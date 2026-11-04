@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-04T02:33:50.9834253-07:00",
+  "generatedAt": "2026-11-04T02:37:32.0061601-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -58,9 +58,9 @@
       "Name": "agent-capacity.json",
       "Canonical": "agent-spawn-capacity/assets/agent-capacity.json",
       "Vendored": "vendor/agent-spawn-capacity/assets/agent-capacity.json",
-      "Sha256": "FAC116682971AF973FE345B966CC4C418E12EE2EBAC75E0DD36A5B1D0E6EEF6C",
-      "Sha256Lf": "910A5046468F9FF524FBC81744420B6D06F54FD1B012185275052C06CE3EBC46",
-      "Bytes": 21835,
+      "Sha256": "389190CA1C808ED590AC3F0190A8E25C95D2A1D86A70A8EF2DA0FDF6EBB6B656",
+      "Sha256Lf": "CBD96B3A4ED53BB4830C4C30F20646403102BC27B73D8890A299638554D2E8FE",
+      "Bytes": 26391,
       "Tree": ""
     },
     {

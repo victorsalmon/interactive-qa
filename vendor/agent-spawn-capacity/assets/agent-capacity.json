@@ -433,6 +433,124 @@
         "simple": { "route": "primary" },
         "merge": { "route": "primary" }
       }
+    },
+    "codex-sol-medium": {
+      "enabled": false,
+      "priority": 8,
+      "cap": 2,
+      "capScope": "pool",
+      "harness": "codex",
+      "matchPrefixes": [
+        "codex/"
+      ],
+      "description": "GPT-6.1 Sol at medium effort - USER AUTHORIZATION ONLY, interactive sessions only. Disabled so -Pool auto can never select it. Unattended work must use the Luna pool.",
+      "roleCaps": {
+        "fix": 2,
+        "recon": 1
+      },
+      "failurePolicy": {
+        "windowMinutes": 15,
+        "failureWindowsToTrip": 2,
+        "cooldownMinutes": 60,
+        "extendOnFailedCanary": false
+      },
+      "keySources": {
+        "authFile": "~/.codex/auth.json",
+        "resolutionNote": "Account-wide credential; one exhausted key fails every Codex worker at once."
+      },
+      "routes": [
+        {
+          "role": "fix",
+          "label": "GPT-6.1 Sol (medium, authorized only)",
+          "cli": "codex",
+          "provider": "codex/gpt-6.1-sol",
+          "modelLabel": "GPT-6.1 Sol",
+          "thinking": "medium",
+          "mode": "full-access",
+          "efforts": {
+            "review": "medium",
+            "fix": "medium",
+            "code": "medium",
+            "refactor": "medium",
+            "merge": "medium"
+          },
+          "note": "INTERACTIVE + USER AUTHORIZATION ONLY. Luna is the only unattended Codex route. This pool is disabled so -Pool auto can never reach it; use an explicit -Pool codex-sol-medium -OptInCodex with the operator present."
+        },
+        {
+          "role": "recon",
+          "label": "GPT-6.1 Sol recon (medium, authorized only)",
+          "cli": "codex",
+          "provider": "codex/gpt-6.1-sol",
+          "modelLabel": "GPT-6.1 Sol",
+          "thinking": "medium",
+          "mode": "full-access",
+          "efforts": {
+            "recon": "medium",
+            "plan": "medium",
+            "simple": "medium"
+          },
+          "note": "INTERACTIVE + USER AUTHORIZATION ONLY. Luna is the only unattended Codex route. This pool is disabled so -Pool auto can never reach it; use an explicit -Pool codex-sol-medium -OptInCodex with the operator present."
+        }
+      ]
+    },
+    "codex-sol-high": {
+      "enabled": false,
+      "priority": 9,
+      "cap": 2,
+      "capScope": "pool",
+      "harness": "codex",
+      "matchPrefixes": [
+        "codex/"
+      ],
+      "description": "GPT-6.1 Sol at high effort - USER AUTHORIZATION ONLY, interactive sessions only. Disabled so -Pool auto can never select it. Unattended work must use the Luna pool.",
+      "roleCaps": {
+        "fix": 2,
+        "recon": 1
+      },
+      "failurePolicy": {
+        "windowMinutes": 15,
+        "failureWindowsToTrip": 2,
+        "cooldownMinutes": 60,
+        "extendOnFailedCanary": false
+      },
+      "keySources": {
+        "authFile": "~/.codex/auth.json",
+        "resolutionNote": "Account-wide credential; one exhausted key fails every Codex worker at once."
+      },
+      "routes": [
+        {
+          "role": "fix",
+          "label": "GPT-6.1 Sol (high, authorized only)",
+          "cli": "codex",
+          "provider": "codex/gpt-6.1-sol",
+          "modelLabel": "GPT-6.1 Sol",
+          "thinking": "high",
+          "mode": "full-access",
+          "efforts": {
+            "review": "high",
+            "fix": "high",
+            "code": "high",
+            "refactor": "high",
+            "merge": "high"
+          },
+          "note": "INTERACTIVE + USER AUTHORIZATION ONLY. Luna is the only unattended Codex route. This pool is disabled so -Pool auto can never reach it; use an explicit -Pool codex-sol-high -OptInCodex with the operator present."
+        },
+        {
+          "role": "recon",
+          "label": "GPT-6.1 Sol recon (high, authorized only)",
+          "cli": "codex",
+          "provider": "codex/gpt-6.1-sol",
+          "modelLabel": "GPT-6.1 Sol",
+          "thinking": "high",
+          "mode": "full-access",
+          "efforts": {
+            "recon": "high",
+            "plan": "high",
+            "simple": "high"
+          },
+          "note": "INTERACTIVE + USER AUTHORIZATION ONLY. Luna is the only unattended Codex route. This pool is disabled so -Pool auto can never reach it; use an explicit -Pool codex-sol-high -OptInCodex with the operator present."
+        }
+      ]
     }
   }
 }
