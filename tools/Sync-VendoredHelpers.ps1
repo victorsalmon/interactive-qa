@@ -108,13 +108,13 @@
     parent directory of this script.
 
 .EXAMPLE
-    pwsh -NoProfile -File interactive-qa-agent/tools/Sync-VendoredHelpers.ps1
+    pwsh -NoProfile -File interactive-qa/tools/Sync-VendoredHelpers.ps1
 
 .EXAMPLE
-    pwsh -NoProfile -File interactive-qa-agent/tools/Sync-VendoredHelpers.ps1 -Check
+    pwsh -NoProfile -File interactive-qa/tools/Sync-VendoredHelpers.ps1 -Check
 
 .EXAMPLE
-    pwsh -NoProfile -File interactive-qa-agent/tools/Sync-VendoredHelpers.ps1 -ListManifest
+    pwsh -NoProfile -File interactive-qa/tools/Sync-VendoredHelpers.ps1 -ListManifest
 #>
 [CmdletBinding()]
 param(
@@ -123,6 +123,13 @@ param(
     [switch] $ListManifest,
 
     [switch] $UpdateSnapshots,
+
+    # A patched row whose canonical source moved is refused by default: recording
+    # the new canonical hash against an old patched body would report MATCH while
+    # the patch silently skipped an upstream change. Pass this only AFTER copying
+    # the new canonical and re-applying the patch, so the acceptance is a
+    # deliberate act rather than a way to silence the check.
+    [switch] $AcceptCanonicalMove,
 
     [string] $PackageRoot
 )
@@ -184,24 +191,9 @@ $script:PatchedFiles = @(
 # ../../iqa-merge/HubRegistry.ps1, ../../git-operations/Invoke-WorktreeLease.ps1),
 # so those two locations are where a package run must find them.
 $script:VendoredFiles = @(
-    [pscustomobject]@{ Canonical = 'iqa-merge/Get-HubCadence.ps1';            Vendored = 'vendor/iqa-merge/Get-HubCadence.ps1' }
-    [pscustomobject]@{ Canonical = 'iqa-merge/HubRegistry.ps1';               Vendored = 'vendor/iqa-merge/HubRegistry.ps1' }
-    [pscustomobject]@{ Canonical = 'iqa-merge/Invoke-HubProbe.ps1';           Vendored = 'vendor/iqa-merge/Invoke-HubProbe.ps1' }
-    [pscustomobject]@{ Canonical = 'iqa-merge/Test-SingleHubRung.ps1';        Vendored = 'vendor/iqa-merge/Test-SingleHubRung.ps1' }
-    [pscustomobject]@{ Canonical = 'iqa-merge/Test-Landed.ps1';               Vendored = 'vendor/iqa-merge/Test-Landed.ps1' }
-    [pscustomobject]@{ Canonical = 'iqa-merge/Test-ScheduleDispatch.ps1';      Vendored = 'vendor/iqa-merge/Test-ScheduleDispatch.ps1' }
-    [pscustomobject]@{ Canonical = 'iqa-merge/Invoke-ScheduleRecordWrite.ps1'; Vendored = 'vendor/iqa-merge/Invoke-ScheduleRecordWrite.ps1' }
-    # Dot-sourced by BOTH HubRegistry.ps1 and Invoke-ScheduleRecordWrite.ps1 at
-    # $PSScriptRoot/AtomicRecordWrite.ps1 (bead cl-common-2jz): it owns the single
-    # implementation of "publish a JSON record atomically under contention", so a
-    # vendored copy that lacked it would resolve the owner to nothing and refuse
-    # to publish at all.
-    [pscustomobject]@{ Canonical = 'iqa-merge/AtomicRecordWrite.ps1';          Vendored = 'vendor/iqa-merge/AtomicRecordWrite.ps1' }
+    # iqa-merge/ and iqa-mode/ helpers are NOT here: their fleet sources were
+    # retired at Phase 5, so they are owned in-package rows (see OwnedFiles above).
     [pscustomobject]@{ Canonical = 'git-operations/Invoke-WorktreeLease.ps1'; Vendored = 'vendor/git-operations/Invoke-WorktreeLease.ps1' }
-
-    [pscustomobject]@{ Canonical = 'iqa-mode/scripts/run-iqa-worker.ps1';        Vendored = 'vendor/dispatch/scripts/run-iqa-worker.ps1' }
-    [pscustomobject]@{ Canonical = 'iqa-mode/scripts/Test-OpencodeProvider.ps1'; Vendored = 'vendor/dispatch/scripts/Test-OpencodeProvider.ps1' }
-    [pscustomobject]@{ Canonical = 'iqa-mode/assets/no-approvals.json';          Vendored = 'vendor/dispatch/assets/no-approvals.json' }
 
     [pscustomobject]@{ Canonical = 'agent-spawn-capacity/scripts/AgentCapacity.ps1';          Vendored = 'vendor/agent-spawn-capacity/scripts/AgentCapacity.ps1' }
     [pscustomobject]@{ Canonical = 'agent-spawn-capacity/scripts/AgentCapacity.Registry.ps1'; Vendored = 'vendor/agent-spawn-capacity/scripts/AgentCapacity.Registry.ps1' }
@@ -216,6 +208,35 @@ $script:VendoredFiles = @(
     # running the prescribed ProviderLock command from an isolated copy, where it
     # failed on the missing file.
     [pscustomobject]@{ Canonical = 'aws/scripts/SecretFingerprint.ps1';       Vendored = 'vendor/aws/scripts/SecretFingerprint.ps1' }
+)
+
+# Owned rows: files whose canonical owner is THIS PACKAGE.
+#
+# The IQA family (iqa-merge, iqa-mode) and the package's own lib/ resolvers were
+# retired out of the fleet Skills tree at Phase 5 - the live IQA text moved into
+# this plugin. A row that still named a canonical source under Skills/ therefore
+# pointed at nothing: -Check could only ever report MISSING, and no re-sync could
+# ever make it MATCH. Ownership is a fact about where the body lives, so the
+# manifest records it rather than pretending an upstream still exists.
+#
+# An owned row is checked against its own recorded hash (an unrecorded edit is a
+# DRIFT) and nothing else. There is no upstream to compare, so the row must say
+# in its Why that this package is the owner - a silent "no source" is exactly the
+# fake-green this manifest exists to prevent.
+$script:OwnedFiles = @(
+    [pscustomobject]@{ Vendored = 'vendor/iqa-merge/AtomicRecordWrite.ps1';          Why = 'Atomic JSON publish policy; the fleet source was retired at Phase 5 and this copy is now the owner every other vendored helper dot-sources.' }
+    [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Get-HubCadence.ps1';             Why = 'Hub cadence derivation; the fleet source was retired at Phase 5 and the iqa-hub member cites this copy.' }
+    [pscustomobject]@{ Vendored = 'vendor/iqa-merge/HubRegistry.ps1';                Why = 'Hub registry; the fleet source was retired at Phase 5 and this copy is what a Hub registers and a monitor finds.' }
+    [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Invoke-HubProbe.ps1';            Why = 'Hub-start probe; the fleet source was retired at Phase 5 and the iqa-hub member cites this copy.' }
+    [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Invoke-ScheduleRecordWrite.ps1'; Why = 'Schedule-record write policy; the fleet source was retired at Phase 5 and the one-rung rule is enforced through this copy.' }
+    [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Test-Landed.ps1';                Why = 'Landing proof; the fleet source was retired at Phase 5 and the merge close-out rule cites this copy.' }
+    [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Test-ScheduleDispatch.ps1';      Why = 'Schedule dispatch check; the fleet source was retired at Phase 5 and the one-rung rule cites this copy.' }
+    [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Test-SingleHubRung.ps1';         Why = 'One-rung-per-repo guard; the fleet source was retired at Phase 5 and the iqa-hub member cites this copy.' }
+    [pscustomobject]@{ Vendored = 'vendor/dispatch/scripts/run-iqa-worker.ps1';      Why = 'Detached worker dispatch; the fleet source (iqa-mode) was retired at Phase 5 and the dispatch member cites this copy.' }
+    [pscustomobject]@{ Vendored = 'vendor/dispatch/scripts/Test-OpencodeProvider.ps1'; Why = 'Provider reachability pre-check for a dispatch; the fleet source (iqa-mode) was retired at Phase 5.' }
+    [pscustomobject]@{ Vendored = 'vendor/dispatch/assets/no-approvals.json';        Why = 'Worker config that denies approval prompts; the fleet source (iqa-mode) was retired at Phase 5.' }
+    [pscustomobject]@{ Vendored = 'lib/Resolve-ClCommon.ps1';                        Why = 'Package-owned resolver for the cl-common checkout. The package must not bundle cl-common, and must not guess its absence either.' }
+    [pscustomobject]@{ Vendored = 'lib/Resolve-PrimaryRepos.ps1';                    Why = 'Package-owned resolver for the machine primary-repo registry, so no member hardcodes which repos are primary.' }
 )
 
 # Archived rows: vendored documents whose canonical source was moved out of the
@@ -288,6 +309,30 @@ function New-NotVendoredRow {
 # wrong. A row here is a decision, not an oversight - silence is what
 # tools/Test-VendoredHelpers.ps1 fails on.
 $script:NotVendoredHelpers = @(
+    New-NotVendoredRow -Owner 'Skills/currents-bookkeeping/scripts' -Names @(
+        'merge-queue.mjs'
+    ) -Reason ('The fleet merge-queue tool. This package ships its own queue ' +
+        '(tools/Invoke-IqaQueue.ps1) with the IDENTICAL row format, so a session never needs a ' +
+        'checkout of another product repo to park or drain work; the fleet tool is named only as ' +
+        'the compatibility counterpart that reads and writes the same files.')
+
+    New-NotVendoredRow -Owner 'the repo under test (scripts/gate)' -Names @(
+        'registry.mjs'
+    ) -Reason ('A gate registry that lives in the repo being merged, discovered per repo. It is ' +
+        'not a skill helper, so vendoring it would pin one product repo''s gate ids into the package.')
+
+    New-NotVendoredRow -Owner 'the fleet merge ledger' -Names @(
+        'merge-ledger.mjs'
+    ) -Reason ('The cross-repo merge ledger, run by path from the fleet checkout that owns the ' +
+        'ledger DB. A Hub on a machine without that checkout records the ledger follow-up as a bead ' +
+        'instead and says so; a vendored copy with no ledger DB would be a dead tool.')
+
+    New-NotVendoredRow -Owner 'the shared-dependency gate' -Names @(
+        'Test-SharedDepAgreement.mjs'
+    ) -Reason ('Compares a pending branch against the FLEET tree (--root <fleet> --ref <trunk>), ' +
+        'so it needs the fleet checkout to have anything to compare. Named by the Hub probe as a ' +
+        'development-override step, not as part of the Hub-start contract.')
+
     New-NotVendoredRow -Owner 'the provider-lock tool' -Names @(
         'provider-lock.json'
     ) -Reason ('Runtime state written by the tool, resolved from the profile state root ' +
@@ -371,12 +416,12 @@ $script:NotVendoredHelpers = @(
     ) -Reason ('Repo-local post-merge deploy hook named by the currents-bookkeeping profile; it belongs to ' +
         'that product repo, not to any skill.')
 
-    New-NotVendoredRow -Owner '(no owner - stale reference)' -Names @(
+    New-NotVendoredRow -Owner '(historical - superseded)' -Names @(
         'Invoke-HubPreflight.ps1'
-    ) -Reason ('STALE REFERENCE - no file of this name exists in cl-common\Skills, Public\salmon-run or ' +
-        'this package as of 2026-11-03; the Hub probe superseded it. Excused so the gate stays honest about ' +
-        'the prose rather than silently passing it; the reference itself should be removed by the member''s ' +
-        'owner.')
+    ) -Reason ('HISTORICAL, not a live command: the name appears only in the v7 changelog entry of ' +
+        'members/iqa-hub/REFERENCE.md, where it was the Step 0 preflight before v8 renamed and folded it ' +
+        'into Repo Clean (Invoke-RepoClean.ps1). The changelog is a record of what happened and is never ' +
+        'rewritten, so the old name stays there as history; nothing prescribes running it.')
 )
 
 # Declared residuals: a vendored file that still names a fleet Skills path. Each
@@ -384,6 +429,10 @@ $script:NotVendoredHelpers = @(
 # fails when a declared residual no longer matches (a stale excuse) AND when an
 # undeclared one appears, so the list can only shrink deliberately.
 $script:Residuals = @(
+    [pscustomobject]@{
+        Path   = 'lib/Resolve-ClCommon.ps1'
+        Reason = 'The integration seam itself: this resolver exists to FIND the fleet cl-common checkout, so it must name the convention ($env:CL_REPOS_ROOT\cl-common) plus the explicit $env:CL_COMMON_PATH override. It resolves nothing else and degrades to a named absence; removing the reference would remove the only way the package can locate the machine skills it references but must not bundle.'
+    }
     [pscustomobject]@{
         Path   = 'vendor/credential-rescue/scripts/Invoke-CredentialRescueWatch.ps1'
         Reason = 'Watch driver: resolves Switch-OpencodeGoKey.ps1 and the opencode CLI from CL_REPOS_ROOT instead of beside itself. A package run of the LOOP therefore needs that machine value; every Key command the members prescribe (Test-GoKey, ProviderLock, Repair-Paseo, the Key Check entry points) resolves in-package. Fix belongs in the canonical script ($PSScriptRoot sibling), then re-sync.'
@@ -663,6 +712,15 @@ if ($Check) {
     foreach ($entry in @($stored.vendored)) {
         [void]$manifestIds.Add($entry.Vendored)
 
+        # Register the canonical path BEFORE any hash verdict. A copy row that
+        # drifts on its recorded hash used to skip this registration, so the
+        # second pass then reported the very file the row already names as
+        # "canonical file has no manifest row" - two defects reported for one
+        # stale hash. The row exists whatever the hash says.
+        if ($entry.Kind -eq 'copy' -and -not [string]::IsNullOrWhiteSpace([string]$entry.Canonical)) {
+            [void]$canonicalIds.Add([string]$entry.Canonical)
+        }
+
         $vendoredPath = Join-Path $packageFull $entry.Vendored
         $status = 'MISSING'
         $detail = ''
@@ -689,6 +747,24 @@ if ($Check) {
                 else {
                     $status = 'DRIFT'
                     $detail = "snapshot edited: recorded=$($recordedHash.Substring(0, 12)) now=$($vendoredHash.Substring(0, 12))"
+                }
+            }
+            elseif ($entry.Kind -eq 'owned') {
+                # An owned row's canonical owner is this package, so there is no
+                # upstream to compare. The recorded hash is the whole check: a
+                # body edited without re-recording is a DRIFT, and a row with no
+                # recorded hash is unprovable rather than fine.
+                if ([string]::IsNullOrWhiteSpace($recordedHash)) {
+                    $status = 'MISSING'
+                    $detail = 'owned row records no Sha256 - the body is unprovable, run this script with no argument'
+                }
+                elseif ($recordedOk) {
+                    $status = 'MATCH'
+                    $detail = "owned in-package sha256 $($vendoredHash.Substring(0, 12)) bytes=$vendoredLength (this package is the owner)"
+                }
+                else {
+                    $status = 'DRIFT'
+                    $detail = "owned in-package body edited: recorded=$($recordedHash.Substring(0, 12)) now=$($vendoredHash.Substring(0, 12)) - re-record with a no-argument run"
                 }
             }
             elseif (-not $recordedOk) {
@@ -987,15 +1063,61 @@ if ($script:ArchivedFiles.Count -gt 0) {
     $archiveSkillsRoot = Resolve-RepoSkillsRoot
 
     if (-not $archiveManifest -or -not $archiveSkillsRoot) {
-        $expected = if ($archiveSkillsRoot) {
-            Join-Path $archiveSkillsRoot $script:ArchiveManifestRelativePath
-        } else {
-            "<repo>/Skills/$($script:ArchiveManifestRelativePath)"
+        # The archive lives in the cl-common checkout that performed the move. A
+        # copy installed anywhere else has no such tree, and refusing to re-sync
+        # there would make the package unmaintainable from its own repository.
+        # So the row is CARRIED FORWARD from the previous manifest: the vendored
+        # body is re-hashed (a real edit is still caught) and the recorded
+        # provenance is preserved, never re-invented and never silently dropped.
+        $previousArchived = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        foreach ($entry in @($previous.vendored)) {
+            if ($entry.Kind -eq 'archived') { $previousArchived[[string]$entry.Vendored] = $entry }
         }
-        Write-Host "Sync-VendoredHelpers: CANNOT-EVALUATE - $($script:ArchivedFiles.Count) archived row(s) are declared but the archive manifest was not found (looked for $expected)" -ForegroundColor Yellow
-        Write-Host 'Archived rows carry provenance: run this script from the cl-common checkout that holds Skills/_archive.' -ForegroundColor Yellow
-        exit 2
+
+        Write-Host 'Sync-VendoredHelpers: archive tree not reachable from this copy - carrying recorded archived provenance forward.' -ForegroundColor Yellow
+
+        foreach ($file in $script:ArchivedFiles) {
+            $vendoredPath = Join-Path $packageFull $file.Vendored
+            if (-not (Test-Path -LiteralPath $vendoredPath -PathType Leaf)) {
+                Write-Host "Sync-VendoredHelpers: archived vendored file not found: $($file.Vendored)" -ForegroundColor Red
+                $missingCanonical++
+                continue
+            }
+
+            $recorded = $null
+            if (-not $previousArchived.TryGetValue($file.Vendored, [ref]$recorded)) {
+                Write-Host "Sync-VendoredHelpers: '$($file.Vendored)' is declared archived but the previous manifest has no archived row - provenance cannot be carried forward" -ForegroundColor Red
+                $missingCanonical++
+                continue
+            }
+            if ([string]::IsNullOrWhiteSpace([string]$recorded.Archived)) {
+                Write-Host "Sync-VendoredHelpers: '$($file.Vendored)' previous archived row records no Archived path - provenance is unprovable" -ForegroundColor Red
+                $missingCanonical++
+                continue
+            }
+
+            $hash = Get-Sha256 -Path $vendoredPath
+            $length = (Get-Item -LiteralPath $vendoredPath).Length
+            Write-Output ('{0}  {1} bytes (archived from {2}; provenance carried forward)' -f $file.Vendored, $length, $file.Source)
+
+            $archivedRows.Add([pscustomobject]@{
+                Kind         = 'archived'
+                Name         = Split-Path -Leaf $file.Source
+                Canonical    = ''
+                ArchivedFrom = [string]$recorded.ArchivedFrom
+                Archived     = [string]$recorded.Archived
+                Vendored     = $file.Vendored
+                Sha256       = $hash
+                Sha256Lf     = (Get-Sha256Normalized -Path $vendoredPath)
+                Bytes        = $length
+                Tree         = ''
+                ArchivedAt   = [string]$recorded.ArchivedAt
+                Phase        = [string]$recorded.Phase
+                Why          = $file.Why
+            })
+        }
     }
+    else {
 
     $archiveRows = @((Get-Content -LiteralPath $archiveManifest -Raw -Encoding utf8 | ConvertFrom-Json).rows)
     $archiveBySource = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
@@ -1057,6 +1179,7 @@ if ($script:ArchivedFiles.Count -gt 0) {
             Why         = $file.Why
         })
     }
+    }
 }
 
 # snapshots: hash what is on disk, but never re-record silently
@@ -1098,6 +1221,38 @@ if ($missingCanonical -gt 0 -or $snapshotDrift -gt 0) {
     exit 1
 }
 
+# owned rows: the package IS the canonical owner, so there is nothing to copy.
+# The row records the body's current hash; an edit that is not re-recorded shows
+# up as a DRIFT on -Check, which is the only integrity claim an owned file can
+# make. A missing file is a failure, never a silent drop.
+$ownedRowCount = 0
+foreach ($owned in $script:OwnedFiles) {
+    $vendoredPath = Join-Path $packageFull $owned.Vendored
+    if (-not (Test-Path -LiteralPath $vendoredPath -PathType Leaf)) {
+        Write-Host "Sync-VendoredHelpers: owned file not found: $($owned.Vendored)" -ForegroundColor Red
+        $missingCanonical++
+        continue
+    }
+
+    $hash = Get-Sha256 -Path $vendoredPath
+    $length = (Get-Item -LiteralPath $vendoredPath).Length
+    Write-Output ('{0}  {1} bytes (owned in-package)' -f $owned.Vendored, $length)
+
+    $newRows.Add([pscustomobject]@{
+        Kind      = 'owned'
+        Name      = Split-Path -Leaf $owned.Vendored
+        Canonical = ''
+        Vendored  = $owned.Vendored
+        Owner     = 'this package'
+        Why       = $owned.Why
+        Sha256    = $hash
+        Sha256Lf  = (Get-Sha256Normalized -Path $vendoredPath)
+        Bytes     = $length
+        Tree      = ''
+    })
+    $ownedRowCount++
+}
+
 foreach ($row in $archivedRows) { $newRows.Add($row) }
 
 # patched rows: vendored bytes + the canonical source they were patched from.
@@ -1125,6 +1280,32 @@ foreach ($patched in $script:PatchedFiles) {
         continue
     }
 
+    # A patched body is only a patch of the canonical revision it was taken from.
+    # Recording a NEW canonical hash against an OLD patched body would make -Check
+    # report MATCH while the patch silently skipped an upstream change - a false
+    # green on the one row the manifest deliberately forks. So a moved canonical
+    # stops the sync: re-apply the patch to the new source, then re-run.
+    $previousPatched = $null
+    foreach ($entry in @($previous.vendored)) {
+        if ($entry.Kind -eq 'patched' -and [string]$entry.Vendored -eq $patched.Vendored) { $previousPatched = $entry }
+    }
+    if ($previousPatched) {
+        $recordedCanonical = [string]$previousPatched.CanonicalSha256
+        $recordedCanonicalLf = [string]$previousPatched.CanonicalSha256Lf
+        $canonicalMoved = $recordedCanonical -and
+            $canonicalHash -ne $recordedCanonical -and
+            (-not $recordedCanonicalLf -or (Get-Sha256Normalized -Path $canonicalPath) -ne $recordedCanonicalLf)
+        if ($canonicalMoved) {
+            if (-not $AcceptCanonicalMove) {
+                Write-Host "Sync-VendoredHelpers: '$($patched.Vendored)' canonical source moved since the patch was recorded" -ForegroundColor Red
+                Write-Host "  recorded=$($recordedCanonical.Substring(0, 12)) now=$($canonicalHash.Substring(0, 12)) - copy the new canonical, re-apply patch '$($patched.Patch)', then re-run with -AcceptCanonicalMove" -ForegroundColor Red
+                $missingCanonical++
+                continue
+            }
+            Write-Host "Sync-VendoredHelpers: accepting the moved canonical for '$($patched.Vendored)' (patch '$($patched.Patch)' re-applied): $($recordedCanonical.Substring(0, 12)) -> $($canonicalHash.Substring(0, 12))" -ForegroundColor Yellow
+        }
+    }
+
     $length = (Get-Item -LiteralPath $vendoredPath).Length
     $copied++
 
@@ -1148,13 +1329,23 @@ foreach ($patched in $script:PatchedFiles) {
     })
 }
 
+if ($missingCanonical -gt 0) {
+    Write-Host "Sync-VendoredHelpers: $missingCanonical row(s) could not be recorded - the manifest was NOT written" -ForegroundColor Red
+    exit 1
+}
+
 $document = [pscustomobject]@{
     schemaVersion = 2
     generatedAt   = (Get-Date).ToString('o')
     # Repo-derived runs record the portable name so the committed manifest does not
     # point at whichever worktree generated it; a fleet run records the absolute
     # root it actually read. Nothing resolves from this field - it is provenance.
-    canonicalRoot = if ($canonicalOrigin -eq 'repo') { 'Skills' } else { $canonicalRoot }
+    # The committed manifest is SHIPPED, so it records only the portable name. A
+    # fleet run used to write the absolute root it read, which made the artifact
+    # machine-specific and tripped the publish gate. Which tree produced a sync is
+    # a fact about the run, not about the package: it is printed by this script and
+    # belongs in the commit message, never in a shipped file.
+    canonicalRoot = 'Skills'
     trees         = @($script:VendoredTrees | ForEach-Object { [pscustomobject]@{ canonicalRoot = $_.Canonical; vendoredRoot = $_.Vendored } })
     vendored      = @($newRows | Sort-Object Vendored)
 }
@@ -1167,8 +1358,9 @@ if (-not (Test-Path -LiteralPath $manifestDir -PathType Container)) {
 $document | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding utf8 -NoNewline
 
 $copyRows = @($newRows | Where-Object { $_.Kind -eq 'copy' }).Count
+$ownedRows = @($newRows | Where-Object { $_.Kind -eq 'owned' }).Count
 $snapshotRows = @($newRows | Where-Object { $_.Kind -eq 'snapshot' }).Count
 $archivedRowCount = @($newRows | Where-Object { $_.Kind -eq 'archived' }).Count
 $patchedRowCount = @($newRows | Where-Object { $_.Kind -eq 'patched' }).Count
-Write-Host "Sync-VendoredHelpers: $copied file(s) synced from $canonicalRoot; manifest written with $copyRows copy row(s), $patchedRowCount patched row(s), $snapshotRows snapshot row(s) and $archivedRowCount archived row(s) -> $manifestPath" -ForegroundColor Green
+Write-Host "Sync-VendoredHelpers: $copied file(s) synced from $canonicalRoot; manifest written with $copyRows copy row(s), $ownedRows owned row(s), $patchedRowCount patched row(s), $snapshotRows snapshot row(s) and $archivedRowCount archived row(s) -> $manifestPath" -ForegroundColor Green
 exit 0

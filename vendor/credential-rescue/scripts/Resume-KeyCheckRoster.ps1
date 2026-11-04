@@ -82,10 +82,10 @@
     -MessageFile <path>` instead of `paseo send`.
 
 .PARAMETER StateDir
-    Where `last-cutover.json` lives. Default `~/.salmon/State/key-check`.
+    Where `last-cutover.json` lives. Default `~/.machine/state/key-check`.
 
 .PARAMETER AuditPath
-    Default `~/.salmon/Tasks/Logs/keycheck.jsonl`.
+    Default `~/.machine/logs/keycheck.jsonl`.
 
 .PARAMETER AgentListFile
     Test seam for the existence check (same shape as Capture's).
@@ -144,8 +144,8 @@ $ErrorActionPreference = 'Stop'
 $scriptRoot = $PSScriptRoot
 . (Join-Path $scriptRoot 'lib\PaseoCommon.ps1')
 
-if ([string]::IsNullOrWhiteSpace($StateDir)) { $StateDir = Join-Path $env:USERPROFILE '.salmon\State\key-check' }
-if ([string]::IsNullOrWhiteSpace($AuditPath)) { $AuditPath = Join-Path $env:USERPROFILE '.salmon\Tasks\Logs\keycheck.jsonl' }
+if ([string]::IsNullOrWhiteSpace($StateDir)) { $StateDir = Join-Path $env:USERPROFILE '.machine\state\key-check' }
+if ([string]::IsNullOrWhiteSpace($AuditPath)) { $AuditPath = Join-Path $env:USERPROFILE '.machine\logs\keycheck.jsonl' }
 if ([string]::IsNullOrWhiteSpace($AgentsDir)) { $AgentsDir = Join-Path $env:USERPROFILE '.paseo\agents' }
 if ([string]::IsNullOrWhiteSpace($SelfAgentId)) { $SelfAgentId = [string]$env:PASEO_AGENT_ID }
 if ([string]::IsNullOrWhiteSpace($SkillRoot)) { $SkillRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptRoot '..\..')) }

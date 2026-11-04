@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     Backup, restore, and verify the ~/.aws credential store on this dev machine.

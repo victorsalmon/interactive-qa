@@ -29,11 +29,22 @@
     $r = Resolve-PrimaryRepos
     if ($r.Available) { $r.Repos | ForEach-Object { $_.name } } else { Write-Warning $r.Reason }
 
+.EXAMPLE
+    # Accept any name the operator uses for a repo: canonical name or alias.
+    $one = Resolve-PrimaryRepos -Name uh
+    if ($one.Available) { $one.Repos[0].path } else { Write-Warning $one.Reason }
+
 .OUTPUTS
     [pscustomobject] Path, Source, Available, Repos, Reason
+    Each Repos entry: name, slug, aliases, path, trunk, exists.
 #>
 [CmdletBinding()]
-param()
+param(
+    # Optional name or alias to resolve. A name that matches nothing is a NAMED
+    # absence, not an empty list: "no primary repo called x" is a different fact
+    # from "this machine has no primary repos", and a monitor must not confuse them.
+    [string]$Name
+)
 
 function Get-RegistryCandidate {
     if (-not [string]::IsNullOrWhiteSpace($env:PRIMARY_REPOS_FILE)) {
@@ -71,11 +82,16 @@ catch {
 }
 
 $repos = @($registry.repos | Where-Object { $_ -and $_.name } | ForEach-Object {
+        $aliases = @()
+        if ($_.aliases) { $aliases = @($_.aliases | Where-Object { $_ } | ForEach-Object { [string]$_ }) }
+
         [pscustomobject]@{
-            name  = [string]$_.name
-            path  = [string]$_.path
-            trunk = if ($_.trunk) { [string]$_.trunk } else { 'dev' }
-            exists = if ($_.path) { Test-Path -LiteralPath $_.path -PathType Container } else { $false }
+            name    = [string]$_.name
+            slug    = if ($_.slug) { [string]$_.slug } else { [string]$_.name }
+            aliases = $aliases
+            path    = [string]$_.path
+            trunk   = if ($_.trunk) { [string]$_.trunk } else { 'dev' }
+            exists  = if ($_.path) { Test-Path -LiteralPath $_.path -PathType Container } else { $false }
         }
     })
 
@@ -86,6 +102,24 @@ if ($repos.Count -eq 0) {
         Available = $false
         Repos     = @()
         Reason    = "the primary-repo registry at $($candidate.Path) lists no repos; record at least one, or the monitor has nothing to supervise"
+    }
+}
+
+if (-not [string]::IsNullOrWhiteSpace($Name)) {
+    $wanted = $Name.Trim()
+    $repos = @($repos | Where-Object {
+            $_.name -eq $wanted -or $_.slug -eq $wanted -or ($_.aliases -contains $wanted) -or
+            ($_.name -like "*$wanted*")
+        })
+
+    if ($repos.Count -eq 0) {
+        return [pscustomobject]@{
+            Path      = $candidate.Path
+            Source    = $candidate.Source
+            Available = $false
+            Repos     = @()
+            Reason    = "no primary repo matches '$Name' in $($candidate.Path); a name that matches nothing is a named absence, not an empty fleet"
+        }
     }
 }
 

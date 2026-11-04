@@ -55,7 +55,7 @@
                          and return to near.
 
     One live run per machine. The run takes a lock
-    (~/.salmon/State/key-check/lock.json); a second live run exits 2 with
+    (~/.machine/state/key-check/lock.json); a second live run exits 2 with
     `locked-by-run` and prints the holder's runId and age. A stale lock (dead
     pid, or a heartbeat older than three intervals) is taken over and audited;
     -Force steals deliberately; -DryRun never takes it.
@@ -114,13 +114,13 @@
     Emit the final run state as JSON (suppresses progress lines).
 
 .PARAMETER StatePath
-    Run-state file. Default ~/.salmon/State/key-check/state.json - ONE fixed
+    Run-state file. Default ~/.machine/state/key-check/state.json - ONE fixed
     path, because that is what makes a run resumable. The lock and the cutover
     outcome live beside it. Under -DryRun the probe NEVER writes this file: it
     reads it as context and writes `<parent>\dryrun\<name>` instead.
 
 .PARAMETER AuditPath
-    Per-check JSONL audit. Default ~/.salmon/Tasks/Logs/keycheck.jsonl. Under
+    Per-check JSONL audit. Default ~/.machine/logs/keycheck.jsonl. Under
     -DryRun the probe writes `<parent>\dryrun\<name>` instead, so no rehearsal
     row ever lands in the live ledger.
 
@@ -327,17 +327,17 @@ if (-not (Test-KeyCheckGrammar -IntervalMinutes $IntervalMinutes -DurationHours 
     exit 2
 }
 
-$stateRoot = Join-Path $env:USERPROFILE '.salmon'
+$stateRoot = Join-Path $env:USERPROFILE '.machine'
 $stateDir = if ($StatePath) {
     $parent = Split-Path -Parent $StatePath
     if ([string]::IsNullOrWhiteSpace($parent)) { (Get-Location).Path } else { $parent }
 } else {
-    Join-Path $stateRoot 'State\key-check'
+    Join-Path $stateRoot 'state\key-check'
 }
 # ONE fixed state path: a run is only resumable if the next invocation looks in
 # the same place the last one wrote.
 if (-not $StatePath) { $StatePath = Join-Path $stateDir 'state.json' }
-if (-not $AuditPath) { $AuditPath = Join-Path (Join-Path $stateRoot 'Tasks\Logs') 'keycheck.jsonl' }
+if (-not $AuditPath) { $AuditPath = Join-Path (Join-Path $stateRoot 'logs') 'keycheck.jsonl' }
 
 # ---- -DryRun is a PROBE: it never shares the live run's identity or files ---
 # Measured defect (cl-common-jqm, 2026-11-03 11:09:10 PT): a dry run resumed the

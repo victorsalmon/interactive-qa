@@ -14,7 +14,7 @@
       User env  OPENCODE_API_KEY   - opencode provider env credential
       auth.json <XDG_DATA_HOME>\opencode\auth.json (live; D:\opencode-data here)
                   ."opencode-go".key (and ."opencode".key when present)
-      ~/.salmon/config.json execution.defaultCodingKey + caps (lane priority)
+      ~/.machine/config.json execution.defaultCodingKey + caps (lane priority)
 
     Paseo is a SEPARATE consumer with its own track: after this cutover, run
     scripts/Repair-Paseo.ps1 (or pass -RestartPaseo to delegate to it) so the
@@ -32,10 +32,10 @@
 
     A cutover is all-or-nothing. The pre-switch state of every surface this
     script writes (seam activeKey, User OPENCODE_GO_KEY / OPENCODE_API_KEY,
-    auth.json, ~/.salmon/config.json) is captured before the first write, and a
+    auth.json, ~/.machine/config.json) is captured before the first write, and a
     post-write canary failure restores it and exits 1 with `rolled-back` - the
     machine is never left with surfaces that disagree. If that restore itself
-    fails, the run writes ~/.salmon/State/key-check/partial-cutover.json (labels
+    fails, the run writes ~/.machine/state/key-check/partial-cutover.json (labels
     only: {from, to, surfaces, at, runId}) and exits 6; the next invocation
     resolves it with -ResumePartial (complete or revert), and
     Invoke-KeyCheckCutover.ps1 does that automatically.
@@ -55,7 +55,7 @@
     Fast path (default when the seam's canary.defaultMode is 'fast'): canary
     only the fleet default worker model (deepseek-v4.1-flash), run
     session hygiene only when poisoned parts actually exist, and project
-    ~/.salmon/config.json in the same pass. This is the near-instant path for
+    ~/.machine/config.json in the same pass. This is the near-instant path for
     "GO<n> is exhausted, GO<m> is fresh" — verify the new key and repoint.
     Safety is unchanged: the pre-check, one real canary, and the credential log
     all still run.
@@ -73,12 +73,12 @@
     and hygiene policies.
 
 .PARAMETER RuntimeConfig
-    ~/.salmon/config.json to project execution.defaultCodingKey and the caps
-    into. Defaults to $env:USERPROFILE\.salmon\config.json. Pass -SkipRuntimeConfig
+    ~/.machine/config.json to project execution.defaultCodingKey and the caps
+    into. Defaults to $env:USERPROFILE\.machine\config.json. Pass -SkipRuntimeConfig
     to leave it untouched.
 
 .PARAMETER SkipRuntimeConfig
-    Do not project the seam into ~/.salmon/config.json. Use only when another
+    Do not project the seam into ~/.machine/config.json. Use only when another
     tool owns that file in the same change.
 
 .PARAMETER SkipHygiene
@@ -102,7 +102,7 @@
 .PARAMETER StateDir
     Where the rollback snapshot (cutover-snapshot/) and the partial-application
     marker (partial-cutover.json) live. Default
-    ~/.salmon/State/key-check - the same directory Key Check keeps its state in.
+    ~/.machine/state/key-check - the same directory Key Check keeps its state in.
 
 .PARAMETER FixtureState
     Test seam: a JSON state store ({"pool":{...},"user":{...}}) used instead of
@@ -203,12 +203,15 @@ param(
 $ErrorActionPreference = 'Stop'
 $FleetRoot = if ($env:CL_REPOS_ROOT) { $env:CL_REPOS_ROOT } else { $env:CSBK_REPOS_ROOT }
 if ([string]::IsNullOrWhiteSpace($FleetRoot)) {
-    # Installed-package run (no fleet checkout): the machine's state root replaces
-    # the fleet Tasks/Logs + Tools paths. Machine state stays machine state; it is
-    # just not a fleet dependency. A fleet run is unchanged.
-    $FleetRoot = Join-Path $HOME '.salmon'
+    # Installed-package run (no fleet checkout). The fleet Tools/ paths do not
+    # exist here, but the credential log is MACHINE state and must still be
+    # written: machine state is never allowed to become a fleet dependency.
+    $FleetRoot = ''
 }
-if ([string]::IsNullOrWhiteSpace($LogPath)) { $LogPath = Join-Path $FleetRoot 'Tasks\Logs\credential-changes.jsonl' }
+if ([string]::IsNullOrWhiteSpace($LogPath)) {
+    $LogPath = if ($FleetRoot) { Join-Path $FleetRoot 'Tasks\Logs\credential-changes.jsonl' }
+               else { Join-Path $HOME '.machine\logs\credential-changes.jsonl' }
+}
 . (Join-Path $PSScriptRoot 'lib\CredLog.ps1')
 . (Join-Path $PSScriptRoot 'lib\PaseoCommon.ps1')
 
@@ -232,7 +235,7 @@ if ($PaseoCli) { Write-Warning '-PaseoCli is deprecated and ignored here; Repair
 # the tests can drive the whole switch (read the pool, capture the pre-switch
 # state, write, roll back) without touching this machine's real registry or a
 # real credential. In production they are thin wrappers over the registry.
-$StateDir = if ($StateDir) { $StateDir } else { Join-Path $env:USERPROFILE '.salmon\State\key-check' }
+$StateDir = if ($StateDir) { $StateDir } else { Join-Path $env:USERPROFILE '.machine\state\key-check' }
 $MarkerPath = Join-Path $StateDir 'partial-cutover.json'
 $SnapshotDir = Join-Path $StateDir 'cutover-snapshot'
 $SnapshotStatePath = Join-Path $SnapshotDir 'snapshot.json'
@@ -308,7 +311,7 @@ function Get-PoolLabel {
 
 # --- pre-switch snapshot: the rollback guarantee ------------------------------
 # The switch writes four surfaces (seam activeKey, User OPENCODE_GO_KEY /
-# OPENCODE_API_KEY, auth.json, ~/.salmon/config.json). A post-write canary
+# OPENCODE_API_KEY, auth.json, ~/.machine/config.json). A post-write canary
 # failure must never leave them disagreeing, so the exact pre-write bytes of
 # every file surface - and the pre-write User values - are captured first and
 # restored on failure. The snapshot lives beside auth.json's own .bak siblings
@@ -444,6 +447,9 @@ if ([string]::IsNullOrWhiteSpace($AuthJson)) {
         $dataHome = [Environment]::GetEnvironmentVariable('XDG_DATA_HOME', 'Process')
     }
     if ([string]::IsNullOrWhiteSpace($dataHome)) {
+        if (-not $FleetRoot) {
+            throw 'XDG_DATA_HOME is unset and there is no fleet checkout to fall back to; set XDG_DATA_HOME or pass -AuthJson.'
+        }
         $dataHome = Join-Path $FleetRoot 'Tools\opencode-data'
         Write-Warning "XDG_DATA_HOME unset; falling back to legacy $dataHome"
     }
@@ -451,9 +457,9 @@ if ([string]::IsNullOrWhiteSpace($AuthJson)) {
 }
 
 # Resolve the runtime config path up front: the rollback snapshot must capture
-# ~/.salmon/config.json BEFORE any write, not when the projection block runs.
+# ~/.machine/config.json BEFORE any write, not when the projection block runs.
 if (-not $SkipRuntimeConfig -and [string]::IsNullOrWhiteSpace($RuntimeConfig)) {
-    $RuntimeConfig = Join-Path $env:USERPROFILE '.salmon\config.json'
+    $RuntimeConfig = Join-Path $env:USERPROFILE '.machine\config.json'
 }
 
 $targetName = "OPENCODE_GO${KeyNumber}_KEY"
@@ -472,7 +478,7 @@ if (-not $canaryCli) {
     $cmd = Get-Command opencode -ErrorAction SilentlyContinue
     if ($cmd) { $canaryCli = $cmd.Source }
 }
-if (-not $canaryCli) {
+if (-not $canaryCli -and $FleetRoot) {
     $fallback = Join-Path $FleetRoot 'Tools\opencode-standalone\node_modules\.bin\opencode.ps1'
     if (Test-Path -LiteralPath $fallback) { $canaryCli = $fallback }
 }
@@ -698,7 +704,7 @@ if (Test-Path -LiteralPath $AuthJson) {
 if ($DryRun) {
     Write-Output ("dry-run: would repoint OPENCODE_GO_KEY, OPENCODE_API_KEY, auth.json opencode-go -> {0}" -f $targetName)
     if (-not $SkipRuntimeConfig -and $seam) {
-        Write-Output ("dry-run: would set ~/.salmon/config.json execution.defaultCodingKey -> {0}" -f $targetName)
+        Write-Output ("dry-run: would set ~/.machine/config.json execution.defaultCodingKey -> {0}" -f $targetName)
         Write-Output "dry-run: would project keyMaxConcurrent + providerMaxConcurrent from the seam"
     }
     Write-Output "dry-run: Paseo untouched here — run Repair-Paseo.ps1 -KeyNumber $KeyNumber as step 2"
@@ -743,7 +749,7 @@ if ((Test-Path -LiteralPath $AuthJson)) {
     Write-Output ("auth.json updated providers: " + ($touched -join ', ') + " (backup $AuthJson.bak-$stamp)")
 }
 
-# --- project the seam into ~/.salmon/config.json ---
+# --- project the seam into ~/.machine/config.json ---
 # THIS is what makes "only the active key is used" true for spawned lanes.
 # execution.defaultCodingKey is not advisory: Get-OpencodeDefaultCodingKey feeds
 # it into Get-OpencodeKeyPriority -DefaultKey, which moves the named key to the
@@ -753,7 +759,7 @@ if ((Test-Path -LiteralPath $AuthJson)) {
 # provider cap and the active key's per-key cap stay consistent.
 if (-not $SkipRuntimeConfig -and $seam) {
     if ([string]::IsNullOrWhiteSpace($RuntimeConfig)) {
-        $RuntimeConfig = Join-Path $env:USERPROFILE '.salmon\config.json'
+        $RuntimeConfig = Join-Path $env:USERPROFILE '.machine\config.json'
     }
     if (Test-Path -LiteralPath $RuntimeConfig) {
         $rcStamp = [datetimeoffset]::UtcNow.ToString('yyyyMMddTHHmmssZ')
@@ -899,7 +905,7 @@ if (-not $SkipCanary) {
 # --- a failed canary must never leave a split machine -----------------------
 # The canary measured the key this run wrote, so a failure is a real failure of
 # that key. Restore every surface captured before the write: the seam activeKey,
-# the User values, auth.json and ~/.salmon/config.json. Only a rollback that
+# the User values, auth.json and ~/.machine/config.json. Only a rollback that
 # itself fails may leave the machine split, and then it says so on disk.
 if ($canaryFailed.Count -gt 0) {
     Write-CredLogHere -Action 'canary-failed' -Target 'opencode-go canary set' -Detail ("cutover to $targetName; failed: " + ($canaryFailed -join ', '))

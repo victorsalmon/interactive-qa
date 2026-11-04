@@ -50,7 +50,7 @@
     Default `<StateDir>\<runId>-roster.json`.
 
 .PARAMETER StateDir
-    Default `~/.salmon/State/key-check`. Test seam.
+    Default `~/.machine/state/key-check`. Test seam.
 
 .PARAMETER AgentListFile
     Test seam: a JSON array in `paseo ls --json` shape instead of the live
@@ -95,7 +95,7 @@ $ErrorActionPreference = 'Stop'
 $scriptRoot = $PSScriptRoot
 . (Join-Path $scriptRoot 'lib\PaseoCommon.ps1')
 
-if ([string]::IsNullOrWhiteSpace($StateDir)) { $StateDir = Join-Path $env:USERPROFILE '.salmon\State\key-check' }
+if ([string]::IsNullOrWhiteSpace($StateDir)) { $StateDir = Join-Path $env:USERPROFILE '.machine\state\key-check' }
 if ([string]::IsNullOrWhiteSpace($OutPath)) { $OutPath = Join-Path $StateDir "$RunId-roster.json" }
 if ([string]::IsNullOrWhiteSpace($AgentsDir)) { $AgentsDir = Join-Path $env:USERPROFILE '.paseo\agents' }
 if ([string]::IsNullOrWhiteSpace($SelfAgentId)) { $SelfAgentId = [string]$env:PASEO_AGENT_ID }

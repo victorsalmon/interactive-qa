@@ -66,7 +66,7 @@ Parts, each `NEEDED` / `SKIP` / `INFO` / `BLOCKED` with a reason and, when
 | `untracked` | untracked paths exist (INFO only, never swept) | — |
 | `sync` | trunk ahead (push) or behind (fast-forward pull) a remote | `Invoke-GitPullSafe.ps1 -RepoRoot <repo>` / `git -C <repo> push <remote> <trunk>` |
 | `helpers` | this checkout's `Skills/` differs from `origin/<trunk>` — a helper invoked from here is **not** the shipped helper, and writes the record shape it knows | review `git -C <repo> diff --stat origin/<trunk> -- Skills`, then sync before invoking any skill helper |
-| `reconcile` | queued/merging queue rows whose frozen SHA is already on the trunk | `merge-queue.mjs prune --repo <slug> --repo-root <repo> --base <trunk>` |
+| `reconcile` | queued/merging queue rows whose frozen SHA is already on the trunk | `Invoke-IqaQueue.ps1 -Mode Prune -Repo <slug> -RepoRoot <repo> -Base <trunk>` |
 | `shared-deps` | a pending branch touches `package.json` / `pnpm-workspace.yaml` / `pnpm-lock.yaml` (the only time the gate can have moved) | `Test-SharedDepAgreement.mjs --root <fleet> --ref origin/<trunk>` |
 | `merge` | a local non-permanent branch has commits the trunk lacks | `Invoke-TrunkPrep.ps1 -RepoRoot <repo> -OnConflict CherryPick` |
 | `hygiene` | a local branch is merged or patch-equivalent, or extra worktrees exist | `Invoke-BranchWorktreeHygiene.ps1 -RepoRoot <repo> -IncludeRoot -BranchDays 0 -WorktreeDays 0 -Apply -IncludePatchEquivalent` |
@@ -237,7 +237,7 @@ that survives both.
     -Repo <slug> -RepoPath <repoRoot> -AgentId <agent-id> -Trunk <trunk> -Json`
    (`<scripts_root>` defaults to this package's `vendor/`; the fleet path
    `Skills/iqa-merge` is a development override only.)
-   writes `~/.salmon/State/hubs/<slug>.json` naming the **agent id** and the
+   writes `~/.machine/state/hubs/<slug>.json` naming the **agent id** and the
    **machine** with a heartbeat stamp. A record that says only "repo X has a
    hub" is not actionable — a Sub needs *which* agent, on *which* machine, and
    *whether it is alive*. Re-Register is idempotent and keeps `registeredAt`.
@@ -521,19 +521,24 @@ ordered a merge in the same turn, the Sub never merges.
 1. **Freeze.** `git status --short`, `git branch --show-current`,
    `git log --oneline -5`, `git diff --stat`, ahead/behind of the trunk.
    No further edits after `Sub Mode` is invoked.
-2. **Enqueue.** Register the frozen SHA as one merge-queue row
-   (`node $env:CL_REPOS_ROOT\currents-bookkeeping\scripts\merge-queue.mjs`,
-   `enqueue --repo <cl-common|cbk|uh> --branch <b> --sha <frozen> --worktree <path>`
-   `--owner <sub-id> [--base <dev|trunk>]`; dir first-set-wins
-   `$MERGE_QUEUE_DIR`, `$SALMON_RUN_HOME/Tasks/MergeQueue`,
-   `~/.salmon/Tasks/MergeQueue`). `--note` carries the COMPLETE
-   instructions: test evidence actually run, one `needs:` line per piece
-   of residual work, and the return contact. A vague note mints
-   nothing — the Hub relays it back as a question. The row is the
+2. **Enqueue.** Register the frozen SHA as one merge-queue row with the package's
+   queue tool:
+
+   ```
+   pwsh -NoProfile -File tools/Invoke-IqaQueue.ps1 -Mode Enqueue -Repo <slug> `
+     -Branch <b> -Sha <frozen> -Worktree <path> -Owner <sub-id> [-Base <trunk>] [-Urgent]
+   ```
+
+   The queue is repo-scoped state at `<repo>/.iqa/merge-queue/<slug>.jsonl`;
+   `$env:MERGE_QUEUE_DIR` or `-QueueDir` is the fleet-wide override, and a queue
+   written by the fleet's `merge-queue.mjs` keeps working because the row format is
+   identical. `-Note` carries the COMPLETE instructions: test evidence actually
+   run, one `needs:` line per piece of residual work, and the return contact. A
+   vague note mints nothing - the Hub relays it back as a question. The row is the
    durable handoff.
-3. **Verify, then ping.** `merge-queue.mjs list --repo <r>` must show the
+3. **Verify, then ping.** `Invoke-IqaQueue.ps1 -Mode List -Repo <r>` must show the
    row before anything else. Then one MERGE-READY ping to the Hub id with
-   branch + frozen SHA only — a wake-up, never the payload. Queued
+   branch + frozen SHA only - a wake-up, never the payload. Queued
    delivery never interrupts the Hub's in-flight batch.
 4. **Await Hub ack.** Poll `list --repo <r>` for your branch row every
    ~60s, up to 10 (≈10 min, inside the lane watchdog): status `merging`
@@ -578,8 +583,8 @@ A `hub-cbk` / `hub-uh` session never lands `cl-common` branches itself. When
 its merge-tick sees a queued row or a `needs:` line touching `cl-common`
 (`Skills/`, `saas-modules/`, shared tooling), it forwards instead of draining:
 
-1. Enqueue to the `cl-common` queue verbatim (`merge-queue.mjs enqueue
-   --repo cl-common --base dev` with the frozen SHA + worktree + owner).
+1. Enqueue to the `cl-common` queue verbatim (`Invoke-IqaQueue.ps1 -Mode Enqueue
+   -Repo cl-common -Base dev` with the frozen SHA + worktree + owner).
 2. Mint a ledger follow-up under the `Merges: cl-common/dev` epic with a
    `blocked-by` edge onto the originating merge bead (`Cross-repo:
    <repo>/<bead-id>` in the body).
@@ -647,7 +652,7 @@ when you are already in a Paseo session and want the delivery receipt inline.
 ## Cross-repo bead linking
 
 `bd` typed edges never span DBs (one typed edge per pair, same store only).
-The shared ledger DB at `~/.salmon/State/merge-beads` is the cross-repo
+The shared ledger DB at `~/.machine/state/merge-beads` is the cross-repo
 graph: every repo's `Merges: <repo>/<base>` epic lives there. Session DBs
 (`.beads/` in the trunk worktree) stay per-repo and ephemeral. To link a
 CBK/UH session bead to `cl-common`:
@@ -662,7 +667,7 @@ CBK/UH session bead to `cl-common`:
 
 ## Merge beads (SaaS shape)
 
-Ledger DB `~/.salmon/State/merge-beads` (`$MERGE_LEDGER_DIR` override;
+Ledger DB `~/.machine/state/merge-beads` (`$MERGE_LEDGER_DIR` override;
 helper `node $env:CL_REPOS_ROOT\currents-bookkeeping\scripts\merge-ledger.mjs`).
 Slugs (logical namespaces inside the single shared ledger DB, realized as
 epic titles — no per-slug subdirs exist yet): `currents-bookkeeping` →
@@ -719,7 +724,7 @@ supervises and stays interactive. Guardrails (all session-enforced):
   names the `ROW` and `CANONICAL` file that must be re-vendored, exit 0 means
   no governed canonical changed or every vendored copy is in sync, exit 2 is
   `CANNOT-EVALUATE` and never a pass. A repo with no
-  `interactive-qa-agent/tools/vendored-helpers.manifest.json` skips with that
+  `interactive-qa/tools/vendored-helpers.manifest.json` skips with that
   reason. `Invoke-RepoClean.ps1` runs the same gate as its `vendored-sync`
   step, so a groom blocks identically.
 - Trunk lock around the land window only:
@@ -812,7 +817,7 @@ All are Hub-enforced; brief workers accordingly.
    Paseo-hosted session including Hubs, and a Hub that comes back has also lost
    its view of the children it was supervising. Recovery is roster → resume →
    `Continue`, in that order: read
-   `~/.salmon/State/key-check/last-cutover.json`, resume from its roster, and
+   `~/.machine/state/key-check/last-cutover.json`, resume from its roster, and
    send each surviving non-terminal agent **one** `Continue` naming its exact
    missing artifacts (report, done file, gate lines). Re-dispatch only when the
    branch carries no commits - a resumed agent re-reads its brief, a
@@ -1764,7 +1769,7 @@ preserved. `SKILL.md` → `## Reference` points here.
   Sub to spawn a duplicate Hub. New `HubRegistry.ps1`
   (`Register`/`Heartbeat`/`Clear`/`Find`/`List`, pinned by
   `Tests/HubRegistry.Tests.ps1`, 15 tests) writes
-  `~/.salmon/State/hubs/<repo>.json` naming the **agent id** and **machine**
+  `~/.machine/state/hubs/<repo>.json` naming the **agent id** and **machine**
   with a heartbeat stamp; `## Sub lookup` reads it first (step 0) and the
   `paseo_list_agents` fallback now mandates `cwd`. The Hub start contract grows
   to five receipts (registry record added) and the advertise checklist requires

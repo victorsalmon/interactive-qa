@@ -23,8 +23,9 @@
       the machine that wrote it, and running the tool dirtied the package. It
       therefore resolves OUTSIDE the package:
 
-        state root   $env:USERPROFILE\.salmon\State\credential-rescue\provider-lock.json
-                     (or -StateRoot, or $env:IQA_PROVIDER_LOCK_STATE_ROOT)
+        state root   $env:MACHINE_STATE_HOME/credential-rescue/provider-lock.json,
+                     or ~/.machine/state/credential-rescue/provider-lock.json
+                     (override with -StateRoot or $env:PROVIDER_LOCK_STATE_ROOT)
         legacy       <package vendor>/assets/provider-lock.json - READ ONLY, used
                      only while the state file does not exist yet
 
@@ -85,8 +86,13 @@ function Resolve-ProviderLockPath {
     if ($Explicit) { return [pscustomobject]@{ Path = $Explicit; Origin = 'explicit' } }
 
     $rootDir = if ($Root) { $Root }
+        elseif ($env:PROVIDER_LOCK_STATE_ROOT) { $env:PROVIDER_LOCK_STATE_ROOT }
+        # Deprecated alias kept for one release: the variable names the plugin,
+        # but the state it points at belongs to the machine (naming rule: name the
+        # scope, not the consumer).
         elseif ($env:IQA_PROVIDER_LOCK_STATE_ROOT) { $env:IQA_PROVIDER_LOCK_STATE_ROOT }
-        else { Join-Path (Join-Path $HOME '.salmon') 'State/credential-rescue' }
+        elseif ($env:MACHINE_STATE_HOME) { Join-Path $env:MACHINE_STATE_HOME 'credential-rescue' }
+        else { Join-Path (Join-Path $HOME '.machine') 'state/credential-rescue' }
     $statePath = Join-Path $rootDir 'provider-lock.json'
 
     if ($CurrentMode -eq 'Lock') {

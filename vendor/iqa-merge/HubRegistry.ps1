@@ -18,7 +18,8 @@
     a FILE, written by each Hub at start and refreshed by heartbeat, so a Sub
     reads a fact instead of inferring one from a filtered list:
 
-        ~/.salmon/State/hubs/<repo>.json
+        <machine state root>/hubs/<repo>.json
+        (MACHINE_STATE_HOME, else ~/.machine/state)
 
     The record names the HUB AGENT ID and the MACHINE as well as the repo, and
     carries a heartbeat timestamp — "repo X has a hub" is not actionable, while
@@ -156,7 +157,11 @@ param(
     [int]$WriteMaxDelayMilliseconds = 4000,
 
     # Registry root. Overridable so tests never touch the machine's real state.
-    [string]$Root = (Join-Path $HOME '.salmon/State/hubs'),
+    # Machine state, so it follows the machine state root: MACHINE_STATE_HOME when
+    # set, else ~/.machine/state. The retired ~/.salmon/State location is NOT a
+    # read fallback here - a stale record there would make a live Hub look absent,
+    # and absence is what licenses a takeover.
+    [string]$Root = $(if ($env:MACHINE_STATE_HOME) { Join-Path $env:MACHINE_STATE_HOME 'hubs' } else { Join-Path $HOME '.machine/state/hubs' }),
 
     [switch]$Json
 )

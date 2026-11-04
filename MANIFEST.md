@@ -11,10 +11,11 @@ decision is enforced rather than described.
 | :--- | :--- |
 | `SKILL.md` | The front door. It is the only entry point and it routes to one member. |
 | `core/` | The normative contracts every member reads: invariants, task model, adapters, profile template. |
-| `members/` | The six members. Each is a thin shell around the core. |
+| `lib/` | The resolvers the tools share: cl-common presence and the machine's primary-repo registry. |
+| `members/` | The seven members. Each is a thin shell around the core. |
 | `profiles/` | A worked repo profile. It resolves slots; it states no rule. |
 | `references/` | The vendored procedure and contract excerpts the members cite. |
-| `tools/` | The gates, the manifest and their tests. Shipping them lets a consumer re-prove the package instead of trusting it. |
+| `tools/` | The gates, the merge queue, the monitor, the manifest and their tests. Shipping them lets a consumer re-prove the package instead of trusting it. |
 | `vendor/` | Every executable a member prescribes, byte-identical to its canonical source. This is what makes a cold start possible. |
 | `README.md` | Install, use, verify. |
 | `MANIFEST.md` | This decision. |
@@ -29,6 +30,26 @@ decision is enforced rather than described.
 
 Both exclusions are reported by the publish gate on every run, so "not shipped"
 is visible rather than silent.
+
+## Vendored row kinds
+
+The machine-readable manifest is
+[tools/vendored-helpers.manifest.json](tools/vendored-helpers.manifest.json) and
+every row is one of five kinds, each with its own proof:
+
+| Kind | Proof |
+| :--- | :--- |
+| `copy` | byte-identical to its canonical file in the fleet Skills tree |
+| `patched` | deliberately divergent; **both** hashes recorded, and a moved canonical is a DRIFT |
+| `snapshot` | a composite excerpt; hash proves the snapshot file itself was not edited |
+| `archived` | the canonical source was retired; hash proves the body, and the archive manifest carries provenance |
+| `owned` | **this package is the canonical owner**; the recorded hash is the whole check, so an unre-recorded edit is a DRIFT |
+
+`owned` exists because the IQA family (`iqa-merge/*`, `iqa-mode/*`) was retired out
+of the fleet tree at Phase 5. Rows that still named a source there could only ever
+report `MISSING`, and no re-sync could make them pass; ownership is a fact about
+where the body lives, so the manifest records it instead of pretending an upstream
+still exists.
 
 ## Absolute paths
 
@@ -45,7 +66,7 @@ justification whose file no longer has one.
 - **Provider lock** - `provider-lock.json` is machine state written by
   `Invoke-ProviderLock.ps1 -Mode Lock`. It is declared **not vendored**: the tool
   resolves it at the profile state root
-  (`$env:USERPROFILE/.salmon/State/credential-rescue/provider-lock.json`, or
+  (`$env:USERPROFILE/.machine/state/credential-rescue/provider-lock.json`, or
   `-StateRoot`), with a read-only legacy fallback to the old in-tree copy.
 - **Cutover seam** - `vendor/credential-rescue/assets/opencode-go-cutover.json` is
   a *projection* of the machine's seam record, kept in the package because the Key
@@ -53,7 +74,7 @@ justification whose file no longer has one.
   **config only** (activeKey, poolOrder, caps, canary, hygiene, metering windows):
   the per-key freshness OBSERVATIONS are runtime state written on every watch
   cycle, so they live at the seam's `observationsPath` in the profile state root
-  (`$env:USERPROFILE/.salmon/State/credential-rescue/seam-observations.json`) and
+  (`$env:USERPROFILE/.machine/state/credential-rescue/seam-observations.json`) and
   never in this file. That split keeps the vendored row stable between commits: a
   Key Watch write changes no tracked file and cannot redden `-Check`. A deliberate
   config change (an operator cutover) still makes `-Check` report DRIFT until the

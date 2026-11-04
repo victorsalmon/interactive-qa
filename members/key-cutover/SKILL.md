@@ -88,7 +88,7 @@ intentional state — never deleted or "remediated" here.
 | The active key is **approaching** its wk/mo cap and should be replaced **before** it dies; "Key Check", "key usage", "near exhaustion" | [key-watch](../key-watch/SKILL.md) |
 
 **Two independent consumers.** Salmon Run lanes read the Machine pool +
-`~/.salmon/config.json`; **Paseo** hosts opencode in long-lived helpers that
+`~/.machine/config.json`; **Paseo** hosts opencode in long-lived helpers that
 freeze env at spawn. A cutover that repoints the env fixes Salmon Run but **not**
 a running Paseo helper — which is why Paseo has its own runbook. A third
 consumer, the standalone `opencode.exe serve --service` on this workstation,
@@ -103,7 +103,7 @@ also freezes env: until it is killed and respawned every CLI canary reports the
 > `opencode run … --standalone` — `Repair-Paseo.ps1` has no `-WithRun`).
 > Only after that surface is whole does the agent **ask the operator** whether
 > to replace the *other* surfaces — the Salmon track (`Switch-OpencodeGoKey.ps1`:
-> User env, `auth.json`, `~/.salmon/config.json`, seam `activeKey`), the
+> User env, `auth.json`, `~/.machine/config.json`, seam `activeKey`), the
 > standalone `opencode.exe serve --service`, and any other consumer. Do not
 > silently fan a cutover out across every consumer: Paseo is the surface that
 > must be incontrovertibly working on the new key first, and the rest is a
@@ -156,7 +156,7 @@ hygiene policy, the Paseo provider pin, and the metering **`freshness.windows`**
 definitions. The per-key freshness OBSERVATIONS (state, utilisation, reset and
 reading dates) are runtime state and do **not** live in this file — they live at
 the seam's `observationsPath` in the profile state root
-(`$HOME/.salmon/State/credential-rescue/seam-observations.json`), beside the
+(`$HOME/.machine/state/credential-rescue/seam-observations.json`), beside the
 provider lock, because a watch cycle must never modify a tracked+vendored file
 (see `vendor/credential-rescue/REFERENCE.md` § "Key freshness ledger"). Two
 tracks project the config, one surface each:
@@ -169,7 +169,7 @@ Step 1 (default) Paseo track  <package>/vendor/credential-rescue/scripts/Repair-
 Step 2 (on approval) Salmon track  <package>/vendor/credential-rescue/scripts/Switch-OpencodeGoKey.ps1 -KeyNumber <n> [-RestartPaseo] [-SeamPath <seam_path>]
   User env OPENCODE_GO_KEY + OPENCODE_API_KEY   (what interactive opencode reads)
   auth.json opencode-go                          (the CLI's credential store copy)
-  ~/.salmon/config.json  execution.defaultCodingKey (+ the caps)
+  ~/.machine/config.json  execution.defaultCodingKey (+ the caps)
   the seam  activeKey
 ```
 
@@ -206,8 +206,8 @@ machine record agree again; `-Check` reporting DRIFT on
 | `vendor/credential-rescue/scripts/Restart-Paseo.ps1` · `Restart-PaseoDaemon.ps1` · `Restart-PaseoOpencodeHelpers.ps1` | **Deprecated shims** — forward to `Repair-Paseo.ps1`. Update callers. |
 | `vendor/credential-rescue/scripts/Test-PaseoMuseSparkCanary.ps1` | Fast model-name canary (no tokens by default). |
 | `vendor/credential-rescue/scripts/Restore-AwsStore.ps1` | `~/.aws` restore (`-Mode Status\|Restore\|Verify\|Backup`). |
-| `vendor/credential-rescue/scripts/Invoke-ProviderLock.ps1` | **Provider lock**: `-Mode Status` (default, read-only) proves every consumer (Machine/User env, Paseo provider env, key file) still matches the authoritative source, printing only lengths + SHA-256 prefixes; `-Mode Lock` records the fingerprints at the machine state root (the profile's `provider-lock.json`, default `$env:USERPROFILE/.salmon/State/credential-rescue/provider-lock.json`), never in this package. Drift exits 1. `-NoAws` compares consumers to the stored fingerprint only. A machine with no lock file is `cannot-evaluate` - seed the state root once from the deployment's lock asset. |
-| `vendor/credential-rescue/scripts/Set-OpencodeGoFreshness.ps1` | **Freshness ledger write** (the write side of `Get-OpencodeGoFreshness`): records ONE key's meter reading(s) — pass `-WeeklyUsed`/`-WeeklyResets` and/or `-MonthlyUsed`/`-MonthlyResets`, each stamping that meter's own `observedAt` (default today); omitted meters keep their figures and reading date. Recomputes the row summary (`state`/`trippedMeter`/`usage`/`resetsOn`/`observedAt`) and the ledger `asOf`, then writes the **observations file** (`$HOME/.salmon/State/credential-rescue/seam-observations.json`, the seam's `observationsPath`) — never the tracked seam. `-ObservationsPath` overrides the location; a first write imports a legacy embedded `freshness.keys`. `-WhatIf` supported, appends a `freshness-update` line to `Tasks/Logs/credential-changes.jsonl` (`-NoLog` disables). Never stores a key value. |
+| `vendor/credential-rescue/scripts/Invoke-ProviderLock.ps1` | **Provider lock**: `-Mode Status` (default, read-only) proves every consumer (Machine/User env, Paseo provider env, key file) still matches the authoritative source, printing only lengths + SHA-256 prefixes; `-Mode Lock` records the fingerprints at the machine state root (the profile's `provider-lock.json`, default `$env:USERPROFILE/.machine/state/credential-rescue/provider-lock.json`), never in this package. Drift exits 1. `-NoAws` compares consumers to the stored fingerprint only. A machine with no lock file is `cannot-evaluate` - seed the state root once from the deployment's lock asset. |
+| `vendor/credential-rescue/scripts/Set-OpencodeGoFreshness.ps1` | **Freshness ledger write** (the write side of `Get-OpencodeGoFreshness`): records ONE key's meter reading(s) — pass `-WeeklyUsed`/`-WeeklyResets` and/or `-MonthlyUsed`/`-MonthlyResets`, each stamping that meter's own `observedAt` (default today); omitted meters keep their figures and reading date. Recomputes the row summary (`state`/`trippedMeter`/`usage`/`resetsOn`/`observedAt`) and the ledger `asOf`, then writes the **observations file** (`$HOME/.machine/state/credential-rescue/seam-observations.json`, the seam's `observationsPath`) — never the tracked seam. `-ObservationsPath` overrides the location; a first write imports a legacy embedded `freshness.keys`. `-WhatIf` supported, appends a `freshness-update` line to `Tasks/Logs/credential-changes.jsonl` (`-NoLog` disables). Never stores a key value. |
 | `vendor/credential-rescue/scripts/Test-GoKey.ps1` · `Invoke-CredentialRescueWatch.ps1` | The unattended watch (`watch` runbook): canary → `Switch` + `Repair-Paseo` only on `EXHAUSTED`. |
 | `vendor/credential-rescue/scripts/Get-OpencodeGoFreshness.ps1` | **Freshness ledger view** (read-only): reads the seam's `freshness.windows` for the cycle definitions and the observations file for per-key state, tripped meter, and per meter (`weekly` / `monthly`) the utilisation, the **cycle** it lives in, its `resetsOn` roll-over instant, `renewsInDays`, **its own `observedAt` reading date**, `ageDays`, a `STALE` marker past `-StaleDays` (default 7) and `ROLLED OVER` when `resetsOn` has already passed. A cold start with no observations file reports an empty ledger plus the config's `activeKey` (never an error). `-Probe` adds the live `Test-GoKey` verdict per key; `-KeyNumber <n>` narrows; `-Json` emits machine-readable output (including `windows`, `ledgerSource` and `observationsPath`) for an agent/coding loop. |
 

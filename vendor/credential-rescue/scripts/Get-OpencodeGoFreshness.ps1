@@ -11,7 +11,7 @@
     The tracked seam (`assets/opencode-go-cutover.json`) is CONFIG only -
     activeKey, poolOrder, caps and the metering `windows`. The per-key
     observations live in the profile state root
-    (`$HOME/.salmon/State/credential-rescue/seam-observations.json`), written by
+    (`$HOME/.machine/state/credential-rescue/seam-observations.json`), written by
     Set-OpencodeGoFreshness.ps1 and Key Check runs, so a watch cycle never
     modifies a tracked or vendored file. A machine with no observations yet
     reads an empty ledger and still resolves the config's active key.
@@ -47,7 +47,7 @@
 .PARAMETER ObservationsPath
     The runtime observations file to read. Default: the seam's declared
     `observationsPath`, else beside a non-canonical seam, else
-    $HOME/.salmon/State/credential-rescue/seam-observations.json.
+    $HOME/.machine/state/credential-rescue/seam-observations.json.
 
 .EXAMPLE
     pwsh -File Get-OpencodeGoFreshness.ps1

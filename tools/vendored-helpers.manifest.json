@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T18:46:34.8283620-07:00",
+  "generatedAt": "2026-11-03T21:16:01.3654873-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -9,6 +9,30 @@
     }
   ],
   "vendored": [
+    {
+      "Kind": "owned",
+      "Name": "Resolve-ClCommon.ps1",
+      "Canonical": "",
+      "Vendored": "lib/Resolve-ClCommon.ps1",
+      "Owner": "this package",
+      "Why": "Package-owned resolver for the cl-common checkout. The package must not bundle cl-common, and must not guess its absence either.",
+      "Sha256": "B73B4634A0E322B5518A4A767AF3C18024E799A79E9EE924C66BD51D8CC85C5B",
+      "Sha256Lf": "B73B4634A0E322B5518A4A767AF3C18024E799A79E9EE924C66BD51D8CC85C5B",
+      "Bytes": 2632,
+      "Tree": ""
+    },
+    {
+      "Kind": "owned",
+      "Name": "Resolve-PrimaryRepos.ps1",
+      "Canonical": "",
+      "Vendored": "lib/Resolve-PrimaryRepos.ps1",
+      "Owner": "this package",
+      "Why": "Package-owned resolver for the machine primary-repo registry, so no member hardcodes which repos are primary.",
+      "Sha256": "2AC3F9AD523BD562DEA58096A163C77C1A3B131563B71D073E6807198076A348",
+      "Sha256Lf": "2AC3F9AD523BD562DEA58096A163C77C1A3B131563B71D073E6807198076A348",
+      "Bytes": 5181,
+      "Tree": ""
+    },
     {
       "Kind": "snapshot",
       "Name": "iqa-common-contracts.md",
@@ -34,9 +58,9 @@
       "Name": "agent-capacity.json",
       "Canonical": "agent-spawn-capacity/assets/agent-capacity.json",
       "Vendored": "vendor/agent-spawn-capacity/assets/agent-capacity.json",
-      "Sha256": "4544467A610B2CF4C92622AFEAA5FD623C8E10BA55D0424C7E02CD6768DF5798",
-      "Sha256Lf": "85049CD8E07692CABB14701B7AE0A1859ABC710C9177A515AA4302961731E763",
-      "Bytes": 21587,
+      "Sha256": "2FB33C6901A3CF56DA5B6F8C28A971836FC9AA8B3D259B8F56FD53D37B892DFD",
+      "Sha256Lf": "191CE83BAECE898235DF004527990ACB0608880945B3959ADED6D4DE4B9CD757",
+      "Bytes": 21588,
       "Tree": ""
     },
     {
@@ -44,9 +68,9 @@
       "Name": "AgentCapacity.ps1",
       "Canonical": "agent-spawn-capacity/scripts/AgentCapacity.ps1",
       "Vendored": "vendor/agent-spawn-capacity/scripts/AgentCapacity.ps1",
-      "Sha256": "C206F75A16062CCA391C7764E6929B72A9179A43DCE01C95FCF76A2E0D351E0F",
-      "Sha256Lf": "10ED2A79755EF0A02998AE9EB6DE3B6163F23532FA88E966BC5B85792C1F93C8",
-      "Bytes": 170234,
+      "Sha256": "6DE94A001D22223C13C5253FEACD235CFC818D5C08E12E79E3ACF80DBEDF7C24",
+      "Sha256Lf": "FA6CED09F1ACFE79C79D1738F98E8CF3438A92AB407B1D2CE7E03A31DA0D2E78",
+      "Bytes": 170232,
       "Tree": ""
     },
     {
@@ -64,9 +88,9 @@
       "Name": "SecretFingerprint.ps1",
       "Canonical": "aws/scripts/SecretFingerprint.ps1",
       "Vendored": "vendor/aws/scripts/SecretFingerprint.ps1",
-      "Sha256": "A792266004D11326882012DBD3BC780087A62FC77E077303626CD6BC269127C3",
-      "Sha256Lf": "8051594BAE785500EF2C444123B0F29E6708C2971E9FC3E0093059F47A4CC680",
-      "Bytes": 5509,
+      "Sha256": "9F1C05A993764B33FD2E421D99186F8C8473665E48C7C4759B4704715106CED0",
+      "Sha256Lf": "0D835A694A41767F815D3FF9643DBEF1E51AA601E573EB530C9CF3F8601C79C9",
+      "Bytes": 5510,
       "Tree": ""
     },
     {
@@ -114,9 +138,9 @@
       "Name": "opencode-go-cutover.json",
       "Canonical": "credential-rescue/assets/opencode-go-cutover.json",
       "Vendored": "vendor/credential-rescue/assets/opencode-go-cutover.json",
-      "Sha256": "5851090CB4B7102D24FB2953483E30D52192AA1C57E425EE650C11ED55FC4A00",
-      "Sha256Lf": "1D5B94B2015CA43DC96DA29CF06921A261746011FED1FD55E8C56822AF674043",
-      "Bytes": 9030,
+      "Sha256": "7EDBAAEECF956AC2A741DA4D2F9D87479DA1AECD1DA2313F93E8457A548507E5",
+      "Sha256Lf": "067E6BBBABCF9068760AC9FD49C20EA07859176CD398DC61BE80B425588E59F1",
+      "Bytes": 9032,
       "Tree": "credential-rescue"
     },
     {
@@ -169,9 +193,9 @@
       "Name": "Capture-KeyCheckRoster.ps1",
       "Canonical": "credential-rescue/scripts/Capture-KeyCheckRoster.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Capture-KeyCheckRoster.ps1",
-      "Sha256": "E21EAB33206FF5614E270608E1D9F6F12A240F8F93FB4401C25931EAE06D611E",
-      "Sha256Lf": "A88BB6398843CB75B90A9CBFF86A22647F0054AB2E3FC1CC376E0E7410282CBB",
-      "Bytes": 13329,
+      "Sha256": "55FD159566FA772242E9C4F5C287E19E0F9FCF979CA58C158C0F20C460C1DFD2",
+      "Sha256Lf": "939F8A021ED78C859C22ADA1AC253478964A403912A6F1754B29E1E5E2330F0E",
+      "Bytes": 13331,
       "Tree": "credential-rescue"
     },
     {
@@ -189,9 +213,9 @@
       "Name": "Get-OpencodeGoFreshness.ps1",
       "Canonical": "credential-rescue/scripts/Get-OpencodeGoFreshness.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Get-OpencodeGoFreshness.ps1",
-      "Sha256": "204C21AB4F1E1FB190C05DDB7B0C35FD63ED1FD83CCE2A2A083339AE1D8A7839",
-      "Sha256Lf": "D80B4D66726CF916D8585572E454A0953F636DD5DF70550266397917D34BB4E7",
-      "Bytes": 16353,
+      "Sha256": "7144226994A9252D857145A34A40A818CC1E2797AE7C76F0483D2F5978E31E53",
+      "Sha256Lf": "8F3776A0E04F165FBF86FEACF7F4D7F68466CFCFFBC63883CAD469FBBDD004F0",
+      "Bytes": 16355,
       "Tree": "credential-rescue"
     },
     {
@@ -209,9 +233,9 @@
       "Name": "Invoke-CutoverRecovery.ps1",
       "Canonical": "credential-rescue/scripts/Invoke-CutoverRecovery.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Invoke-CutoverRecovery.ps1",
-      "Sha256": "2E4E5FC71A03810B5215FC139DB7D515A405EACF1C0D267A60D674513F395999",
-      "Sha256Lf": "23FC8FB1BD9B65BDC081844743568B2961A742954412C785CA09E83A6B9A5EA8",
-      "Bytes": 29841,
+      "Sha256": "4AFC18A63CD629C9B9C9F7A2888C253A67CFD96114950C5E0D2977790760FD22",
+      "Sha256Lf": "CAE02E31111EC2A9EA60A4AC050B973AA253D67C3455EFFD9D4F24A0516AD169",
+      "Bytes": 30323,
       "Tree": "credential-rescue"
     },
     {
@@ -219,9 +243,9 @@
       "Name": "Invoke-KeyCheck.ps1",
       "Canonical": "credential-rescue/scripts/Invoke-KeyCheck.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Invoke-KeyCheck.ps1",
-      "Sha256": "9F020B99576E70D301539A19C1682B377C22DFFE6863060D3143AD3B34A0621C",
-      "Sha256Lf": "8939A2F99F4B7F4F39D9484B845635BCDB5EEAC3A4F26E2D672668E33514F9B2",
-      "Bytes": 102460,
+      "Sha256": "0877B59ABB9B52F1516D684640BEEE297479A679E73B9FA6E25C1EA10E4549FE",
+      "Sha256Lf": "AFE755CCF9BB1491A24119AB1A1B12F449650F05764901439F92C96FDB203F54",
+      "Bytes": 102452,
       "Tree": "credential-rescue"
     },
     {
@@ -229,9 +253,9 @@
       "Name": "Invoke-KeyCheckCutover.ps1",
       "Canonical": "credential-rescue/scripts/Invoke-KeyCheckCutover.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Invoke-KeyCheckCutover.ps1",
-      "Sha256": "B13D94D7BB8773B777FBF8399303583C0B56182F3899512D996F776DDB923B5C",
-      "Sha256Lf": "DEC88BBDB2F1033EC91E9228F7FA68EE114926E4D475CE99E77827B61BC5EC10",
-      "Bytes": 38584,
+      "Sha256": "D77EA484D59DF8BAA0C3853436D23713B6370F55094039AE166BA8DE8020A480",
+      "Sha256Lf": "40A0519AC9C82C0FCE9E3A32C63B3778E4D66503AF2382B39B7DDFF6860322B6",
+      "Bytes": 38579,
       "Tree": "credential-rescue"
     },
     {
@@ -239,9 +263,9 @@
       "Name": "Invoke-KeyCheckWitness.ps1",
       "Canonical": "credential-rescue/scripts/Invoke-KeyCheckWitness.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Invoke-KeyCheckWitness.ps1",
-      "Sha256": "3A37F7B74243D7343F7DC6056A8C7B68FBAFE9239BD59F47B18C603B5029DBAC",
-      "Sha256Lf": "B35B182A069A8225243BF6EB07F7C8974992B90635F3363CB9CE3228D8B28069",
-      "Bytes": 13052,
+      "Sha256": "72F687B02C485587B057B495FF50F193B83FAC0C9D35B42FC6BFD0C6A3BB035C",
+      "Sha256Lf": "C7A0FF55838E8D083F3D1483586C78092FA65617F23D645E5CA2C91947364508",
+      "Bytes": 13044,
       "Tree": "credential-rescue"
     },
     {
@@ -251,11 +275,11 @@
       "Vendored": "vendor/credential-rescue/scripts/Invoke-ProviderLock.ps1",
       "Patch": "lock-path-outside-package",
       "Why": "The lock is machine state written on this machine, so the package copy resolves it from the profile state root ($env:USERPROFILE/.salmon/State/credential-rescue/provider-lock.json) with a read-only legacy fallback to the old in-tree asset, and -Mode Lock writes the state root. The canonical script keeps its in-tree default until the fleet tool is retired.",
-      "Sha256": "E783200281CE21E078BB1317E2DB1FFC95090948FF837998B181831B7301C142",
-      "Sha256Lf": "EC077B36891E43D181633B854795CB2155C6FEA01CB9F92E40EBAC706E8527DD",
+      "Sha256": "7C35745F1BEEEBCE84ABB779CAF8E2960B4F4B70F8ED1D8373D32AD14A88E6FF",
+      "Sha256Lf": "122545EEB3C80A577866144ED299E66B9E01F4F7CC38568D2FB6C248473F38F9",
       "CanonicalSha256": "A64EECD7135B6071B2D7EA98698947A813B7790766401E3BBFC275B00D81315A",
       "CanonicalSha256Lf": "8FC724414B463A17D6F6F1277882BF391109DAFF7958DEB58C3F8F732014964D",
-      "Bytes": 20754,
+      "Bytes": 21218,
       "Tree": ""
     },
     {
@@ -273,9 +297,9 @@
       "Name": "CutoverRecovery.ps1",
       "Canonical": "credential-rescue/scripts/lib/CutoverRecovery.ps1",
       "Vendored": "vendor/credential-rescue/scripts/lib/CutoverRecovery.ps1",
-      "Sha256": "502EF036A796985636577FDCD5B1497FE25B5D4EE1D01F03CCA4AC94DD592A5D",
-      "Sha256Lf": "75C4115B776408FF30D2770C1DDAB1A689EB19EB0DD5F50626A29C6F118ADAC2",
-      "Bytes": 11336,
+      "Sha256": "A1B915B0281EF61E21CEDF64EBC45FD4BCBA6157834D78280A3C37B72B3ED3DD",
+      "Sha256Lf": "AB2297726843B565BD23E5A2D9CAF373739203708AAFA517815A7708A9A814FD",
+      "Bytes": 11338,
       "Tree": "credential-rescue"
     },
     {
@@ -283,9 +307,9 @@
       "Name": "CutoverSeam.ps1",
       "Canonical": "credential-rescue/scripts/lib/CutoverSeam.ps1",
       "Vendored": "vendor/credential-rescue/scripts/lib/CutoverSeam.ps1",
-      "Sha256": "24DFD13C2D43C33B9ADA3B09B948001E154327CCA3359F65BD875FBF51728157",
-      "Sha256Lf": "F38E02EBA8FD0D6968E9D9DFA35065AA9F9AFA7A7CBF6CD2B4D08B435AA67E74",
-      "Bytes": 6829,
+      "Sha256": "7564E74C9E0F829C3E6259A8F93E7C24D8C9AB8C59D09BFB301E9F757CA4C57E",
+      "Sha256Lf": "168AE3103FB87888E1AA27C0701BE5B6A7261516D965BC8CE8D9D279B5F1A15B",
+      "Bytes": 6831,
       "Tree": "credential-rescue"
     },
     {
@@ -373,9 +397,9 @@
       "Name": "Restore-AwsStore.ps1",
       "Canonical": "credential-rescue/scripts/Restore-AwsStore.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Restore-AwsStore.ps1",
-      "Sha256": "FDBAE7402703316A39B4FBF63777B8C342C6A8AF9CCF45CF60D6454ABF05AE56",
-      "Sha256Lf": "35E974E76C7B1B26DD4C768F4575D40D64AAA05759660DFC98D4FD65EEE5BB2A",
-      "Bytes": 22488,
+      "Sha256": "49F1590B398289CC72B151BBAF749F0D245801F7AEDD74F7AC3ECDF1F04A625C",
+      "Sha256Lf": "EE98D610136129C2F103087BFC341D1D09BB023C26B38839EA43D3D2023BD660",
+      "Bytes": 22485,
       "Tree": "credential-rescue"
     },
     {
@@ -383,9 +407,9 @@
       "Name": "Resume-KeyCheckRoster.ps1",
       "Canonical": "credential-rescue/scripts/Resume-KeyCheckRoster.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Resume-KeyCheckRoster.ps1",
-      "Sha256": "25EF971D2AAC66B2291704E04C906FD4FAAA39FBB3474B4154833829E07201E9",
-      "Sha256Lf": "593C1208ECFAADA7A14E22745E58F00F01F4368062C01664C07F3DB001DF3478",
-      "Bytes": 24563,
+      "Sha256": "CACAA544AB614F2A4479DDBB2E0987C89091AD4B4B03CBD63360FA91B361202D",
+      "Sha256Lf": "6A4E7DDD7B1239F98F6DC20DCE21989E9AA2FA72E40D3E39226FB1562A6D3FF0",
+      "Bytes": 24555,
       "Tree": "credential-rescue"
     },
     {
@@ -393,9 +417,9 @@
       "Name": "Set-OpencodeGoFreshness.ps1",
       "Canonical": "credential-rescue/scripts/Set-OpencodeGoFreshness.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Set-OpencodeGoFreshness.ps1",
-      "Sha256": "74BDE214D862A21F400616A4482146E138D1AE1E854D5B948F4CAAE966A422F3",
-      "Sha256Lf": "EA25E7B981A76D9738AE17497596F106849B67DB44658F7E77C50C91DE155B9C",
-      "Bytes": 15517,
+      "Sha256": "3C12C1D6C2F027D9ED3B0826F0970B9CEAE5E89704791929F26CD7790639D89B",
+      "Sha256Lf": "9694FF07713B7FDE0A5FA27996482F42B17F17B99186744C426D77973C9122EC",
+      "Bytes": 15519,
       "Tree": "credential-rescue"
     },
     {
@@ -403,9 +427,9 @@
       "Name": "Stamp-InterruptedGates.ps1",
       "Canonical": "credential-rescue/scripts/Stamp-InterruptedGates.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Stamp-InterruptedGates.ps1",
-      "Sha256": "913759A48FAFD0AEBBBEE963818ECBFFD19F3EC65B3D601EB3955344ED3116CD",
-      "Sha256Lf": "E34E994745451E921A2634D34FCEC66A309EC5C71DCD250DB7649290D97FA31F",
-      "Bytes": 5706,
+      "Sha256": "1AAAF87D2F9B85EB6762C261ACEC77ABB7679CF22737240CE8F78610362F932F",
+      "Sha256Lf": "7F12994444AA73A48BF42FB69340B1D92A42AC9A543CDD34C966506136313D91",
+      "Bytes": 5707,
       "Tree": "credential-rescue"
     },
     {
@@ -415,11 +439,11 @@
       "Vendored": "vendor/credential-rescue/scripts/Switch-OpencodeGoKey.ps1",
       "Patch": "state-root-log-fallback",
       "Why": "The canonical script throws when CL_REPOS_ROOT is unset, which made an installed copy unable to plan a cutover. The package copy falls back to the machine state root ($HOME/.salmon) for the credential-change log and the legacy Tools paths; a fleet run is unchanged.",
-      "Sha256": "45D56C608CDFBD0F7AE3205E773CA0C24309B332805B2BF925B48854B64446C9",
-      "Sha256Lf": "79BFDE11A16968CA7E5F1A6B7D2CB614A3FBFA34D41DD228BB00BFA3B107CFDE",
-      "CanonicalSha256": "D395F2B759C5FA8F0E44C43BFF53F97F4B8F044C9D0A56A7FB864DE6C269F3DB",
-      "CanonicalSha256Lf": "5BAFB6B11358032E1A5789B35FC217072811E559B82D0B99C406C39994962BB4",
-      "Bytes": 51733,
+      "Sha256": "82A87ED83274B150A33CEF60150E351F54E452448A97FC4B5B8EFAD95EA2FCEE",
+      "Sha256Lf": "E6125EFA8DE24AF4947207D07C6760280C8DF7533D0F701E77E4C8E0AD4A41DE",
+      "CanonicalSha256": "EC61B150C1E561C8A264D1E64244C22059319D31F9206201EEB3812E4202ACC5",
+      "CanonicalSha256Lf": "D5CECEBF73DB98F7C285B4CEC4B9D53A18EE04291D43BF69623B6F72CBF2304E",
+      "Bytes": 52026,
       "Tree": ""
     },
     {
@@ -427,9 +451,9 @@
       "Name": "Test-CutoverInProgress.ps1",
       "Canonical": "credential-rescue/scripts/Test-CutoverInProgress.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Test-CutoverInProgress.ps1",
-      "Sha256": "DE3A457BBC3CFBC915F00EA40446A0A68482C76539BA4021AEABBA06A9A4782D",
-      "Sha256Lf": "21BF9AEAC1707FF1C24F82F47B49166E6734D99E2E31D9218CEFD0A7508ACDB6",
-      "Bytes": 4868,
+      "Sha256": "E9C272ECAC21E1E9795C601A0E109A2D82581270E398C0C0A9617DA01E288DDB",
+      "Sha256Lf": "F60F6180ABA51A38D358C81393650F16F23F2FD55C2B89D9E57B1CBD685A766C",
+      "Bytes": 4869,
       "Tree": "credential-rescue"
     },
     {
@@ -457,9 +481,9 @@
       "Name": "Test-KeyCheckLiveness.ps1",
       "Canonical": "credential-rescue/scripts/Test-KeyCheckLiveness.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Test-KeyCheckLiveness.ps1",
-      "Sha256": "D7224ECC6205FAF390F682998C3E060247F6C89F03C4ED65862DB88D8FB34F2E",
-      "Sha256Lf": "992A8167EF4F3C7EADCA82296D587F785193DDF70A9844C320DACDC196030713",
-      "Bytes": 10963,
+      "Sha256": "088AE2CC3963291EBDBA802632A3A79E9980A8B1CF578A0BFB682891D375ED2E",
+      "Sha256Lf": "AE26738565A284F2B83BC9A272BC54CF61E35F9BF86BC3D723479F1EBA62ED79",
+      "Bytes": 10954,
       "Tree": "credential-rescue"
     },
     {
@@ -467,9 +491,9 @@
       "Name": "Test-PaseoMuseSparkCanary.ps1",
       "Canonical": "credential-rescue/scripts/Test-PaseoMuseSparkCanary.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Test-PaseoMuseSparkCanary.ps1",
-      "Sha256": "5D9D6DC7C84AE3C919C7AAE31E6F57C876ADE41CC3E89C9D27E80A7C67B862D2",
-      "Sha256Lf": "D870C55E73A18D18C3116FA24D56F93B556B2FE0B85655EB157906AFF5D63D0F",
-      "Bytes": 6507,
+      "Sha256": "6F9B1E78064FFB509720699EE934D41E37257BB6AEB7BC194CE7318B9E6D0C94",
+      "Sha256Lf": "E210084DEF8FBE71A0B4A99E17083770DB14687D1E97FB5AC59EAEA540BB5AC7",
+      "Bytes": 6498,
       "Tree": "credential-rescue"
     },
     {
@@ -477,9 +501,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/SKILL.md",
       "Vendored": "vendor/credential-rescue/SKILL.md",
-      "Sha256": "FB649224EAED4BB256187E9D61EACB63BBA0E804B2B174790A35EC239DD6D6D0",
-      "Sha256Lf": "F43AC586A9D3912AA334DE322C77414A22DBDF8522FED1877AB2652007A9B5F3",
-      "Bytes": 558,
+      "Sha256": "781E9AD717D1F1DB6D5D4FAAD24DCF90D06F631F8D347FCD7ED6EEE7F02F14AC",
+      "Sha256Lf": "DA9C9535013BA3F6670FBA313698BCF43D7DD5A5F42EA413B8243D8671D4174E",
+      "Bytes": 552,
       "Tree": "credential-rescue"
     },
     {
@@ -497,9 +521,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/aws-store/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/aws-store/SKILL.md",
-      "Sha256": "593A9B33713745E53515F730EE106ADC06E5D289D455D174423DDF8B6884FF37",
-      "Sha256Lf": "C4DFBB92961E685D9320E976101AEDF27ADEB211F8561B6FD24607E43B9EE2A7",
-      "Bytes": 3835,
+      "Sha256": "C1F8EBAEB07ED532B64C48F3E7CA71B992A655CB97117B568A45485CEC3D06B9",
+      "Sha256Lf": "201428DD2766DC835BFA22ADCA7E2B4DFAC387B736198E15DA6811F13653BDEE",
+      "Bytes": 3830,
       "Tree": "credential-rescue"
     },
     {
@@ -507,9 +531,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/key-check/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/key-check/SKILL.md",
-      "Sha256": "1C2B25BB3AC19ABB1135585081C6A97FBA940412806EF6D456531D9A0F4D1B46",
-      "Sha256Lf": "8A64CEDC85F1E2CBEF32E254211C09AE1E5DAF13986DA23B20769D2BBA56DC2C",
-      "Bytes": 544,
+      "Sha256": "009E611D032A2012836B3B30B6ED48A0C6E8AC7CC238EBCD797784738383ABEC",
+      "Sha256Lf": "22058EEEFF261C69DF0FFCD980C46562F35649B975DC87E1BC514B354629DCD2",
+      "Bytes": 538,
       "Tree": "credential-rescue"
     },
     {
@@ -532,9 +556,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/paseo-rescue/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/paseo-rescue/SKILL.md",
-      "Sha256": "FC88EF78D334222E1C11C18D0AC1A698632CAFA689A0037DC426CCF364284D33",
-      "Sha256Lf": "409B75D078F9CC79D604D0D3D0BAABFF09EAD1B8E26E97EED6095014D3351093",
-      "Bytes": 521,
+      "Sha256": "E96FB1569969744A4602B4DFD4118F73F70DE7BC227334C4F1395D226E358529",
+      "Sha256Lf": "0D285B8EDB746D4890354663C16E59DE179F6ED84FB718429CD60078F2029406",
+      "Bytes": 515,
       "Tree": "credential-rescue"
     },
     {
@@ -542,9 +566,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/salmon-run/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/salmon-run/SKILL.md",
-      "Sha256": "9A1AAE1AC888281F56F071E7DA90F8C4823A0E7BCF081032198E6D2994FA8E03",
-      "Sha256Lf": "547F03B2576FB0A2C6755EE7F305AF94AA0103C073D38F036298EC6D8DFD3028",
-      "Bytes": 7091,
+      "Sha256": "206F2D02CBCF0EB0E184B2A2AB4977FA26CE76CF9DB50D9516383BC813E019C5",
+      "Sha256Lf": "B6D171B1F9C7FE0EBCA5A3E29C89BBB8597F02A9B091AE4BF132DD10C9AFE8B9",
+      "Bytes": 7082,
       "Tree": "credential-rescue"
     },
     {
@@ -567,9 +591,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/watch/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/watch/SKILL.md",
-      "Sha256": "3AF22BB3F740F526E6CA2776EF3A70675EA9596B7771E5F539E823830FBB9099",
-      "Sha256Lf": "B4558C5C72D07AA642C63C075D5A683C513331301C73D3EE40C9E3EEFDD594C9",
-      "Bytes": 582,
+      "Sha256": "30D33B7B12D750C52ECCB80172FC1190F4630C0A5AEBD253A8A09CB6F36378C5",
+      "Sha256Lf": "B60D1D01895FE51FB3AA71E56CCD830BBB966661E5384276790BF49C38F6B4AF",
+      "Bytes": 576,
       "Tree": "credential-rescue"
     },
     {
@@ -657,9 +681,9 @@
       "Name": "KeyCheckDryRunIsolation.Tests.ps1",
       "Canonical": "credential-rescue/Tests/KeyCheckDryRunIsolation.Tests.ps1",
       "Vendored": "vendor/credential-rescue/Tests/KeyCheckDryRunIsolation.Tests.ps1",
-      "Sha256": "3DAA885D80F1C0B900B4F29DAC52CAD7176EBCB9CDD947DB1F890724A58F27C8",
-      "Sha256Lf": "7DA59F814E86120E43C99B537D5102793C7C9C2A208081A7D315C8372B2F3BDC",
-      "Bytes": 13730,
+      "Sha256": "4D442FECD8E134410127D50BAFF4D8CC1CC2CB619C4EC050BA942CD9FCB2C277",
+      "Sha256Lf": "5177E50FFCDE063629141DF4E8FC6078D17F7089CFFC1FFEE8EEAA23AE3E4422",
+      "Bytes": 13731,
       "Tree": "credential-rescue"
     },
     {
@@ -707,9 +731,9 @@
       "Name": "SeamSplit.Tests.ps1",
       "Canonical": "credential-rescue/Tests/SeamSplit.Tests.ps1",
       "Vendored": "vendor/credential-rescue/Tests/SeamSplit.Tests.ps1",
-      "Sha256": "86008310D1D7991629CA748D3586FAA7FDB5B68159F555663ED891C3176FC120",
-      "Sha256Lf": "3835DBC8389F7D0E3D19378FA4D898F9AD847D101DA310AB424275439D57077B",
-      "Bytes": 11680,
+      "Sha256": "27E7DA2207C1D4055455AB8BF0E7D458FECA3A13165F06FD2D6F0B7A0F0BA339",
+      "Sha256Lf": "FC6D003C32637253A1071424A439F14D775F8730D1CFEE2AD668814A70761494",
+      "Bytes": 11682,
       "Tree": "credential-rescue"
     },
     {
@@ -717,9 +741,9 @@
       "Name": "Switch-OpencodeGoKey.Tests.ps1",
       "Canonical": "credential-rescue/Tests/Switch-OpencodeGoKey.Tests.ps1",
       "Vendored": "vendor/credential-rescue/Tests/Switch-OpencodeGoKey.Tests.ps1",
-      "Sha256": "9DA30B837F834E8644150AFE0576FA0F00BC5A78B6788FE92DA7C6C897FF86D1",
-      "Sha256Lf": "7AEBCA3E267C5656F15A990C2154BA510E5C46534B0B61D1A6A1EA851E04BE86",
-      "Bytes": 14621,
+      "Sha256": "79238F52D18B21B1EFBFBF6A8C79F2748C2A30EC769BD8F59000E443CFB7AEBF",
+      "Sha256Lf": "5AD4B7D01AFB8BCD626343E2A4B96E8B1A902C7D1BF0EFB600E6C7454C3A5496",
+      "Bytes": 14622,
       "Tree": "credential-rescue"
     },
     {
@@ -733,30 +757,36 @@
       "Tree": "credential-rescue"
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "no-approvals.json",
-      "Canonical": "iqa-mode/assets/no-approvals.json",
+      "Canonical": "",
       "Vendored": "vendor/dispatch/assets/no-approvals.json",
+      "Owner": "this package",
+      "Why": "Worker config that denies approval prompts; the fleet source (iqa-mode) was retired at Phase 5.",
       "Sha256": "7F49B977193771C53342212ACFD4E0AEA9A15C27B8587C9B1D1A41D58D9692A2",
       "Sha256Lf": "C20823E71D81769B018C7908A049EF572E4187BE208DDB2FA4578A63534FB5FE",
       "Bytes": 303,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "run-iqa-worker.ps1",
-      "Canonical": "iqa-mode/scripts/run-iqa-worker.ps1",
+      "Canonical": "",
       "Vendored": "vendor/dispatch/scripts/run-iqa-worker.ps1",
+      "Owner": "this package",
+      "Why": "Detached worker dispatch; the fleet source (iqa-mode) was retired at Phase 5 and the dispatch member cites this copy.",
       "Sha256": "BBF9F8C55B50F9154DF8B2DE675A745A6C42BB04779573B0A51585AF32DB1DB3",
       "Sha256Lf": "FDB9CD708EEDF9B30D2951A1B207FF598015436BBF07B529F0429F9AFAE88452",
       "Bytes": 60255,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "Test-OpencodeProvider.ps1",
-      "Canonical": "iqa-mode/scripts/Test-OpencodeProvider.ps1",
+      "Canonical": "",
       "Vendored": "vendor/dispatch/scripts/Test-OpencodeProvider.ps1",
+      "Owner": "this package",
+      "Why": "Provider reachability pre-check for a dispatch; the fleet source (iqa-mode) was retired at Phase 5.",
       "Sha256": "F7AC7138F7C8F036EAA2081A0C7051A8DB4284EE9AB123CC871EC56161A25C1E",
       "Sha256Lf": "1DBA574F57D515B1DDB94A4A3F9E3EA4B80E592945C3C8E9AAC8BFB318667894",
       "Bytes": 13376,
@@ -767,86 +797,102 @@
       "Name": "Invoke-WorktreeLease.ps1",
       "Canonical": "git-operations/Invoke-WorktreeLease.ps1",
       "Vendored": "vendor/git-operations/Invoke-WorktreeLease.ps1",
-      "Sha256": "A210F61C6C43C1DDE2351E3C13F9269867C6D6C87709614F1D269D39AB91A03D",
-      "Sha256Lf": "2130987042DB47371ABE98B2B329773F76A5BFE0442F5A9BB37CBF655A8F3F51",
-      "Bytes": 16104,
+      "Sha256": "13F323B743EC7D7830AB3F085C9BA697CD66A6BFDD7A68E06F7C1BFABA281FB8",
+      "Sha256Lf": "55AA36353550B87FBC21CD225393584C91E79A45847477A5A67D1F54BDB76617",
+      "Bytes": 16100,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "AtomicRecordWrite.ps1",
-      "Canonical": "iqa-merge/AtomicRecordWrite.ps1",
+      "Canonical": "",
       "Vendored": "vendor/iqa-merge/AtomicRecordWrite.ps1",
+      "Owner": "this package",
+      "Why": "Atomic JSON publish policy; the fleet source was retired at Phase 5 and this copy is now the owner every other vendored helper dot-sources.",
       "Sha256": "DD9E0CFA0D3F98BC303122ED56A49480122DD07BFA0CF1FDB731024BC217A371",
       "Sha256Lf": "2BB6FCC03716A5E36CD951DBA096DC658FC7F7F3C2B526C5D2F8A5B76373CC54",
       "Bytes": 13067,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "Get-HubCadence.ps1",
-      "Canonical": "iqa-merge/Get-HubCadence.ps1",
+      "Canonical": "",
       "Vendored": "vendor/iqa-merge/Get-HubCadence.ps1",
+      "Owner": "this package",
+      "Why": "Hub cadence derivation; the fleet source was retired at Phase 5 and the iqa-hub member cites this copy.",
       "Sha256": "8939E07708DC7D8A7489063166780B011176A7358E9D898215517476B7CDC963",
       "Sha256Lf": "519A3F25E4BFF3C633505A97459C9B5E5BD4AD061E1BEF4E97C8E9203CBE55D2",
       "Bytes": 53648,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "HubRegistry.ps1",
-      "Canonical": "iqa-merge/HubRegistry.ps1",
+      "Canonical": "",
       "Vendored": "vendor/iqa-merge/HubRegistry.ps1",
-      "Sha256": "387FC615FD81125B6809FFC1A3C41A126F9F6DBF428BA273C8F8D276DE406AD6",
-      "Sha256Lf": "E9915B6AE3133BB687AA254C73FAE66A008470C7BC747CBE3B485ACE4BB2AEBD",
-      "Bytes": 60948,
+      "Owner": "this package",
+      "Why": "Hub registry; the fleet source was retired at Phase 5 and this copy is what a Hub registers and a monitor finds.",
+      "Sha256": "FB99A8CDDB35AC037D4C12B7A69136AFD0A012C31A20C24C48BE8435018AA98D",
+      "Sha256Lf": "1BCAE986A9524950B799FFCAAD2436E9800919EDA15A6D4DF46ADCF680806BD9",
+      "Bytes": 61388,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "Invoke-HubProbe.ps1",
-      "Canonical": "iqa-merge/Invoke-HubProbe.ps1",
+      "Canonical": "",
       "Vendored": "vendor/iqa-merge/Invoke-HubProbe.ps1",
-      "Sha256": "8B135F8470CC4E7D45497075533D10A8A4C301ED3E2A6AEF8EE186283BA443A9",
-      "Sha256Lf": "B27659DECAAB2FD383324F3CC2FF16A4D772EB5E2CE2501863A7274ABE8E49E6",
-      "Bytes": 25789,
+      "Owner": "this package",
+      "Why": "Hub-start probe; the fleet source was retired at Phase 5 and the iqa-hub member cites this copy.",
+      "Sha256": "EB0CF0A8806569E6D62CC98BB5F15C4C46A07857FD4D7ECD86CEE8AE7AF952D2",
+      "Sha256Lf": "7F6CA3000D494096EF4D5C2B7AF7743C0999AA20547EFC3A3FAB166F3725694B",
+      "Bytes": 25796,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "Invoke-ScheduleRecordWrite.ps1",
-      "Canonical": "iqa-merge/Invoke-ScheduleRecordWrite.ps1",
+      "Canonical": "",
       "Vendored": "vendor/iqa-merge/Invoke-ScheduleRecordWrite.ps1",
-      "Sha256": "790BBBEB0DCC7FDAF566095F3C911097E6A961640E07C70317778679E358F3CF",
-      "Sha256Lf": "CA48D40D0BB6A2071E20B53E73C957935C9C68CFA81AC8DA81A701C5F7964860",
-      "Bytes": 20974,
+      "Owner": "this package",
+      "Why": "Schedule-record write policy; the fleet source was retired at Phase 5 and the one-rung rule is enforced through this copy.",
+      "Sha256": "1AAA308F81CAC21D8ECED79A397DA378A4BF585F22E50DF43724B1B3BBE93BDD",
+      "Sha256Lf": "3DF47D8707DDF87F40367E8F481E74351CB4C4C9241C993B270D0307FACB5FF6",
+      "Bytes": 20972,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "Test-Landed.ps1",
-      "Canonical": "iqa-merge/Test-Landed.ps1",
+      "Canonical": "",
       "Vendored": "vendor/iqa-merge/Test-Landed.ps1",
+      "Owner": "this package",
+      "Why": "Landing proof; the fleet source was retired at Phase 5 and the merge close-out rule cites this copy.",
       "Sha256": "55DE023AB045E66852FC6B487518B78463B3A2EA709AC0CD058D73A59522BA56",
       "Sha256Lf": "C412549C0F67E4AF4B602F68C69A95569749812AC34B23E169EC3255C616F858",
       "Bytes": 5386,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "Test-ScheduleDispatch.ps1",
-      "Canonical": "iqa-merge/Test-ScheduleDispatch.ps1",
+      "Canonical": "",
       "Vendored": "vendor/iqa-merge/Test-ScheduleDispatch.ps1",
-      "Sha256": "BC01951185FF0D4E58ED034F322C286EE1C58187873F571127627504BC9C2EB2",
-      "Sha256Lf": "5A7F34F50D0FEC780494E4C840F73FA813C1BA46CC1F6F79F481EA29D1D3FF40",
-      "Bytes": 22560,
+      "Owner": "this package",
+      "Why": "Schedule dispatch check; the fleet source was retired at Phase 5 and the one-rung rule cites this copy.",
+      "Sha256": "F78398702DC08365099AF4B9DE546632734F129DF06802C6EC3A1174059C7CD9",
+      "Sha256Lf": "7E04E6DED3A8817A6D3192D3BDDCAD8AE006788D8EC82C4D99557DF9C5B7E12E",
+      "Bytes": 22574,
       "Tree": ""
     },
     {
-      "Kind": "copy",
+      "Kind": "owned",
       "Name": "Test-SingleHubRung.ps1",
-      "Canonical": "iqa-merge/Test-SingleHubRung.ps1",
+      "Canonical": "",
       "Vendored": "vendor/iqa-merge/Test-SingleHubRung.ps1",
+      "Owner": "this package",
+      "Why": "One-rung-per-repo guard; the fleet source was retired at Phase 5 and the iqa-hub member cites this copy.",
       "Sha256": "645D7823F4F56B3ED48D97C2728A8F94F0B4AD43558AA9D47FABA3909DF73DB7",
       "Sha256Lf": "581FD2D75376B591595747446B0DBDC75CF540EE989E2853557D1813D97A4255",
       "Bytes": 19695,

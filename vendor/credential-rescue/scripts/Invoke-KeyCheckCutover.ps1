@@ -15,7 +15,7 @@
 
         1. Switch-OpencodeGoKey.ps1 -KeyNumber <n>
              the Salmon track: seam activeKey, User OPENCODE_GO_KEY /
-             OPENCODE_API_KEY, auth.json, ~/.salmon/config.json
+             OPENCODE_API_KEY, auth.json, ~/.machine/config.json
         2. verify the TWO non-Paseo surfaces (seam activeKey, User key hash)
         3. write the outcome { applied: true, verified: 'pending',
              restartPending: true }  <- before anything destructive
@@ -58,7 +58,7 @@
 
 .PARAMETER OutcomePath
     Where the outcome JSON is written. Default
-    ~/.salmon/State/key-check/<runId>-cutover.json. The watch polls this file,
+    ~/.machine/state/key-check/<runId>-cutover.json. The watch polls this file,
     so it is written even when a step fails.
 
 .PARAMETER RunId
@@ -88,7 +88,7 @@
 
 .PARAMETER PartialMarkerPath
     The partial-application marker the Salmon switch leaves when a rollback
-    failed: ~/.salmon/State/key-check/partial-cutover.json. When it exists, a
+    failed: ~/.machine/state/key-check/partial-cutover.json. When it exists, a
     fresh switch is refused and the recorded cutover is completed or reverted
     first. Test seam.
 
@@ -118,7 +118,7 @@
 
 .PARAMETER AuditPath
     The audit trail the roster/witness failure lines go to. Default
-    ~/.salmon/Tasks/Logs/keycheck.jsonl.
+    ~/.machine/logs/keycheck.jsonl.
 
 .PARAMETER MarkerPath
     The cutover-in-progress marker: `{runId, startedAt, phase, host}`, written
@@ -186,12 +186,12 @@ if ([string]::IsNullOrWhiteSpace($WitnessScript)) { $WitnessScript = Join-Path $
 if ([string]::IsNullOrWhiteSpace($RecoveryScript)) { $RecoveryScript = Join-Path $scriptRoot 'Invoke-CutoverRecovery.ps1' }
 if ([string]::IsNullOrWhiteSpace($SeamPath)) { $SeamPath = Join-Path $scriptRoot '..\assets\opencode-go-cutover.json' }
 if ([string]::IsNullOrWhiteSpace($PaseoConfig)) { $PaseoConfig = Join-Path $env:USERPROFILE '.paseo\config.json' }
-if ([string]::IsNullOrWhiteSpace($AuditPath)) { $AuditPath = Join-Path $env:USERPROFILE '.salmon\Tasks\Logs\keycheck.jsonl' }
+if ([string]::IsNullOrWhiteSpace($AuditPath)) { $AuditPath = Join-Path $env:USERPROFILE '.machine\logs\keycheck.jsonl' }
 if ([string]::IsNullOrWhiteSpace($PartialMarkerPath)) {
-    $PartialMarkerPath = Join-Path (Join-Path $env:USERPROFILE '.salmon\State\key-check') 'partial-cutover.json'
+    $PartialMarkerPath = Join-Path (Join-Path $env:USERPROFILE '.machine\state\key-check') 'partial-cutover.json'
 }
 if ([string]::IsNullOrWhiteSpace($OutcomePath)) {
-    $OutcomePath = Join-Path (Join-Path $env:USERPROFILE '.salmon\State\key-check') "$RunId-cutover.json"
+    $OutcomePath = Join-Path (Join-Path $env:USERPROFILE '.machine\state\key-check') "$RunId-cutover.json"
 }
 $outcomeDir = Split-Path -Parent $OutcomePath
 if ([string]::IsNullOrWhiteSpace($RosterPath)) { $RosterPath = Join-Path $outcomeDir "$RunId-roster.json" }

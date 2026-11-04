@@ -15,7 +15,7 @@
     or Key Check cycle rewrites it. It lives in the profile state root beside the
     provider lock:
 
-        $HOME/.salmon/State/credential-rescue/seam-observations.json
+        $HOME/.machine/state/credential-rescue/seam-observations.json
 
     This is the same split the provider lock already uses (tracked fingerprints
     live in the state root, never in the package). One store, no daemon: a JSON
@@ -99,7 +99,7 @@ function Get-CutoverObservationsPath {
         return [System.IO.Path]::GetFullPath((Expand-CutoverSeamPath ([string]$Seam.observationsPath)))
     }
 
-    return (Join-Path (Join-Path $HOME '.salmon\State\credential-rescue') 'seam-observations.json')
+    return (Join-Path (Join-Path $HOME '.machine\state\credential-rescue') 'seam-observations.json')
 }
 
 function Read-CutoverObservations {

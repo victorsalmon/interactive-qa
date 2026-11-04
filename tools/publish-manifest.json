@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "package": "interactive-qa-agent",
+  "package": "interactive-qa",
   "version": "1.0.0",
   "ship": [
     "SKILL.md",
@@ -8,6 +8,7 @@
     "MANIFEST.md",
     "LICENSE",
     "core/",
+    "lib/",
     "members/",
     "profiles/",
     "references/",

@@ -86,31 +86,53 @@ idle repo therefore produces ~1–4 lines a day instead of 24.
 | :--- | :--- |
 | `STALL-GRAPH` | unfinished beads exist and the graph has not changed for ≥ 6 h |
 | `STALL-MERGE` | lane worktrees exist and the trunk has not moved for ≥ 2 h |
+| `WAKE-*` | a wake was attempted and did not get through (see below) |
 
 Each finding carries `code`, `repo`, a one-line `detail` and its `evidence`
 counts, so a Hub can act without re-reading anything. `Check` exits **1** when
 findings exist, **0** when clean.
 
+## Waking a Hub
+
+`-Wake` turns a finding into a message. It resolves the repo's **live** Hub from
+`vendor/iqa-merge/HubRegistry.ps1 -Mode Find` and sends it **one compact line**
+through the Paseo CLI:
+
+```
+paseo send <hub-agent-id> --prompt-file <monitor>/wake-<repo>.txt --behavior steer --no-wait --json
+```
+
+The prompt names the finding codes, their one-line details and the findings file
+- never the graph. A monitor that pastes its history into the wake spends exactly
+the tokens it exists to save.
+
+| Outcome | Meaning |
+| :--- | :--- |
+| `WAKE-SENT` | queued to the live hub's agent id |
+| `WAKE-NO-HUB` | no live hub record; **nobody** is woken and that is reported |
+| `WAKE-NO-TRANSPORT` | Paseo CLI not found (`$env:PASEO_CLI`, `PATH`, then the documented install locations) |
+| `WAKE-FAILED` | the send itself failed, with its exit code |
+
+A wake failure is recorded as a finding **beside** the stalls, so `findings.json`
+is the truth whether or not a message got through. Waking is off by default and
+`-WakeDryRun` prints the exact command without sending it - verify the transport
+before arming the schedule.
+
+**What it deliberately will not do: spawn a Hub.** No live hub means the repo is
+unattended, which is a dispatch decision for the operator, not a supervisor's.
+
 ## Scheduling
 
 ```powershell
-$script = 'E:\Repos\Public\interactive-qa\tools\Invoke-IqaMonitor.ps1'
+# run from the package root, so the path is resolved and never hardcoded
+$script = (Resolve-Path .\tools\Invoke-IqaMonitor.ps1).Path
 Register-ScheduledTask -TaskName 'IQA-Monitor-Snapshot' `
   -Action @(
     New-ScheduledTaskAction -Execute (Get-Command pwsh).Source -Argument "-NoProfile -File `"$script`" -Mode Snapshot",
-    New-ScheduledTaskAction -Execute (Get-Command pwsh).Source -Argument "-NoProfile -File `"$script`" -Mode Check") `
+    New-ScheduledTaskAction -Execute (Get-Command pwsh).Source -Argument "-NoProfile -File `"$script`" -Mode Check -Wake") `
   -Trigger (New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 15)) `
   -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew)
 ```
 
-Rollup belongs on a weekly schedule (`-Mode Rollup -RetainDays 7`), not the
-15-minute one.
-
-## Deliberately not done yet
-
-**Waking a Hub.** The findings contract is complete, but *delivering* a wake
-needs the live Hub's agent id (from `HubRegistry -Mode Find`) and a verified
-non-interactive send. Until that is wired, the monitor writes `findings.json`
-and exits non-zero — a supervisor, not yet an alarm. Do not fake the wake: a
-finding nobody receives is worse than a finding on disk, because it looks
-handled.
+Rollup belongs on a **weekly** schedule (`-Mode Rollup -RetainDays 7`), not the
+15-minute one: it rewrites history files and has nothing to gain from frequency.

@@ -105,11 +105,19 @@ $scriptRoot = $PSScriptRoot
 
 $StateDir = Get-CutoverStateDir -Override $StateDir
 if ([string]::IsNullOrWhiteSpace($RosterPath)) { $RosterPath = Join-Path $StateDir "$RunId-roster.json" }
-if ([string]::IsNullOrWhiteSpace($AuditPath)) { $AuditPath = Join-Path $env:USERPROFILE '.salmon\Tasks\Logs\keycheck.jsonl' }
+if ([string]::IsNullOrWhiteSpace($AuditPath)) { $AuditPath = Join-Path $env:USERPROFILE '.machine\logs\keycheck.jsonl' }
 if ([string]::IsNullOrWhiteSpace($HubRegistryRoot)) { $HubRegistryRoot = Get-CutoverDefaultHubRoot }
 if ([string]::IsNullOrWhiteSpace($LeaseRoot)) { $LeaseRoot = Get-CutoverDefaultLeaseRoot }
 if ([string]::IsNullOrWhiteSpace($HubRegistryScript)) {
-    $HubRegistryScript = Join-Path $scriptRoot '..\..\iqa-merge\HubRegistry.ps1'
+    # The IQA skills moved out of this repo (dev, 2026-11-04); the plugin's
+    # vendored copy is canonical. Fall back to the old in-tree location so an
+    # older checkout still works.
+    $candidates = @(
+        (Join-Path $scriptRoot '..\..\..\interactive-qa\vendor\iqa-merge\HubRegistry.ps1'),
+        (Join-Path $scriptRoot '..\..\iqa-merge\HubRegistry.ps1')
+    )
+    $HubRegistryScript = @($candidates | Where-Object { Test-Path -LiteralPath $_ })[0]
+    if ([string]::IsNullOrWhiteSpace($HubRegistryScript)) { $HubRegistryScript = $candidates[-1] }
 }
 $HubRegistryScript = [System.IO.Path]::GetFullPath($HubRegistryScript)
 if ([string]::IsNullOrWhiteSpace($StampScript)) { $StampScript = Join-Path $scriptRoot 'Stamp-InterruptedGates.ps1' }

@@ -16,7 +16,7 @@
     regression pin for D10 (bead cl-common-1v5), where the gate reported OK while
     ten links escaped into the sibling `Skills/` tree.
 
-    Run: pwsh -File interactive-qa-agent/tools/Test-PluginLinks.Tests.ps1
+    Run: pwsh -File interactive-qa/tools/Test-PluginLinks.Tests.ps1
 #>
 
 BeforeAll {

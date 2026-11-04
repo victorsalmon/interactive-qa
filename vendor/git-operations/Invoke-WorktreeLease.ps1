@@ -12,8 +12,8 @@
     A lease is a small JSON document in a central, git-ignored store:
 
         $env:OC_WORKTREE_LEASE_ROOT
-          ?? $env:MACHINE_STATE_HOME/State/worktree-leases
-          ?? ~/.salmon/State/worktree-leases
+          ?? $env:MACHINE_STATE_HOME/worktree-leases
+          ?? ~/.machine/state/worktree-leases
 
     keyed by the SHA1 of the normalized checkout path. The Salmon Run engine
     reads the same store (Modules/SalmonRun.PondEngine/Private/
@@ -107,7 +107,7 @@ function Get-LeaseRoot {
         return $env:OC_WORKTREE_LEASE_ROOT
     }
     if (-not [string]::IsNullOrWhiteSpace($env:MACHINE_STATE_HOME)) {
-        return (Join-Path $env:MACHINE_STATE_HOME 'State\worktree-leases')
+        return (Join-Path $env:MACHINE_STATE_HOME 'worktree-leases')
     }
     return (Join-Path $HOME '.machine\state\worktree-leases')
 }

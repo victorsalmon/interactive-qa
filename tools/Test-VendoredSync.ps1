@@ -6,7 +6,7 @@
     hash, or it does not land.
 
 .DESCRIPTION
-    The package under `interactive-qa-agent/` vendors byte-identical copies of
+    The package under `interactive-qa/` vendors byte-identical copies of
     canonical `Skills/**` helpers. Those copies are a build artefact of the canon,
     but nothing in git couples the two, so a canonical edit used to land alone and
     the package gate went red on the trunk hours later (bead `cl-common-e93`,
@@ -30,7 +30,7 @@
          that touches no governed canonical cannot introduce vendored drift);
       5. when it is not empty, check out the branch tip into a throwaway detached
          worktree and run the one owner of the mapping,
-         `interactive-qa-agent/tools/Sync-VendoredHelpers.ps1 -Check`, against it.
+         `interactive-qa/tools/Sync-VendoredHelpers.ps1 -Check`, against it.
          A pre-manifest branch that ships no package fails without a check: it
          cannot carry a vendored copy or a recorded hash for anything, so the row
          it changes is MISSING by construction;
@@ -72,11 +72,11 @@
 
 .PARAMETER ManifestPath
     Manifest to read. Defaults to
-    `<RepoPath>/interactive-qa-agent/tools/vendored-helpers.manifest.json`.
+    `<RepoPath>/interactive-qa/tools/vendored-helpers.manifest.json`.
 
 .PARAMETER SyncScript
     The single owner of the mapping. Defaults to
-    `<RepoPath>/interactive-qa-agent/tools/Sync-VendoredHelpers.ps1`.
+    `<RepoPath>/interactive-qa/tools/Sync-VendoredHelpers.ps1`.
 
 .PARAMETER Json
     Emit one JSON object instead of the human report.

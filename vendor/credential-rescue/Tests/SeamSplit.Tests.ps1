@@ -48,7 +48,7 @@ BeforeAll {
             version          = 1
             updated          = '2026-11-03'
             activeKey        = 'OPENCODE_GO3_KEY'
-            observationsPath = '~/.salmon/State/credential-rescue/seam-observations.json'
+            observationsPath = '~/.machine/state/credential-rescue/seam-observations.json'
             poolOrder        = @('OPENCODE_GO1_KEY', 'OPENCODE_GO3_KEY')
             freshness        = [ordered]@{
                 asOf    = $null
@@ -229,7 +229,7 @@ Describe 'cl-common-6j7 cutover seam config/observation split' {
             $run.ExitCode | Should -Be 0 -Because $run.Output
             $view = $run.Output | ConvertFrom-Json
             $view.observationsPath | Should -Be (Get-ObservationsPath $seam)
-            $view.observationsPath | Should -Not -Match '\.salmon\\State'
+            $view.observationsPath | Should -Not -Match '\.machine\\State'
         }
     }
 }

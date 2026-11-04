@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     Very quick model-name canary for the fleet worker model (no inference by default).
@@ -12,7 +12,7 @@
     historical name because the incident record it came from was
     `Skills/_archive/iqa-superseded-2026-11-03/credential-rescue/assets/paseo-muse-spark-resolution-2026-10-15.md`
     (archived 2026-11-03; the live body is
-    `interactive-qa-agent/vendor/credential-rescue/assets/paseo-muse-spark-resolution-2026-10-15.md`).
+    `interactive-qa/vendor/credential-rescue/assets/paseo-muse-spark-resolution-2026-10-15.md`).
     The model it checks is
     the current fleet worker, DeepSeek V4.1 Flash (operator directive
     2026-10-28 — Muse Spark 1.3 is retired for agent creation).

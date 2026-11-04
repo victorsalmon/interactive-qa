@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 <#
 .SYNOPSIS
     Spawn-capacity gate + model failover + provider-error log for Paseo agents.
@@ -268,7 +268,7 @@ function Get-Paths {
               else { Expand-FleetPath ([string](Get-Prop $paths 'logDir' "$($env:CL_REPOS_ROOT)\Tasks\Logs")) }
     $state = if ($StateOverride) { $StateOverride }
              elseif ($env:AGENT_CAPACITY_STATE) { $env:AGENT_CAPACITY_STATE }
-             else { Expand-FleetPath ([string](Get-Prop $paths 'stateFile' '~/.salmon/State/agent-capacity.json')) }
+             else { Expand-FleetPath ([string](Get-Prop $paths 'stateFile' '~/.machine/state/agent-capacity.json')) }
     return @{
         LogDir    = $logDir
         SpawnLog  = Join-Path $logDir ([string](Get-Prop $paths 'spawnLog' 'agent-spawns.jsonl'))

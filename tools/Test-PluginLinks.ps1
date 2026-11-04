@@ -46,10 +46,10 @@
     mode, not a self-containment proof.
 
 .EXAMPLE
-    pwsh -File interactive-qa-agent/tools/Test-PluginLinks.ps1
+    pwsh -File interactive-qa/tools/Test-PluginLinks.ps1
 
 .EXAMPLE
-    pwsh -File interactive-qa-agent/tools/Test-PluginLinks.ps1 -ResolvableOnly
+    pwsh -File interactive-qa/tools/Test-PluginLinks.ps1 -ResolvableOnly
 #>
 [CmdletBinding()]
 param(

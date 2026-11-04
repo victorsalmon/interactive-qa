@@ -17,14 +17,26 @@
 param()
 
 BeforeAll {
-    $script:GuardScript = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..' 'Test-VendoredSync.ps1')).Path
+    # The guard lives BESIDE this test in the package's tools/ directory. It used to
+    # live in Skills/iqa-merge/Tests/ with the guard one level up, and this lookup
+    # kept pointing one level up after the move - so BeforeAll threw and Pester
+    # reported an unrelated loop-label error. Prefer the sibling, keep the old
+    # location as a fallback so the test still runs from a fleet checkout.
+    $guardCandidates = @(
+        (Join-Path $PSScriptRoot 'Test-VendoredSync.ps1'),
+        (Join-Path (Split-Path -Parent $PSScriptRoot) 'Test-VendoredSync.ps1')
+    )
+    $script:GuardScript = $null
+    foreach ($candidate in $guardCandidates) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { $script:GuardScript = (Resolve-Path -LiteralPath $candidate).Path; break }
+    }
     $script:PwshPath = (Get-Command pwsh -ErrorAction Stop).Source
 
-    if (-not (Test-Path -LiteralPath $script:GuardScript -PathType Leaf)) {
-        throw "Guard script not found: $script:GuardScript"
+    if (-not $script:GuardScript) {
+        throw "Guard script not found. Looked in: $($guardCandidates -join '; ')"
     }
 
-    # A tiny but faithful stand-in for interactive-qa-agent/tools/Sync-VendoredHelpers.ps1:
+    # A tiny but faithful stand-in for interactive-qa/tools/Sync-VendoredHelpers.ps1:
     # same command line (-Check -PackageRoot), same row contract (STATUS<2+spaces>vendored),
     # same exit codes (0 MATCH, 1 not in sync). The guard under test owns the diff,
     # the intersection, the worktree and the message; the mapping owner is stubbed
@@ -111,7 +123,7 @@ exit 0
 
         # The two governed canonical files, their vendored copies, and the owner.
         $canonicalDir = Join-Path $root 'Skills/demo'
-        $packageDir = Join-Path $root 'interactive-qa-agent'
+        $packageDir = Join-Path $root 'interactive-qa'
         $toolsDir = Join-Path $packageDir 'tools'
         $vendoredDir = Join-Path $packageDir 'vendor/demo'
         New-Item -ItemType Directory -Path $canonicalDir, $toolsDir, $vendoredDir -Force | Out-Null
@@ -125,7 +137,7 @@ exit 0
 
         $manifest = [pscustomobject]@{
             schemaVersion = 2
-            package       = 'interactive-qa-agent'
+            package       = 'interactive-qa'
             vendored      = @(
                 New-VendoredRow -Canonical 'demo/Alpha.ps1' -Vendored 'vendor/demo/Alpha.ps1' -Path (Join-Path $vendoredDir 'Alpha.ps1')
                 New-VendoredRow -Canonical 'demo/Beta.ps1' -Vendored 'vendor/demo/Beta.ps1' -Path (Join-Path $vendoredDir 'Beta.ps1')
@@ -264,11 +276,11 @@ Describe 'Test-VendoredSync merge gate' {
             New-Branch -Repo $repo -Name 'feat/synced'
             $canonical = Join-Path $repo 'Skills/demo/Alpha.ps1'
             Set-Content -LiteralPath $canonical -Value "#Requires -Version 7`n# alpha canonical v2" -Encoding utf8 -NoNewline
-            Copy-Item -LiteralPath $canonical -Destination (Join-Path $repo 'interactive-qa-agent/vendor/demo/Alpha.ps1') -Force
+            Copy-Item -LiteralPath $canonical -Destination (Join-Path $repo 'interactive-qa/vendor/demo/Alpha.ps1') -Force
 
-            $manifestPath = Join-Path $repo 'interactive-qa-agent/tools/vendored-helpers.manifest.json'
+            $manifestPath = Join-Path $repo 'interactive-qa/tools/vendored-helpers.manifest.json'
             $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-            $hash = Get-Sha256Hex -Path (Join-Path $repo 'interactive-qa-agent/vendor/demo/Alpha.ps1')
+            $hash = Get-Sha256Hex -Path (Join-Path $repo 'interactive-qa/vendor/demo/Alpha.ps1')
             ($manifest.vendored | Where-Object { $_.Canonical -eq 'demo/Alpha.ps1' }).Sha256 = $hash
             ($manifest.vendored | Where-Object { $_.Canonical -eq 'demo/Alpha.ps1' }).Sha256Lf = $hash
             $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding utf8 -NoNewline
@@ -286,7 +298,7 @@ Describe 'Test-VendoredSync merge gate' {
             New-Branch -Repo $repo -Name 'feat/stale'
             $canonical = Join-Path $repo 'Skills/demo/Alpha.ps1'
             Set-Content -LiteralPath $canonical -Value "#Requires -Version 7`n# alpha canonical v3" -Encoding utf8 -NoNewline
-            Copy-Item -LiteralPath $canonical -Destination (Join-Path $repo 'interactive-qa-agent/vendor/demo/Alpha.ps1') -Force
+            Copy-Item -LiteralPath $canonical -Destination (Join-Path $repo 'interactive-qa/vendor/demo/Alpha.ps1') -Force
             Save-BranchCommit -Repo $repo -Message 'copy updated, manifest not'
 
             $result = Invoke-Guard -Repo $repo -Branch 'feat/stale'
@@ -348,7 +360,7 @@ Describe 'Test-VendoredSync merge gate' {
             $repo = New-SyncFixture -Name "bad-manifest-$(Get-Random)"
             New-Branch -Repo $repo -Name 'feat/bad-manifest'
             Set-Content -LiteralPath (Join-Path $repo 'Skills/demo/Alpha.ps1') -Value "#Requires -Version 7`n# edited" -Encoding utf8 -NoNewline
-            Set-Content -LiteralPath (Join-Path $repo 'interactive-qa-agent/tools/vendored-helpers.manifest.json') -Value '{ not json' -Encoding utf8
+            Set-Content -LiteralPath (Join-Path $repo 'interactive-qa/tools/vendored-helpers.manifest.json') -Value '{ not json' -Encoding utf8
             Save-BranchCommit -Repo $repo -Message 'break the manifest'
 
             $result = Invoke-Guard -Repo $repo -Branch 'feat/bad-manifest'
@@ -362,7 +374,7 @@ Describe 'Test-VendoredSync merge gate' {
             $repo = New-SyncFixture -Name "deleted-manifest-$(Get-Random)"
             New-Branch -Repo $repo -Name 'feat/deletes-manifest'
             Set-Content -LiteralPath (Join-Path $repo 'Skills/demo/Alpha.ps1') -Value "#Requires -Version 7`n# edited" -Encoding utf8 -NoNewline
-            Remove-Item -LiteralPath (Join-Path $repo 'interactive-qa-agent/tools/vendored-helpers.manifest.json') -Force
+            Remove-Item -LiteralPath (Join-Path $repo 'interactive-qa/tools/vendored-helpers.manifest.json') -Force
             Save-BranchCommit -Repo $repo -Message 'delete the manifest'
 
             $result = Invoke-Guard -Repo $repo -Branch 'feat/deletes-manifest'
@@ -385,7 +397,7 @@ Describe 'Test-VendoredSync merge gate' {
             & git -C $repo checkout --quiet -b 'feat/pre-manifest-clean' $oldTip 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) { throw 'could not branch from the pre-manifest commit' }
 
-            $null = & git -C $repo cat-file -e 'HEAD:interactive-qa-agent/tools/vendored-helpers.manifest.json' 2>&1
+            $null = & git -C $repo cat-file -e 'HEAD:interactive-qa/tools/vendored-helpers.manifest.json' 2>&1
             $LASTEXITCODE | Should -Be 128 -Because 'the fixture branch must genuinely predate the manifest'
 
             Set-Content -LiteralPath (Join-Path $repo 'README.md') -Value '# a change that is not a vendored canonical' -Encoding utf8

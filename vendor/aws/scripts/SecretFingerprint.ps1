@@ -142,7 +142,7 @@ function Get-PaseoProviderEnvValue {
 function Get-FileSecretValue {
     <#
     .SYNOPSIS
-        Trim-read a single-line key file (e.g. ~/.salmon/secrets/x.key).
+        Trim-read a single-line key file (e.g. ~/.machine/secrets/x.key).
         Missing file returns ''.
     #>
     param([Parameter(Mandatory)][string]$Path)

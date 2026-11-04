@@ -41,11 +41,11 @@
     recovers even after a reboot.
 
 .PARAMETER StatePath
-    Run-state file to read. Default ~/.salmon/State/key-check/state.json (the
+    Run-state file to read. Default ~/.machine/state/key-check/state.json (the
     same fixed path the run writes, which is what makes the question answerable).
 
 .PARAMETER AuditPath
-    Per-check JSONL audit. Default ~/.salmon/Tasks/Logs/keycheck.jsonl.
+    Per-check JSONL audit. Default ~/.machine/logs/keycheck.jsonl.
 
 .PARAMETER IntervalMinutes
     Base gear handed to the watch this starts. Default 15.
@@ -93,15 +93,15 @@ $scriptRoot = $PSScriptRoot
 . (Join-Path $scriptRoot 'lib\KeyCheck.Decision.ps1')
 . (Join-Path $scriptRoot 'lib\KeyCheck.State.ps1')
 
-$stateRoot = Join-Path $env:USERPROFILE '.salmon'
+$stateRoot = Join-Path $env:USERPROFILE '.machine'
 $stateDir = if ($StatePath) {
     $parent = Split-Path -Parent $StatePath
     if ([string]::IsNullOrWhiteSpace($parent)) { (Get-Location).Path } else { $parent }
 } else {
-    Join-Path $stateRoot 'State\key-check'
+    Join-Path $stateRoot 'state\key-check'
 }
 if (-not $StatePath) { $StatePath = Join-Path $stateDir 'state.json' }
-if (-not $AuditPath) { $AuditPath = Join-Path (Join-Path $stateRoot 'Tasks\Logs') 'keycheck.jsonl' }
+if (-not $AuditPath) { $AuditPath = Join-Path (Join-Path $stateRoot 'logs') 'keycheck.jsonl' }
 $lockPath = Join-Path $stateDir 'lock.json'
 $lockStaleSeconds = [int]([Math]::Max(60, 3 * $IntervalMinutes * 60))
 

@@ -24,7 +24,7 @@
       - a reader of the live state (Test-KeyCheckLiveness) still sees the live
         run's real phase and cadence, never the rehearsal.
 
-    Every test works in TestDrive. The live ~/.salmon/State/key-check files are
+    Every test works in TestDrive. The live ~/.machine/state/key-check files are
     never read or written.
 #>
 

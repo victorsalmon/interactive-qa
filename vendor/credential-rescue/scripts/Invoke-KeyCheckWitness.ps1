@@ -41,10 +41,10 @@
     started while the helper is still finishing its restart.
 
 .PARAMETER StateDir
-    Default `~/.salmon/State/key-check`.
+    Default `~/.machine/state/key-check`.
 
 .PARAMETER AuditPath
-    Default `~/.salmon/Tasks/Logs/keycheck.jsonl`.
+    Default `~/.machine/logs/keycheck.jsonl`.
 
 .PARAMETER SeamPath
     Default `../assets/opencode-go-cutover.json`. Test seam.
@@ -87,8 +87,8 @@ $scriptRoot = $PSScriptRoot
 . (Join-Path $scriptRoot 'lib\PaseoCommon.ps1')
 . (Join-Path $scriptRoot '..\..\aws\scripts\SecretFingerprint.ps1')
 
-if ([string]::IsNullOrWhiteSpace($StateDir)) { $StateDir = Join-Path $env:USERPROFILE '.salmon\State\key-check' }
-if ([string]::IsNullOrWhiteSpace($AuditPath)) { $AuditPath = Join-Path $env:USERPROFILE '.salmon\Tasks\Logs\keycheck.jsonl' }
+if ([string]::IsNullOrWhiteSpace($StateDir)) { $StateDir = Join-Path $env:USERPROFILE '.machine\state\key-check' }
+if ([string]::IsNullOrWhiteSpace($AuditPath)) { $AuditPath = Join-Path $env:USERPROFILE '.machine\logs\keycheck.jsonl' }
 if ([string]::IsNullOrWhiteSpace($OutcomePath)) { $OutcomePath = Join-Path $StateDir "$RunId-cutover.json" }
 if ([string]::IsNullOrWhiteSpace($SeamPath)) { $SeamPath = Join-Path $scriptRoot '..\assets\opencode-go-cutover.json' }
 if ([string]::IsNullOrWhiteSpace($PaseoConfig)) { $PaseoConfig = Join-Path $env:USERPROFILE '.paseo\config.json' }

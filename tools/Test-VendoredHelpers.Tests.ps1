@@ -7,7 +7,7 @@
     this package MUST exit 0; each planted defect MUST exit non-zero AND name the
     defect, so a green gate cannot be green by not looking.
 
-    Run: pwsh -File interactive-qa-agent/tools/Test-VendoredHelpers.Tests.ps1
+    Run: pwsh -File interactive-qa/tools/Test-VendoredHelpers.Tests.ps1
 
     The archived-row cases prove the repository's archive linkage and need the
     canonical Skills tree beside the package; on an isolated copy of the package
@@ -153,12 +153,19 @@ Describe 'Test-VendoredHelpers gate' {
             $manifestPath = Join-Path $copy 'tools/vendored-helpers.manifest.json'
             $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 
-            $original = @($manifest.vendored) | Where-Object { $_.Canonical -eq 'iqa-merge/Get-HubCadence.ps1' } | Select-Object -First 1
+            # Pick the row from the manifest instead of naming a file: a fixture
+            # pinned to one path stops testing anything the moment that file changes
+            # kind (this one did - iqa-merge went from copy to owned).
+            $original = @($manifest.vendored) |
+                Where-Object { $_.Kind -eq 'copy' -and -not [string]::IsNullOrWhiteSpace([string]$_.Canonical) } |
+                Select-Object -First 1
+            $original | Should -Not -BeNullOrEmpty -Because 'the package must vendor at least one copy row'
+
             $second = [pscustomobject]@{
                 Kind      = 'copy'
                 Name      = $original.Name
                 Canonical = $original.Canonical
-                Vendored  = 'vendor/iqa-merge/Get-HubCadence-second-copy.ps1'
+                Vendored  = 'vendor/credential-rescue/scripts/Duplicate-Owner-Probe.ps1'
                 Sha256    = $original.Sha256
                 Sha256Lf  = $original.Sha256Lf
                 Bytes     = $original.Bytes
@@ -166,12 +173,25 @@ Describe 'Test-VendoredHelpers gate' {
             }
             $manifest.vendored = @($manifest.vendored) + $second
             $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding utf8 -NoNewline
-            Copy-Item -LiteralPath (Join-Path $copy 'vendor/iqa-merge/Get-HubCadence.ps1') -Destination (Join-Path $copy 'vendor/iqa-merge/Get-HubCadence-second-copy.ps1')
+            Copy-Item -LiteralPath (Join-Path $copy $original.Vendored) -Destination (Join-Path $copy 'vendor/credential-rescue/scripts/Duplicate-Owner-Probe.ps1')
 
             $result = Invoke-Gate -RootPath $copy
             $result.ExitCode | Should -Not -Be 0
             $result.Output | Should -Match 'vendored more than once'
-            $result.Output | Should -Match 'iqa-merge/Get-HubCadence\.ps1'
+            $result.Output | Should -Match ([regex]::Escape([string]$original.Canonical))
+        }
+    }
+
+    Context 'an owned row whose body was edited without re-recording' {
+
+        It 'exits non-zero and calls the body edited' {
+            $copy = New-PackageCopy -Name 'owned-edited'
+            $ownedPath = Join-Path $copy 'vendor/iqa-merge/Test-Landed.ps1'
+            Add-Content -LiteralPath $ownedPath -Value "`n# an edit nobody re-recorded"
+
+            $result = Invoke-Gate -RootPath $copy
+            $result.ExitCode | Should -Not -Be 0
+            $result.Output | Should -Match 'owned in-package body edited'
         }
     }
 

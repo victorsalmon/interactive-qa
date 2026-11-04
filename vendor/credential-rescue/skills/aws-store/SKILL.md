@@ -1,4 +1,4 @@
-﻿---
+---
 name: aws-store
 description: Runbook — restore the ~/.aws credential store after one of the recurring external-cleanup deletions, and reseed its off-.aws backup. Owns the restore source order, the Restore-AwsStore.ps1 modes (Status/Restore/Verify/Backup), and the touched-file inventory. Use when ~/.aws (or another ~/.*/ folder) has vanished, when AWS CLI calls suddenly fail with NoCredentialProviders, or before rotating IAM keys.
 triggers:
@@ -9,7 +9,7 @@ triggers:
 # Runbook — restore `~/.aws` after deletion
 
 A recurring external cleaner wipes `~/.aws` (and sometimes other `~/.*/`
-folders). Backups live **under `~/.salmon`, never inside `~/.aws`** — the cleaner
+folders). Backups live **under `~/.machine`, never inside `~/.aws`** — the cleaner
 removes the whole `.aws` dir including its `backups/`.
 
 **Never print a secret value.** Profile NAMES and ARNs only.
@@ -29,8 +29,8 @@ pwsh -File $s -Mode Backup                 # reseed the off-.aws snapshot
 1. The **operator's restore bundle** — untracked from the tree by `ca236ac6`
    and absent here; the script skips what it cannot find (`-SkipRepoZip` to skip
    it explicitly). Confirm the operator's copy before planning around it.
-2. `~/.salmon/Backups/aws-store/latest`.
-3. Newest `.enc` backup (AES-256, key = `AWS_CRED_BACKUP_KEY` in `~/.salmon/.env`).
+2. `~/.machine/backups/aws-store/latest`.
+3. Newest `.enc` backup (AES-256, key = `AWS_CRED_BACKUP_KEY` in `~/.machine/.env`).
 4. `-CredentialsFile <path>`.
 5. Session-DB scrape (Devin `cli/sessions.db`; opencode `opencode.db` under the
    live `$env:XDG_DATA_HOME\opencode`).
@@ -48,7 +48,7 @@ operator-held, so confirm the operator's copy before planning a restore around
 them. **Never print, quote, or copy their contents** into logs, chat, memory, or
 commits.
 
-Local backup state right now: `~/.salmon/Backups/aws-store` is **absent**, so run
+Local backup state right now: `~/.machine/backups/aws-store` is **absent**, so run
 `-Mode Backup` after any successful restore — that reseed is what makes the next
 deletion a file-copy restore instead of a scrape.
 
@@ -73,6 +73,6 @@ clean a `~/.*/` credential folder).
 
 ## Reference
 
-- Templates, the full source order, and the bundle rules: `interactive-qa-agent/vendor/credential-rescue/REFERENCE.md` § Runbook B
+- Templates, the full source order, and the bundle rules: `interactive-qa/vendor/credential-rescue/REFERENCE.md` § Runbook B
   (the `Skills/credential-rescue/REFERENCE.md` body is archived — see `Skills/_archive/iqa-superseded-2026-11-03/`)
 - AWS CLI ops (profiles, Secrets Manager reads, SSO): the `aws` skill

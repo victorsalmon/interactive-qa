@@ -1,8 +1,8 @@
-# Interactive QA Agent
+# Interactive QA
 
 Version **1.0.0**. A publishable agent plugin for running interactive
-quality-assurance sessions against a product, with a merge hub, worker lanes, and
-credential-safe dispatch. It is a **package of links and contracts**, not a copy
+quality-assurance sessions against a product, with a merge hub, worker lanes, a
+repo-owned merge queue, and credential-safe dispatch. It is a **package of links and contracts**, not a copy
 of any existing skill: the normative text stays in one owner file per rule and
 every other surface points at it.
 
@@ -13,7 +13,7 @@ every other surface points at it.
   [core/TASK-MODEL.md](core/TASK-MODEL.md), [core/ADAPTERS.md](core/ADAPTERS.md),
   [core/PROFILE.template.md](core/PROFILE.template.md)) that states each shared
   rule once.
-- Six members, each owning one kind of work, each a thin shell around the core.
+- Seven members, each owning one kind of work, each a thin shell around the core.
 
 ## What it is NOT
 
@@ -45,6 +45,7 @@ every other surface points at it.
 | `dispatch` | Spawns, briefs, supervises and recovers a detached worker. | [members/dispatch/SKILL.md](members/dispatch/SKILL.md) |
 | `key-watch` | Canaries credential health on a cadence and decides when a cutover is due, including the deadline-bounded Key Check. | [members/key-watch/SKILL.md](members/key-watch/SKILL.md) |
 | `key-cutover` | Moves the machine onto a replacement credential, one track at a time, and proves every surface moved. | [members/key-cutover/SKILL.md](members/key-cutover/SKILL.md) |
+| `iqa-monitor` | Supervises progress deterministically: compact snapshots only when due, named stall findings, a rate-vs-burn report, and a verified wake to the live Hub. | [members/iqa-monitor/SKILL.md](members/iqa-monitor/SKILL.md) |
 
 ## How to invoke it
 
@@ -53,7 +54,7 @@ directory loads it when the user's words match, or you load it explicitly:
 
 ```
 # any harness that reads a skill directory
-read interactive-qa-agent/SKILL.md
+read interactive-qa/SKILL.md
 ```
 
 Read the front door, then **one** member — the member the user's words name. The
@@ -111,11 +112,21 @@ pwsh -NoProfile -File tools/Test-VendoredHelpers.ps1          # no orphans, no u
 pwsh -NoProfile -File tools/Test-PackagePaths.ps1             # no unexplained absolute path
 ```
 
-All four run from the package root and from a copy anywhere on disk. The link
-gate exits `0` only when every relative Markdown link resolves **and stays inside
-the package root**; it prints each dead or escaping link with its file and line.
-`-ResolvableOnly` is a diagnostic for "what is dead", never a self-containment
-proof. The link gate's own proof is
+There are also two smoke tests a consumer can run without a fleet checkout:
+
+```
+# the module/resolver layer: an absent registry is a named absence, never a guess
+pwsh -NoProfile -File lib/Resolve-PrimaryRepos.ps1 -Name uh
+
+# the queue: enqueue, list, claim, and refuse a second concurrent claim
+pwsh -NoProfile -File tools/Invoke-IqaQueue.ps1 -Mode Status -QueueDir <tmp>
+```
+
+All four gates run from the package root and from a copy anywhere on disk. The
+link gate exits `0` only when every relative Markdown link resolves **and stays
+inside the package root**; it prints each dead or escaping link with its file and
+line. `-ResolvableOnly` is a diagnostic for "what is dead", never a
+self-containment proof. The link gate's own proof is
 [tools/Test-PluginLinks.Tests.ps1](tools/Test-PluginLinks.Tests.ps1); the
 vendored-helper gate's is
 [tools/Test-VendoredHelpers.Tests.ps1](tools/Test-VendoredHelpers.Tests.ps1).
@@ -136,13 +147,26 @@ their hash), so provenance survives the move.
 
 ## Status
 
-Phase 6. The core contracts and the link gate landed in Phase 1; the **Key
-family** in Phase 2; the **IQA family** in Phase 3; the archive/alias work in
-Phases 4–5; publish hardening (no runtime state in the package, no absolute
-paths, a publish manifest, and a cold start from a copy alone) in Phase 6. Still
-outside the plugin by design: `work-now`, `credential-rescue` (cited as the
+**1.0.0 - complete and cold-start tested.** The core contracts and the link gate
+landed in Phase 1; the **Key family** in Phase 2; the **IQA family** in Phase 3;
+the archive/alias work in Phases 4-5; publish hardening in Phase 6; and Phase 7
+closed the functional gaps that made a standalone install partial:
+
+- `tools/Invoke-IqaQueue.ps1` - the merge queue now lives here, with the same
+  append-only row format as the fleet's `merge-queue.mjs`. The Sub contract no
+  longer depends on a checkout of another product repo.
+- `tools/Invoke-IqaMonitor.ps1` - deterministic progress supervision, including a
+  verified `-Wake` that messages the repo's live Hub (see
+  [members/iqa-monitor/SKILL.md](members/iqa-monitor/SKILL.md)).
+- `lib/` - the cl-common and primary-repo resolvers, so nothing hardcodes a repo
+  name or a machine layout.
+- `iqa-merge/*` and `dispatch/*` helpers are **owned in-package** rows: the fleet
+  sources were retired, so the manifest records this package as their owner rather
+  than pointing at a path that no longer exists.
+
+Still outside the plugin by design: `work-now`, `credential-rescue` (cited as the
 fleet's owner until it is retired), and every helper the manifest declares
-not-vendored.
+not-vendored, each with its reason.
 
 ## License
 

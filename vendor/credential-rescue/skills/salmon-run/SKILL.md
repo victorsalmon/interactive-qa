@@ -1,4 +1,4 @@
-﻿---
+---
 name: salmon-run
 description: Runbook — Salmon-track opencode-go key cutover for Salmon Run lanes (Switch-OpencodeGoKey.ps1: User env + auth.json + defaultCodingKey, hygiene, canary). This is the **second** track: the Paseo surface is replaced first and in full (Repair-Paseo.ps1), and the Salmon cutover runs only after the operator approves the other surfaces. Owns the cutover seam, the defaultCodingKey front-of-pool rule, and lane verification. Use when a lane or CLI dies on "Weekly usage limit reached" / "Go usage limit exceeded", or when the operator names an exhausted pool key and a fresh one.
 triggers:
@@ -9,7 +9,7 @@ triggers:
 # Runbook — Salmon Run lane key cutover
 
 Salmon Run lanes read the opencode-go pool from the Machine env vars plus
-`~/.salmon/config.json`. A cutover is a **one-file seam edit** projected onto
+`~/.machine/config.json`. A cutover is a **one-file seam edit** projected onto
 every lane surface. Paseo is a *different* consumer — see the `paseo-rescue` runbook.
 
 **Never print a secret value.** Key NAMES only. Every change logs one JSON line
@@ -35,7 +35,7 @@ pwsh -File $env:CL_REPOS_ROOT\cl-common\Skills\credential-rescue\scripts\Switch-
 `-KeyNumber` selects `OPENCODE_GO<n>_KEY` from Machine scope, falling back to
 User scope when the Machine value is absent (a key staged without the elevation
 prompt Machine scope needs); the operator never hands you the value. The script
-is the only writer of the seam and of `~/.salmon/config.json`.
+is the only writer of the seam and of `~/.machine/config.json`.
 
 ## The seam
 
@@ -43,11 +43,11 @@ is the only writer of the seam and of `~/.salmon/config.json`.
 `keyMaxConcurrent`, `providerMaxConcurrent`, the canary set, and the hygiene
 policy. It is CONFIG ONLY: the per-key freshness observations live at the seam's
 `observationsPath` in the profile state root
-(`$HOME/.salmon/State/credential-rescue/seam-observations.json`), so a watch
+(`$HOME/.machine/state/credential-rescue/seam-observations.json`), so a watch
 cycle never dirties the tracked/vendored seam. `Switch-OpencodeGoKey.ps1`
 projects the config onto the User env
 (`OPENCODE_GO_KEY` + `OPENCODE_API_KEY`), `auth.json`, and
-`~/.salmon/config.json` (`execution.defaultCodingKey` + the caps), then writes
+`~/.machine/config.json` (`execution.defaultCodingKey` + the caps), then writes
 `activeKey` back so the seam and reality never drift.
 
 ## `defaultCodingKey` is not advisory
@@ -69,7 +69,7 @@ warns when they diverge.
 ## What the switch does, in order
 
 Model pre-check (name / endpoint / transport) → repoint User env + `auth.json`
-→ project `~/.salmon/config.json` → write `activeKey` to the seam → session
+→ project `~/.machine/config.json` → write `activeKey` to the seam → session
 hygiene (count first; strip only if poisoned) → one canary → credential log.
 
 Then, as a separate step **the operator approves**, re-point the Salmon surfaces;
@@ -94,7 +94,7 @@ to `Repair-Paseo.ps1`); `-RestartPaseo` delegates to it after the cutover.
 | Message | Class | Action |
 | :--- | :--- | :--- |
 | `Weekly usage limit reached. Resets in N days` | key exhaustion | cut over to a fresh key |
-| `encrypted_content … not issued to this caller` | model-transport | session hygiene — see `interactive-qa-agent/vendor/credential-rescue/REFERENCE.md` § Runbook A |
+| `encrypted_content … not issued to this caller` | model-transport | session hygiene — see `interactive-qa/vendor/credential-rescue/REFERENCE.md` § Runbook A |
 | `An active OpenCode Go subscription is required` | NOT-SUBSCRIBED (account) | operator renews; repointing changes nothing |
 
 ## Verify the lanes
@@ -104,7 +104,7 @@ highest-index-first, so `defaultCodingKey` is what pins the active key to the
 front. Confirm the runtime config took:
 
 ```powershell
-(Get-Content "$env:USERPROFILE\.salmon\config.json" -Raw | ConvertFrom-Json).execution.defaultCodingKey
+(Get-Content "$env:USERPROFILE\.machine\config.json" -Raw | ConvertFrom-Json).execution.defaultCodingKey
 ```
 
 ## Close out the ledger — ask, then record
@@ -129,7 +129,7 @@ with its utilisation is a real entry and the reason the next run can trust the k
 
 ## Reference
 
-- Shared facts, safe reads, and the long-form cutover: `interactive-qa-agent/vendor/credential-rescue/REFERENCE.md` § Runbook A
+- Shared facts, safe reads, and the long-form cutover: `interactive-qa/vendor/credential-rescue/REFERENCE.md` § Runbook A
   (the `Skills/credential-rescue/REFERENCE.md` body is archived — see `Skills/_archive/iqa-superseded-2026-11-03/`)
 - Paseo consumer: [../paseo-rescue/SKILL.md](../paseo-rescue/SKILL.md)
 - Unattended watch: [../watch/SKILL.md](../watch/SKILL.md)

@@ -7,7 +7,7 @@
     "logDir": "%CL_REPOS%\\Tasks\\Logs",
     "spawnLog": "agent-spawns.jsonl",
     "errorLog": "agent-spawn-errors.jsonl",
-    "stateFile": "~/.salmon/State/agent-capacity.json"
+    "stateFile": "~/.machine/state/agent-capacity.json"
   },
   "defaults": {
     "reservationTtlMinutes": 30,

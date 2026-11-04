@@ -48,7 +48,7 @@
     the gate works on a copy of the package anywhere on disk.
 
 .EXAMPLE
-    pwsh -NoProfile -File interactive-qa-agent/tools/Test-VendoredHelpers.ps1
+    pwsh -NoProfile -File interactive-qa/tools/Test-VendoredHelpers.ps1
 
 .EXAMPLE
     # prove an isolated copy, with nothing else of the repository in reach
@@ -167,7 +167,11 @@ foreach ($row in $vendoredRows) {
     # The Markdown token check resolves a helper by basename, so two copies of the
     # same canonical file (each placed where a different consumer's relative path
     # points) are legitimate; a duplicate *path* is not.
-    if ([System.IO.Path]::GetExtension([string]$row.Vendored) -eq '.ps1') {
+    #
+    # BOTH extensions register here. Registering only .ps1 is what let a cross-repo
+    # `.mjs` dependency (the fleet merge queue) sit in the members' prescribed
+    # commands while this gate reported every helper resolved.
+    if ([System.IO.Path]::GetExtension([string]$row.Vendored) -in @('.ps1', '.mjs')) {
         [void]$vendoredNames.Add([string]$row.Name)
         $vendoredByBasename[[string]$row.Name] = [string]$row.Vendored
     }
@@ -267,7 +271,7 @@ switch ($checkRun.ExitCode) {
 }
 
 # --- 7. every helper named in the Markdown resolves ---------------------------
-$tokenPattern = [regex]'(?<![A-Za-z0-9_.-])(?<name>[A-Za-z0-9_.-]+\.ps1)'
+$tokenPattern = [regex]'(?<![A-Za-z0-9_.-])(?<name>[A-Za-z0-9_.-]+\.(?:ps1|mjs))'
 $mdFiles = Get-ChildItem -LiteralPath $packageFull -Recurse -File -Filter '*.md' | Where-Object {
     $relative = $_.FullName.Substring($packageFull.Length)
     -not ($relative -split '[\\/]' | Where-Object { $_ -in @('.git', 'node_modules') })

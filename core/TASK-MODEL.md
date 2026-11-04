@@ -16,9 +16,9 @@ a bead labelled `manual` / `origin:human`, never a separate queue file.
   (its own repo, engine and docs), but no session uses its ponds, queues or
   `Tasks/` tree as a backlog any more.
 - **Legacy trees are migration input only.** Never enqueue new work into
-  `~/.salmon/Tasks/{00Intake,02Code,00Manual,...}`; a live item found there is
+  `~/.machine/state/tasks/{00Intake,02Code,00Manual,...}`; a live item found there is
   minted as a bead and the file moves to
-  `~/.salmon/Tasks/09Archive/Moved to Beads/`. A repo-local `Tasks/` dir is never
+  `~/.machine/state/tasks/09Archive/Moved to Beads/`. A repo-local `Tasks/` dir is never
   written.
 - **Minting** follows the `create-bead` skill (graph resolution, decomposition,
   write paths), never an ad-hoc title.

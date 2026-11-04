@@ -29,7 +29,7 @@
     Exactly one line is printed on stdout, so a backstop can log it verbatim.
 
 .PARAMETER StateDir
-    The Key Check state directory. Default `~/.salmon/State/key-check`.
+    The Key Check state directory. Default `~/.machine/state/key-check`.
 
 .PARAMETER WindowMinutes
     How long after a finished cutover a backstop must still stand down.

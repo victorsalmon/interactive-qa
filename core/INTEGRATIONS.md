@@ -49,5 +49,5 @@ Resolution order: `CL_COMMON_PATH` → `CL_REPOS_ROOT\cl-common` → absent.
   `repo-clean` should say "groom unavailable: cl-common not installed", not skip
   the step as though it had passed. (Gate integrity: a gate that cannot run is
   skipped-with-waiver, carrying its reason — never a pass.)
-- **Never hardcode** `C:\Users\...` or a recreatable path in a shipped file.
+- **Never hardcode** a user-home path or any other recreatable location in a shipped file.
   `tools/Test-PackagePaths.ps1` fails the package for it.

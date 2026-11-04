@@ -48,7 +48,7 @@
 
 .PARAMETER ScheduleId
     The schedule id, as returned by `paseo_create_schedule` and as the record's
-    file name (`C:\Users\<user>\.paseo\schedules\<id>.json`). A prefix is
+    file name (`%USERPROFILE%\.paseo\schedules\<id>.json`). A prefix is
     accepted; an ambiguous prefix is CANNOT-EVALUATE rather than a guess.
 
 .PARAMETER Name
@@ -58,8 +58,8 @@
 
 .PARAMETER Cwd
     With -Name, require the record's `cwd` to match. Paths are compared
-    case-insensitively with `/` and `\` normalised, so `E:/repos/x` and
-    `E:\repos\x` name the same checkout.
+    case-insensitively with `/` and `\` normalised, so a forward-slash and a
+    backslash spelling of one checkout name the same directory.
 
 .PARAMETER SchedulesPath
     The schedule store to read. Defaults to `$env:PASEO_SCHEDULES_DIR` when set,
@@ -74,7 +74,7 @@
     Test-ScheduleDispatch: FAILED-SPAWN schedule=16e0588b ...
 
 .EXAMPLE
-    pwsh Test-ScheduleDispatch.ps1 -Name lane-gct-naive-instant-b -Cwd E:\repos\cl-common\.worktrees\lane-gct -Json
+    pwsh Test-ScheduleDispatch.ps1 -Name lane-gct-naive-instant-b -Cwd <repo>\.worktrees\lane-gct -Json
 
 .EXAMPLE
     # the check-back assertion, tolerant of a fire that has not landed yet

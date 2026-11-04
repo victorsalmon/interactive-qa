@@ -6,4 +6,4 @@ triggers:
   - model
 ---
 
-Canonical content lives at `interactive-qa-agent/members/key-watch/SKILL.md`.
+Canonical content lives at `interactive-qa/members/key-watch/SKILL.md`.

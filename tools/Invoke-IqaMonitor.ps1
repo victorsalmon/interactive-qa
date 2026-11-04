@@ -54,6 +54,17 @@ param(
     [string[]]$Repo,
     [int]$ReportHours = 24,
     [int]$RetainDays = 7,
+
+    # Waking is a real delivery: the monitor finds the repo's live Hub in the
+    # registry and sends it ONE compact line through the Paseo CLI. Without a live
+    # hub there is nobody to wake, and spawning a new agent here would be a
+    # dispatch decision, not a supervisor's - so that case is a named finding.
+    [switch]$Wake,
+
+    # Resolve and print the exact wake command without sending it. Use this to
+    # verify the transport on a machine before arming the scheduled task.
+    [switch]$WakeDryRun,
+
     [switch]$Json
 )
 
@@ -78,6 +89,150 @@ function Get-PrimaryRepos {
     $resolved = & $resolver
     if (-not $resolved.Available) { throw $resolved.Reason }
     return $resolved.Repos
+}
+
+# -Repo accepts the canonical name, the slug, or any alias the registry records,
+# because the operator says "uh" and the label says "hub-cbk". An unknown name is a
+# named failure: silently supervising nothing looks exactly like a healthy fleet.
+function Select-PrimaryRepos {
+    param([object[]]$Primary, [string[]]$Names)
+
+    if (-not $Names) { return @($Primary) }
+
+    $wanted = @($Names | ForEach-Object { $_.Trim() })
+    $selected = @($Primary | Where-Object {
+            $row = $_
+            $wanted -contains $row.name -or $wanted -contains $row.slug -or
+            (@($row.aliases) | Where-Object { $wanted -contains $_ }) -or
+            (@($wanted | Where-Object { $row.name -like "*$_*" })).Count -gt 0
+        })
+
+    if ($selected.Count -eq 0) {
+        $known = ($Primary | ForEach-Object { "$($_.name) ($(@($_.aliases) -join '/'))" }) -join ', '
+        throw "no primary repo matches '$($Names -join ', ')'; the registry knows: $known"
+    }
+    return $selected
+}
+
+function Resolve-PaseoCli {
+    # Explicit override, then PATH, then the two documented install locations. The
+    # locations are built from environment variables, never written as an absolute
+    # path, so the publish gate stays honest and a different install still works.
+    if (-not [string]::IsNullOrWhiteSpace($env:PASEO_CLI)) { return $env:PASEO_CLI }
+
+    $onPath = Get-Command paseo -ErrorAction SilentlyContinue
+    if ($onPath) { return $onPath.Source }
+
+    foreach ($candidate in @(
+            (Join-Path $env:ProgramFiles 'Paseo\paseo.exe'),
+            (Join-Path $env:LOCALAPPDATA 'Programs\Paseo\paseo.exe')
+        )) {
+        if ($candidate -and (Test-Path -LiteralPath $candidate -PathType Leaf)) { return $candidate }
+    }
+    return $null
+}
+
+function Get-LiveHub {
+    param([string]$Repo, [string]$HubRegistry)
+
+    if (-not (Test-Path -LiteralPath $HubRegistry -PathType Leaf)) {
+        return [pscustomobject]@{ Live = $false; AgentId = $null; Reason = "hub registry helper missing: $HubRegistry" }
+    }
+    try {
+        $raw = & $HubRegistry -Mode Find -Repo $Repo -Json 2>$null | Out-String
+        if ([string]::IsNullOrWhiteSpace($raw)) {
+            return [pscustomobject]@{ Live = $false; AgentId = $null; Reason = 'hub registry returned nothing' }
+        }
+        $record = $raw | ConvertFrom-Json
+        $live = [bool]$record.live
+        $agentId = if ($record.agentId) { [string]$record.agentId } else { $null }
+        return [pscustomobject]@{
+            Live    = $live
+            AgentId = $agentId
+            Reason  = if ($live) { "live hub as of $(($record.hubs | Select-Object -First 1).heartbeatAt)" } else { [string]$record.reason }
+        }
+    }
+    catch {
+        return [pscustomobject]@{ Live = $false; AgentId = $null; Reason = "hub registry could not be read: $($_.Exception.Message)" }
+    }
+}
+
+function Send-MonitorWake {
+    param([string]$Repo, [object[]]$Findings, [string]$MonitorDir, [switch]$DryRun)
+
+    $packageRoot = Split-Path $PSScriptRoot -Parent
+    $hubRegistry = Join-Path $packageRoot 'vendor/iqa-merge/HubRegistry.ps1'
+    $hub = Get-LiveHub -Repo $Repo -HubRegistry $hubRegistry
+
+    if (-not $hub.Live) {
+        return [pscustomobject]@{
+            repo      = $Repo
+            delivered = $false
+            agentId   = $null
+            code      = 'WAKE-NO-HUB'
+            detail    = "no live hub to wake: $($hub.Reason)"
+        }
+    }
+
+    $paseoCli = Resolve-PaseoCli
+    if (-not $paseoCli) {
+        return [pscustomobject]@{
+            repo      = $Repo
+            delivered = $false
+            agentId   = $hub.AgentId
+            code      = 'WAKE-NO-TRANSPORT'
+            detail    = 'Paseo CLI not found (set PASEO_CLI or put paseo on PATH); findings are on disk only'
+        }
+    }
+
+    # One compact line per repo. A monitor that pastes its whole history into the
+    # wake spends exactly the tokens it exists to save.
+    $summary = ($Findings | ForEach-Object { "$($_.code): $($_.detail)" }) -join ' | '
+    $promptPath = Join-Path $MonitorDir "wake-$Repo.txt"
+    $prompt = "IQA MONITOR - $Repo needs a decision. $summary. Findings: $(Join-Path $MonitorDir 'findings.json'). Act on it or record why not; do not re-read the graph to rediscover this."
+    Set-Content -LiteralPath $promptPath -Value $prompt -Encoding utf8
+
+    $arguments = @('send', $hub.AgentId, '--prompt-file', $promptPath, '--behavior', 'steer', '--no-wait', '--json')
+
+    if ($DryRun) {
+        return [pscustomobject]@{
+            repo      = $Repo
+            delivered = $false
+            dryRun    = $true
+            agentId   = $hub.AgentId
+            code      = 'WAKE-DRY-RUN'
+            detail    = "would run: $paseoCli $($arguments -join ' ')"
+        }
+    }
+
+    try {
+        $output = & $paseoCli @arguments 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) {
+            return [pscustomobject]@{
+                repo      = $Repo
+                delivered = $false
+                agentId   = $hub.AgentId
+                code      = 'WAKE-FAILED'
+                detail    = "paseo send exited $LASTEXITCODE`: $(($output -split "`n" | Select-Object -First 1))"
+            }
+        }
+        return [pscustomobject]@{
+            repo      = $Repo
+            delivered = $true
+            agentId   = $hub.AgentId
+            code      = 'WAKE-SENT'
+            detail    = "queued one monitor line to $($hub.AgentId)"
+        }
+    }
+    catch {
+        return [pscustomobject]@{
+            repo      = $Repo
+            delivered = $false
+            agentId   = $hub.AgentId
+            code      = 'WAKE-FAILED'
+            detail    = $_.Exception.Message
+        }
+    }
 }
 
 function Get-LastWeeklyPercent {
@@ -160,7 +315,7 @@ function Invoke-Snapshot {
     New-Item -ItemType Directory -Force -Path $monitorDir | Out-Null
 
     $primary = Get-PrimaryRepos
-    if ($Repo) { $primary = @($primary | Where-Object { $Repo -contains $_.name }) }
+    $primary = Select-PrimaryRepos -Primary $primary -Names $Repo
 
     $wk = Get-LastWeeklyPercent
     $now = Get-Date
@@ -245,7 +400,7 @@ function Invoke-Check {
     if (-not (Test-Path -LiteralPath $monitorDir)) { throw "no monitor history at $monitorDir; run -Mode Snapshot first" }
 
     $primary = Get-PrimaryRepos
-    if ($Repo) { $primary = @($primary | Where-Object { $Repo -contains $_.name }) }
+    $primary = Select-PrimaryRepos -Primary $primary -Names $Repo
 
     $now = Get-Date
     $findings = @()
@@ -280,13 +435,37 @@ function Invoke-Check {
     }
 
     $findingsPath = Join-Path $monitorDir 'findings.json'
-    @{ ts = $now.ToString('o'); count = $findings.Count; findings = $findings } |
+
+    # Wake attempts are recorded BESIDE the findings, never instead of them: the
+    # file is the truth whether or not a message got through, and a failed wake is
+    # itself a finding a reader can act on.
+    $wakeResults = @()
+    if ($Wake -and $findings.Count -gt 0) {
+        $repoNames = @($findings | ForEach-Object { $_.repo } | Sort-Object -Unique)
+        foreach ($repoName in $repoNames) {
+            $repoFindings = @($findings | Where-Object { $_.repo -eq $repoName })
+            $wakeResults += Send-MonitorWake -Repo $repoName -Findings $repoFindings -MonitorDir $monitorDir -DryRun:$WakeDryRun
+        }
+        foreach ($result in $wakeResults) {
+            if ($result.code -ne 'WAKE-SENT' -and $result.code -ne 'WAKE-DRY-RUN') {
+                $findings += [pscustomobject]@{
+                    code     = $result.code
+                    repo     = $result.repo
+                    detail   = $result.detail
+                    evidence = @{ agentId = $result.agentId }
+                }
+            }
+        }
+    }
+
+    @{ ts = $now.ToString('o'); count = $findings.Count; findings = $findings; wake = @($wakeResults) } |
         ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $findingsPath -Encoding UTF8
 
     if ($Json) { $findings | ConvertTo-Json -Depth 5 }
     else {
         if ($findings.Count -eq 0) { "NO FINDINGS" }
         else { $findings | ForEach-Object { "$($_.code) $($_.repo): $($_.detail)" } }
+        foreach ($result in $wakeResults) { "wake $($result.repo): $($result.code) - $($result.detail)" }
     }
     if ($findings.Count -gt 0) { exit 1 }
 }
@@ -295,7 +474,7 @@ function Invoke-Report {
     $stateRoot = Get-StateRoot
     $monitorDir = Join-Path $stateRoot 'monitor'
     $primary = Get-PrimaryRepos
-    if ($Repo) { $primary = @($primary | Where-Object { $Repo -contains $_.name }) }
+    $primary = Select-PrimaryRepos -Primary $primary -Names $Repo
 
     $now = Get-Date
     $since = $now.AddHours(-$ReportHours)
@@ -375,9 +554,22 @@ function Invoke-Rollup {
 function Invoke-Status {
     $stateRoot = Get-StateRoot
     $monitorDir = Join-Path $stateRoot 'monitor'
+    $primary = Select-PrimaryRepos -Primary (Get-PrimaryRepos) -Names $Repo
     $rows = @()
-    foreach ($file in Get-ChildItem -LiteralPath $monitorDir -Filter '*.latest.json' -ErrorAction SilentlyContinue) {
-        $l = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
+
+    # Enumerate the SELECTED repos, not whatever files happen to exist: listing the
+    # directory made -Repo silently do nothing, so a typo'd or aliased name looked
+    # exactly like a healthy repo.
+    foreach ($p in $primary) {
+        $file = Join-Path $monitorDir "$($p.name).latest.json"
+        if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+            $rows += [pscustomobject]@{
+                repo = $p.name; lastWrite = '(none)'; lastChange = '(none)'
+                intervalMin = $null; open = $null; closed = $null; trunk = $p.trunk
+            }
+            continue
+        }
+        $l = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
         $rows += [pscustomobject]@{
             repo         = $l.last.repo
             lastWrite    = ([datetime]$l.lastWriteTs).ToString('MM-dd HH:mm')

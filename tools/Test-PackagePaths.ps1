@@ -39,7 +39,7 @@
     the gate runs unchanged on a copy anywhere on disk.
 
 .EXAMPLE
-    pwsh -NoProfile -File interactive-qa-agent/tools/Test-PackagePaths.ps1
+    pwsh -NoProfile -File interactive-qa/tools/Test-PackagePaths.ps1
 #>
 [CmdletBinding()]
 param(

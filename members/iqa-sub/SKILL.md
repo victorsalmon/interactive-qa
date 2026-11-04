@@ -51,11 +51,21 @@ Order inside the park is load-bearing:
    `git log --oneline -5`, `git diff --stat`, ahead/behind of the trunk. No
    further edits to the branch after this point.
 2. **Push the branch** to `origin`. This backs the work up and lets CI see it.
-3. **Enqueue** the frozen SHA as one merge-queue row - repo, branch, SHA,
-   worktree, `--owner <this agent's id>` so the hub can join rows to live lanes,
-   `--base <trunk>`. The note carries the complete instructions: the evidence
-   actually run, one `needs:` line per piece of residual work, and the return
-   contact. A vague note mints nothing; the hub relays it back as a question.
+3. **Enqueue** the frozen SHA as one merge-queue row with the package's own
+   queue tool - repo, branch, SHA, worktree, owner, base:
+
+   ```
+   pwsh -NoProfile -File tools/Invoke-IqaQueue.ps1 -Mode Enqueue -Repo <slug> `
+     -Branch <b> -Sha <frozen> -Worktree <path> -Owner <this agent's id> [-Base <trunk>] [-Urgent]
+   ```
+
+   The queue is repo-scoped state at `<repo>/.iqa/merge-queue/<slug>.jsonl` (never
+   inside the package); `$env:MERGE_QUEUE_DIR` or `-QueueDir` overrides it, and a
+   queue written by the fleet's `merge-queue.mjs` is read as-is because the row
+   format is identical. `-Owner` lets the hub join rows to live lanes. `-Note`
+   carries the complete instructions: the evidence actually run, one `needs:` line
+   per piece of residual work, and the return contact. A vague note mints nothing;
+   the hub relays it back as a question.
 4. **Ring the doorbell**: one `MERGE-READY <branch> @ <sha>` prompt to the live
    hub, plus the `needs:` list. The ping is a doorbell - the queue row is truth.
    No resend loops.

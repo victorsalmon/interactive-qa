@@ -16,7 +16,7 @@
          label it exercised.
 
       2. A FAILED CANARY LEFT A SPLIT MACHINE. The switch wrote the seam, the
-         User env, auth.json and ~/.salmon/config.json, then exited 1 with the
+         User env, auth.json and ~/.machine/config.json, then exited 1 with the
          surfaces disagreeing. A post-write canary failure must restore the
          pre-switch state byte-for-byte; only a rollback that itself fails may
          leave a partial application, and then it leaves a label-only marker

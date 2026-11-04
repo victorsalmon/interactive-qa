@@ -48,9 +48,10 @@ names it, a read may use the in-package snapshot.
 
 The **provider lock** (`Invoke-ProviderLock.ps1`) is machine state by design: it
 records fingerprints of *this* machine's credentials, so it resolves its lock
-file outside the package at `$env:USERPROFILE/.salmon/State/credential-rescue/provider-lock.json`
-(`-StateRoot`, or `$env:IQA_PROVIDER_LOCK_STATE_ROOT`, override the directory),
-with a read-only fallback to a legacy in-tree copy. `-Mode Lock` always writes
+file outside the package at `$env:MACHINE_STATE_HOME/credential-rescue/provider-lock.json`
+(or `~/.machine/state/credential-rescue/provider-lock.json`; `-StateRoot` or
+`$env:PROVIDER_LOCK_STATE_ROOT` overrides the directory), with a read-only
+fallback to a legacy in-tree copy. `-Mode Lock` always writes
 the state root and seeds it from the legacy copy on the first run. A machine with
 neither file is `cannot-evaluate`: the provider definitions (source secret and
 field, consumer targets) are deployment configuration and cannot be invented -
@@ -190,7 +191,7 @@ hashes without writing (recorded hashes always, canonical files too when the
 Skills tree is reachable):
 
 ```
-pwsh -NoProfile -File interactive-qa-agent/tools/Sync-VendoredHelpers.ps1 -Check
+pwsh -NoProfile -File interactive-qa/tools/Sync-VendoredHelpers.ps1 -Check
 ```
 
 Drift — a canonical helper that changed while the vendored copy did not — is
@@ -220,10 +221,14 @@ Rules:
   canonical helper, re-run the sync, commit both sides.
 - `Invoke-HubProbe.ps1` still composes commands for *other* skills' helpers by
   design (`Invoke-SafeCommit.ps1`, `Invoke-TrunkPrep.ps1`,
-  `Invoke-BranchWorktreeHygiene.ps1`, `merge-queue.mjs`), resolved from the fleet
+  `Invoke-BranchWorktreeHygiene.ps1`), resolved from the fleet
   root. Its fallback when `CL_REPOS_ROOT` is unset is derived from the script's own
-  location — right for the canonical copy under `Skills/iqa-merge`, one level off
+  location - right for the canonical copy under `Skills/iqa-merge`, one level off
   for a package copy under `<package>/vendor`. The part **statuses** come from
   repo-local git state and stay valid; a printed command is only meaningful when
   the development override is set. Never run one whose helper path does not exist.
   This is the development-override seam, not part of the Hub-start contract.
+- The **merge queue** is not one of those helpers: it ships here as
+  `tools/Invoke-IqaQueue.ps1`, because parking a branch is the Sub's core promise
+  and must not depend on a checkout of another product repo. Its row format is
+  identical to the fleet's `merge-queue.mjs`, so either tool reads either queue.

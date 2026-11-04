@@ -15,7 +15,7 @@
     vendored manifest row, so a watch cycle must not modify it. The ledger is
     written to the profile state root instead:
 
-        $HOME/.salmon/State/credential-rescue/seam-observations.json
+        $HOME/.machine/state/credential-rescue/seam-observations.json
 
     (see scripts/lib/CutoverSeam.ps1 for the resolution order). A first write
     imports any legacy `freshness.keys` still embedded in the seam, so no
@@ -65,7 +65,7 @@
 .PARAMETER ObservationsPath
     The runtime observations file to write. Default: the seam's declared
     `observationsPath`, else beside a non-canonical seam, else
-    $HOME/.salmon/State/credential-rescue/seam-observations.json.
+    $HOME/.machine/state/credential-rescue/seam-observations.json.
 
 .PARAMETER Evidence
     Free text of what was observed and how (probe, operator Console reading).

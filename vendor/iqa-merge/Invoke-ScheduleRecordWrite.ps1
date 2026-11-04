@@ -7,7 +7,7 @@
 
 .DESCRIPTION
     The daemon writes a schedule record by renaming a temporary file over
-    `C:\Users\<user>\.paseo\schedules\<id>.json`. That rename races the daemon's
+    `%USERPROFILE%\.paseo\schedules\<id>.json`. That rename races the daemon's
     own readers/writers and can fail `EPERM: operation not permitted`. Measured
     twice on 2026-11-03 (bead cl-common-q8k):
 

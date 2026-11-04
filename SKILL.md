@@ -1,12 +1,13 @@
 ---
-name: interactive-qa-agent
+name: interactive-qa
 description: >
-  Front door for the Interactive QA Agent plugin — an interactive
+  Front door for the Interactive QA plugin - an interactive
   quality-assurance session against a product, with a merge hub, single-unit
-  worker lanes, hand-off receipts, detached worker dispatch, and key watch and
-  cutover. Routes to exactly one member and nothing else. Use when the user
-  says "IQA", "interactive QA", "run a QA session", "hub mode", "sub mode",
-  "work now", "watch the key", or asks to test a product interactively.
+  worker lanes, a repo-owned merge queue, hand-off receipts, detached worker
+  dispatch, key watch and cutover, and a deterministic progress monitor. Routes
+  to exactly one member and nothing else. Use when the user says "IQA",
+  "interactive QA", "run a QA session", "hub mode", "sub mode", "work now",
+  "watch the key", or asks to test a product interactively.
 ---
 
 # Interactive QA Agent — front door
@@ -21,6 +22,7 @@ Read this file, then read **one** member. This file defines no procedure.
 | Spawning, briefing, or recovering a worker | `dispatch` | [members/dispatch/SKILL.md](members/dispatch/SKILL.md) |
 | Watching credential health while work is running | `key-watch` | [members/key-watch/SKILL.md](members/key-watch/SKILL.md) |
 | Moving the fleet onto a replacement credential | `key-cutover` | [members/key-cutover/SKILL.md](members/key-cutover/SKILL.md) |
+| Checking whether work is progressing, or waking a stalled Hub | `iqa-monitor` | [members/iqa-monitor/SKILL.md](members/iqa-monitor/SKILL.md) |
 
 All members read the same core:
 [INVARIANTS](core/INVARIANTS.md) · [TASK-MODEL](core/TASK-MODEL.md) ·

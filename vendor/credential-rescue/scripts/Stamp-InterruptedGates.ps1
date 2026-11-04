@@ -31,7 +31,7 @@
     ISO-8601 end of the kill window. Omit to read `-KillWindowPath`.
 
 .PARAMETER KillWindowPath
-    Default `~/.salmon/State/key-check/cutover-kill-window.json`.
+    Default `~/.machine/state/key-check/cutover-kill-window.json`.
 
 .PARAMETER RunId
     The cutover run the window belongs to. Default: the value in the window file.

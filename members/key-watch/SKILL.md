@@ -317,7 +317,7 @@ Both were `cl-common-79y`; they are fixed in `Invoke-KeyCheck.ps1` and
 Two watches on one machine each read the same state, both see the same
 threshold crossing, and both cut over — the second `Repair-Paseo` restarts Paseo
 underneath the first. So a run takes a lock at
-`~/.salmon/State/key-check/lock.json`:
+`~/.machine/state/key-check/lock.json`:
 
 ```json
 { "pid": 12345, "host": "BOX", "runId": "20261102-152559",
@@ -340,12 +340,12 @@ underneath the first. So a run takes a lock at
 
 **To clear a lock deliberately:** confirm no Key Check process is running
 (`Get-Process pwsh` plus the audit trail), then delete
-`~/.salmon/State/key-check/lock.json`, or re-run with `-Force`. Never delete it
+`~/.machine/state/key-check/lock.json`, or re-run with `-Force`. Never delete it
 while a run is alive — that reintroduces the double-cutover defect.
 
 ### Resume: the deadline is never extended
 
-State is persisted to `~/.salmon/State/key-check/state.json` after **every**
+State is persisted to `~/.machine/state/key-check/state.json` after **every**
 check, so an interruption — a reboot, an operator `Ctrl-C`, or the `paseo
 restart` the cutover itself causes — does not lose the run:
 
@@ -390,7 +390,7 @@ code, no `endedAt`, no proof, no report.
 
 So `trigger` starts `vendor/credential-rescue/scripts/Invoke-KeyCheckCutover.ps1` and polls its outcome
 file. The helper writes that outcome **before** the repair runs — `-OutcomePath`
-(default `~/.salmon/State/key-check/<runId>-cutover.json`) carries `applied`,
+(default `~/.machine/state/key-check/<runId>-cutover.json`) carries `applied`,
 `verified`, `restartPending`, each step's exit code, the surfaces checked so
 far, `at` and `runId` — so the evidence exists **whether or not** the helper
 outlives the restart. Survivability is environment-dependent and is not relied
@@ -446,7 +446,7 @@ The sequence is ordered, and the destructive step is last:
 
 1. `Switch-OpencodeGoKey.ps1 -KeyNumber <n>` — the Salmon track: seam
    `activeKey`, User `OPENCODE_GO_KEY` / `OPENCODE_API_KEY`, `auth.json`,
-   `~/.salmon/config.json`.
+   `~/.machine/config.json`.
 2. Verify the **two non-Paseo surfaces** (seam `activeKey`, User key hash). If
    the switch left its own surfaces disagreeing, the repair is refused and the
    run ends **4** `surface-disagrees` — nothing usable moved.
@@ -470,7 +470,7 @@ that one-surface check is exactly why every rescue used to report
 The switch is all-or-nothing, and its canary is the only proof of the new key:
 the pre-switch state of every surface it writes is captured first, a canary
 failure rolls them all back (exit 1, `rolled-back`), and only a rollback that
-itself fails leaves `~/.salmon/State/key-check/partial-cutover.json` (exit 6) —
+itself fails leaves `~/.machine/state/key-check/partial-cutover.json` (exit 6) —
 which this helper resolves *before* any fresh switch by asking the switch to
 complete the recorded target or revert to the recorded `from` key. **A canary
 must run `--standalone` or it measures the CLI's cached background service, not
@@ -503,7 +503,7 @@ restart still leaves the evidence behind:
                 "hasDoneFile": false } ] }
 ```
 
-It lives at `~/.salmon/State/key-check/<runId>-roster.json`, its path is
+It lives at `~/.machine/state/key-check/<runId>-roster.json`, its path is
 recorded in the cutover outcome (`rosterPath`), and it never contains a key
 value — only `GO<n>` labels. This process and `merge-*` workers are excluded.
 
@@ -518,7 +518,7 @@ its creation. `.iqa-report.md` is the lane's own brief-mandated report.
 
 `vendor/credential-rescue/scripts/Resume-KeyCheckRoster.ps1` then makes **one logged decision per
 agent** (`{kind:"roster-resume", runId, agentId, decision, reason, at,
-variant}` in `~/.salmon/Tasks/Logs/keycheck.jsonl`): `resumed`,
+variant}` in `~/.machine/logs/keycheck.jsonl`): `resumed`,
 `skipped-finished`, `skipped-self`, `skipped-already-nudged`,
 `skipped-missing`, `skipped-missing-cwd` (the worktree was swept: no send, no
 failure line), `skipped-over-cap`. **An `isHub` entry is resumable by
@@ -546,7 +546,7 @@ sites are safe** — the helper after a proven cutover, and the watch's resume
 path when the helper died mid-restart.
 
 **The durable marker.** The resume pass (and the witness) writes
-`~/.salmon/State/key-check/last-cutover.json` =
+`~/.machine/state/key-check/last-cutover.json` =
 `{runId, at, from, to, rosterPath, witnessPath, verdict}`, so a process can
 learn a cutover happened without knowing the runId. On start, a Key Check run
 that finds a marker newer than its own start **recovers before any further
@@ -567,7 +567,7 @@ two verified verdicts. Every label comes from `Get-PoolMatchLabel`, with the
 seam's *name* resolved to its *value* first: labelling by stripping `_KEY`
 compared `OPENCODE_GO3` against `GO3` and reported a verified machine as
 `no-evidence` (pinned by a test). It writes
-`~/.salmon/State/key-check/witness-<runId>.json`, one `cutover-witness` audit
+`~/.machine/state/key-check/witness-<runId>.json`, one `cutover-witness` audit
 line, and refreshes `last-cutover.json`.
 
 A failure in any of the three scripts is audited
@@ -679,7 +679,7 @@ prevent. Schedule it (hourly is enough — a lapsed watch costs nothing while th
 key is quiet) and the chain recovers even after a reboot.
 
 **What the record proves.** One `kind: successor` audit line per decision, with
-the trigger source, in `~/.salmon/Tasks/Logs/keycheck.jsonl`:
+the trigger source, in `~/.machine/logs/keycheck.jsonl`:
 
 ```json
 {"kind":"successor","trigger":"successor-arm","action":"armed","runId":"20261103-080748",
@@ -788,17 +788,17 @@ nothing was watching it.
 
 | Path | Content |
 | :-- | :-- |
-| `~/.salmon/State/key-check/state.json` | The resumable run: `{ runId, startedAt, deadlineAt, phase, generation, replacementKey, consecutiveRateLimited, consecutiveCannotEvaluate, consecutiveBelowThreshold, armed, lastCheckAt, lastResult }` plus `activeKeyNumber`, `checks`, `lastReading`, `evidence[]`, `dryRun`, `cutovers` (each with `applied`, `verified`, `outcomePath`, `launchMethod`, `launchPid`), `drift`, `canary`, `simulatedActiveKeyNumber`, `endedAt`, `endReason`, `exitCode`, `successor` (`{ trigger, armed, at, fireAt, pid, method, parentRunId }` — whether the next window is armed, and by which arm of the fix), and the cadence record `{ cadenceSeconds, cadenceGear, cadenceReason, burnPerMinute, ettMinutes, sampleAt, cadenceChanges[], cadenceLoosenStreak, cadenceFloorTicks, cadenceSamples[], cadenceSampleSignature, cadenceSampleGeneration }`. Rewritten at every check — that is what makes an interrupted run resumable. One fixed path, never a per-run file. |
-| `~/.salmon/State/key-check/lock.json` | The live-run lock: `{ pid, host, runId, startedAt, heartbeatAt }`. Heartbeat refreshed at every check. Values only, never key material. |
-| `~/.salmon/State/key-check/dryrun/` | **A `-DryRun` probe's own artefacts** — `state.json`, `keycheck.jsonl`, `<runId>-cutover.json`, `witness-<runId>.json` — where `<runId>` ends `-dryrun` and the state carries `dryRun: true` plus `rehearsedRunId` (the live run it rehearsed). A dry run reads the live state as context and writes ONLY here, so the live `state.json` / `lock.json` / `keycheck.jsonl` are unreachable from it (cl-common-jqm). |
-| `~/.salmon/State/key-check/<runId>-cutover.json` | The helper's outcome: `applied`, `verified` (`true` or `'pending'`), `restartPending`, `reason`, per-step `exitCode`, the surfaces checked, `at`, `runId`, `rosterPath`, `witnessPath`, `witnessVerdict`. Written by the helper — the pending version **before** the restart, so it exists whether or not the helper outlives it, and a resume consumes it. |
-| `~/.salmon/State/key-check/<runId>-roster.json` | The pre-cutover agent snapshot (`id`, `shortId`, `title`, `cwd`, `cwdIsRepoRoot`, `status`, `created`, `sessionId`, `lastActivityAt`, `labels`, `isHub`, `hasDoneFile`). Labels only, never a key value. |
-| `~/.salmon/State/key-check/witness-<runId>.json` | The witness verdict plus the evidence it used: outcome presence/content, the three surface labels, daemon alive, exit code. |
-| `~/.salmon/State/key-check/last-cutover.json` | The durable discovery marker: `{runId, at, from, to, rosterPath, witnessPath, verdict}`. Readable without a runId; a marker newer than a run's start triggers the recovery pass. |
-| `~/.salmon/State/key-check/cutover-in-progress.json` | The in-flight claim: `{runId, startedAt, phase, host}`, written before the switch and removed when the cutover ends. What `Test-CutoverInProgress.ps1` answers 3 for. |
-| `~/.salmon/State/key-check/cutover-kill-window.json` | The destructive-step window: `{runId, startedAt, endedAt}`. A per-run sibling (`cutover-kill-window-<runId>.json`) is written too, so two cutovers in minutes do not overwrite each other's evidence. `Stamp-InterruptedGates.ps1` stamps `<repo>/.gate-runs/<stamp>` modified inside it with `killed-by-cutover.json`. |
-| `~/.salmon/State/key-check/cutover-report-<runId>.json` / `.md` | The post-cutover reconciliation report: closed / resumed / unresumed (with reason) agents with branch+HEAD, worktrees with uncommitted work or a missing report/done file, leases released/revoked with owner+generation, stand-downs, and `unhandled` gaps. |
-| `~/.salmon/Tasks/Logs/keycheck.jsonl` | One line per check (key number, wk/mo, phase, decision, the three tolerance streaks), one per cutover (from/to key numbers, `applied`, `verified`, canary result, outcome path, launch method — never values), one per `successor` decision (`trigger` = `successor-arm` \| `supervisor`, `action` = `armed` \| `failed` \| `started` \| `skipped`, the reason, the holder when skipped), one per cadence gear CHANGE (`kind: cadence` - phase, from/to seconds, burn, ETT, points remaining, reason; never one per tick), one per lock event, one per resume, one `roster-resume` per agent (`decision`, `reason`, `variant`, `logOnly`), one `cutover-recovery` per recovery pass with its counts, one `cutover-witness` per witness run, one `cutover-standdown` per reconciled backstop (repo, agent, original Hub, sent), one `cutover-lease-released` / `cutover-lease-revoked` with owner+generation, one `cutover-role-register`, one `cutover-gates-stamped`, one `cutover-marker-cleared`, `note` when the budget cannot hold one interval, and an `end` line with the reason and exit code. |
+| `~/.machine/state/key-check/state.json` | The resumable run: `{ runId, startedAt, deadlineAt, phase, generation, replacementKey, consecutiveRateLimited, consecutiveCannotEvaluate, consecutiveBelowThreshold, armed, lastCheckAt, lastResult }` plus `activeKeyNumber`, `checks`, `lastReading`, `evidence[]`, `dryRun`, `cutovers` (each with `applied`, `verified`, `outcomePath`, `launchMethod`, `launchPid`), `drift`, `canary`, `simulatedActiveKeyNumber`, `endedAt`, `endReason`, `exitCode`, `successor` (`{ trigger, armed, at, fireAt, pid, method, parentRunId }` — whether the next window is armed, and by which arm of the fix), and the cadence record `{ cadenceSeconds, cadenceGear, cadenceReason, burnPerMinute, ettMinutes, sampleAt, cadenceChanges[], cadenceLoosenStreak, cadenceFloorTicks, cadenceSamples[], cadenceSampleSignature, cadenceSampleGeneration }`. Rewritten at every check — that is what makes an interrupted run resumable. One fixed path, never a per-run file. |
+| `~/.machine/state/key-check/lock.json` | The live-run lock: `{ pid, host, runId, startedAt, heartbeatAt }`. Heartbeat refreshed at every check. Values only, never key material. |
+| `~/.machine/state/key-check/dryrun/` | **A `-DryRun` probe's own artefacts** — `state.json`, `keycheck.jsonl`, `<runId>-cutover.json`, `witness-<runId>.json` — where `<runId>` ends `-dryrun` and the state carries `dryRun: true` plus `rehearsedRunId` (the live run it rehearsed). A dry run reads the live state as context and writes ONLY here, so the live `state.json` / `lock.json` / `keycheck.jsonl` are unreachable from it (cl-common-jqm). |
+| `~/.machine/state/key-check/<runId>-cutover.json` | The helper's outcome: `applied`, `verified` (`true` or `'pending'`), `restartPending`, `reason`, per-step `exitCode`, the surfaces checked, `at`, `runId`, `rosterPath`, `witnessPath`, `witnessVerdict`. Written by the helper — the pending version **before** the restart, so it exists whether or not the helper outlives it, and a resume consumes it. |
+| `~/.machine/state/key-check/<runId>-roster.json` | The pre-cutover agent snapshot (`id`, `shortId`, `title`, `cwd`, `cwdIsRepoRoot`, `status`, `created`, `sessionId`, `lastActivityAt`, `labels`, `isHub`, `hasDoneFile`). Labels only, never a key value. |
+| `~/.machine/state/key-check/witness-<runId>.json` | The witness verdict plus the evidence it used: outcome presence/content, the three surface labels, daemon alive, exit code. |
+| `~/.machine/state/key-check/last-cutover.json` | The durable discovery marker: `{runId, at, from, to, rosterPath, witnessPath, verdict}`. Readable without a runId; a marker newer than a run's start triggers the recovery pass. |
+| `~/.machine/state/key-check/cutover-in-progress.json` | The in-flight claim: `{runId, startedAt, phase, host}`, written before the switch and removed when the cutover ends. What `Test-CutoverInProgress.ps1` answers 3 for. |
+| `~/.machine/state/key-check/cutover-kill-window.json` | The destructive-step window: `{runId, startedAt, endedAt}`. A per-run sibling (`cutover-kill-window-<runId>.json`) is written too, so two cutovers in minutes do not overwrite each other's evidence. `Stamp-InterruptedGates.ps1` stamps `<repo>/.gate-runs/<stamp>` modified inside it with `killed-by-cutover.json`. |
+| `~/.machine/state/key-check/cutover-report-<runId>.json` / `.md` | The post-cutover reconciliation report: closed / resumed / unresumed (with reason) agents with branch+HEAD, worktrees with uncommitted work or a missing report/done file, leases released/revoked with owner+generation, stand-downs, and `unhandled` gaps. |
+| `~/.machine/logs/keycheck.jsonl` | One line per check (key number, wk/mo, phase, decision, the three tolerance streaks), one per cutover (from/to key numbers, `applied`, `verified`, canary result, outcome path, launch method — never values), one per `successor` decision (`trigger` = `successor-arm` \| `supervisor`, `action` = `armed` \| `failed` \| `started` \| `skipped`, the reason, the holder when skipped), one per cadence gear CHANGE (`kind: cadence` - phase, from/to seconds, burn, ETT, points remaining, reason; never one per tick), one per lock event, one per resume, one `roster-resume` per agent (`decision`, `reason`, `variant`, `logOnly`), one `cutover-recovery` per recovery pass with its counts, one `cutover-witness` per witness run, one `cutover-standdown` per reconciled backstop (repo, agent, original Hub, sent), one `cutover-lease-released` / `cutover-lease-revoked` with owner+generation, one `cutover-role-register`, one `cutover-gates-stamped`, one `cutover-marker-cleared`, `note` when the budget cannot hold one interval, and an `end` line with the reason and exit code. |
 | `Tasks/Logs/credential-changes.jsonl` | Written **only** by `Set-OpencodeGoFreshness.ps1` when the ledger actually changes; Key Check does not duplicate it. |
 
 `-DryRun` makes **every** decision and writes the full audit trail, but performs
@@ -820,10 +820,10 @@ watch was dead and started a duplicate.
 
 The fix is structural, not a guard some later path can skip:
 
-- the probe reads `~/.salmon/State/key-check/state.json` as **context** (so the
+- the probe reads `~/.machine/state/key-check/state.json` as **context** (so the
   decisions it rehearses are the ones the live run would make) and then writes
   `state.json`, `keycheck.jsonl`, cutover outcome and witness files **only**
-  under `~/.salmon/State/key-check/dryrun/`;
+  under `~/.machine/state/key-check/dryrun/`;
 - its identity is `<live runId>-dryrun` and its audit rows all carry
   `dryRun: true`, with `rehearsedRunId` naming the live run;
 - the live lock is never taken, rewritten or released, and a probe leaves the
