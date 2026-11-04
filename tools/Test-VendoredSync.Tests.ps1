@@ -41,6 +41,11 @@ BeforeAll {
     # same exit codes (0 MATCH, 1 not in sync). The guard under test owns the diff,
     # the intersection, the worktree and the message; the mapping owner is stubbed
     # so the fixture stays small and the case stays deterministic.
+    #
+    # The repo root is the nearest ancestor of the package that carries Skills/,
+    # because a fixture must resolve its OWN canonical tree in either layout: the
+    # package sits at <root>/interactive-qa/tools in one and at
+    # <root>/vendor/interactive-qa/tools in the other.
     $script:StubSync = @'
 #Requires -Version 7
 [CmdletBinding()]
@@ -50,6 +55,11 @@ if (-not $PackageRoot) { $PackageRoot = Split-Path -Parent $PSScriptRoot }
 $manifestPath = Join-Path $PackageRoot 'tools/vendored-helpers.manifest.json'
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 $repoRoot = Split-Path -Parent $PackageRoot
+while ($repoRoot -and -not (Test-Path -LiteralPath (Join-Path $repoRoot 'Skills') -PathType Container)) {
+    $parent = Split-Path -Parent $repoRoot
+    if ($parent -eq $repoRoot -or -not $parent) { break }
+    $repoRoot = $parent
+}
 $bad = 0
 
 foreach ($row in @($manifest.vendored)) {
@@ -115,7 +125,11 @@ exit 0
     function New-SyncFixture {
         param(
             [Parameter(Mandatory)][string] $Name,
-            [switch] $ManifestIntroducedLater
+            [switch] $ManifestIntroducedLater,
+            # The two layouts the gate must find a manifest in: the package at
+            # <root>/interactive-qa/ (package-root) or vendored into a host repo at
+            # <root>/vendor/interactive-qa/ (how cl-common carries it).
+            [switch] $VendoredLayout
         )
 
         $root = Join-Path $TestDrive $Name
@@ -123,7 +137,11 @@ exit 0
 
         # The two governed canonical files, their vendored copies, and the owner.
         $canonicalDir = Join-Path $root 'Skills/demo'
-        $packageDir = Join-Path $root 'interactive-qa'
+        $packageDir = if ($VendoredLayout) {
+            Join-Path $root 'vendor/interactive-qa'
+        } else {
+            Join-Path $root 'interactive-qa'
+        }
         $toolsDir = Join-Path $packageDir 'tools'
         $vendoredDir = Join-Path $packageDir 'vendor/demo'
         New-Item -ItemType Directory -Path $canonicalDir, $toolsDir, $vendoredDir -Force | Out-Null
@@ -203,6 +221,7 @@ exit 0
             [string[]] $Branch,
             [string[]] $Paths,
             [string] $GuardPath,
+            [string] $ManifestPath,
             [switch] $Json
         )
 
@@ -210,6 +229,7 @@ exit 0
         $arguments = @('-NoProfile', '-NonInteractive', '-File', $guard, '-RepoPath', $Repo, '-Trunk', 'dev')
         if ($Branch) { $arguments += @('-Branch', ($Branch -join ',')) }
         if ($Paths) { $arguments += @('-Paths', ($Paths -join ',')) }
+        if ($ManifestPath) { $arguments += @('-ManifestPath', $ManifestPath) }
         if ($Json) { $arguments += '-Json' }
 
         $output = & $script:PwshPath @arguments 2>&1
@@ -306,6 +326,121 @@ Describe 'Test-VendoredSync merge gate' {
             $result.ExitCode | Should -Be 1 -Because $result.Output
             $result.Output | Should -Match 'CANONICAL Skills/demo/Alpha\.ps1'
             $result.Output | Should -Match 'manifest hash stale'
+        }
+    }
+
+    Context 'the layout probe: package-root and vendor/<pkg>' {
+        # bead cl-common-ttr: the gate probed only <root>/interactive-qa/, so on a
+        # host repository that vendors the package (cl-common carries it at
+        # vendor/interactive-qa/) it found no manifest and printed SKIP - a false
+        # green on every branch of that repository. Both layouts must resolve, and
+        # the resolved one must be the one the vendored copies are checked against.
+
+        It 'resolves the package-root layout and names the watched rows' {
+            $repo = New-SyncFixture -Name "layout-package-root-$(Get-Random)"
+
+            $result = Invoke-Guard -Repo $repo -Branch 'dev' -Json
+
+            $result.ExitCode | Should -Be 0 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            $report = $result.Output | ConvertFrom-Json
+            $report.verdict | Should -Be 'ok'
+            $report.watchedRows | Should -Be 2 -Because 'the manifest at <root>/interactive-qa/tools declares two rows'
+        }
+
+        It 'resolves the vendor/<pkg> layout and names the watched rows' {
+            $repo = New-SyncFixture -Name "layout-vendored-$(Get-Random)" -VendoredLayout
+
+            $result = Invoke-Guard -Repo $repo -Branch 'dev' -Json
+
+            $result.ExitCode | Should -Be 0 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            $report = $result.Output | ConvertFrom-Json
+            $report.verdict | Should -Be 'ok'
+            $report.watchedRows | Should -Be 2 -Because 'the manifest at <root>/vendor/interactive-qa/tools declares two rows'
+        }
+
+        It 'passes a re-vendored canonical edit under vendor/<pkg>' {
+            $repo = New-SyncFixture -Name "vendored-synced-$(Get-Random)" -VendoredLayout
+            New-Branch -Repo $repo -Name 'feat/vendored-synced'
+            $canonical = Join-Path $repo 'Skills/demo/Alpha.ps1'
+            Set-Content -LiteralPath $canonical -Value "#Requires -Version 7`n# alpha canonical v2" -Encoding utf8 -NoNewline
+            $vendoredAlpha = Join-Path $repo 'vendor/interactive-qa/vendor/demo/Alpha.ps1'
+            Copy-Item -LiteralPath $canonical -Destination $vendoredAlpha -Force
+
+            $manifestPath = Join-Path $repo 'vendor/interactive-qa/tools/vendored-helpers.manifest.json'
+            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            $hash = Get-Sha256Hex -Path $vendoredAlpha
+            ($manifest.vendored | Where-Object { $_.Canonical -eq 'demo/Alpha.ps1' }).Sha256 = $hash
+            ($manifest.vendored | Where-Object { $_.Canonical -eq 'demo/Alpha.ps1' }).Sha256Lf = $hash
+            $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding utf8 -NoNewline
+            Save-BranchCommit -Repo $repo -Message 're-vendor alpha under vendor/<pkg>'
+
+            $result = Invoke-Guard -Repo $repo -Branch 'feat/vendored-synced'
+
+            $result.ExitCode | Should -Be 0 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            $result.Output | Should -Match 'Test-VendoredSync: OK'
+            $result.Output | Should -Match 'vendored row\(s\) in sync'
+        }
+
+        It 'really runs the check under vendor/<pkg>, not just a row count' {
+            $repo = New-SyncFixture -Name "vendored-drift-$(Get-Random)" -VendoredLayout
+            New-Branch -Repo $repo -Name 'feat/vendored-drift'
+            Set-Content -LiteralPath (Join-Path $repo 'Skills/demo/Alpha.ps1') -Value "#Requires -Version 7`n# alpha CANONICAL EDIT" -Encoding utf8 -NoNewline
+            Save-BranchCommit -Repo $repo -Message 'edit canonical only'
+
+            $result = Invoke-Guard -Repo $repo -Branch 'feat/vendored-drift'
+
+            $result.ExitCode | Should -Be 1 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            foreach ($pattern in $script:FailPatterns) {
+                $result.Output | Should -Match $pattern
+            }
+        }
+    }
+
+    Context 'an explicit -ManifestPath' {
+
+        It 'honours the same manifest named relative and absolute' {
+            $repo = New-SyncFixture -Name "explicit-manifest-$(Get-Random)" -VendoredLayout
+            New-Branch -Repo $repo -Name 'feat/explicit-manifest'
+            $canonical = Join-Path $repo 'Skills/demo/Beta.ps1'
+            Set-Content -LiteralPath $canonical -Value "#Requires -Version 7`n# beta canonical v2" -Encoding utf8 -NoNewline
+            $vendoredBeta = Join-Path $repo 'vendor/interactive-qa/vendor/demo/Beta.ps1'
+            Copy-Item -LiteralPath $canonical -Destination $vendoredBeta -Force
+
+            $manifestPath = Join-Path $repo 'vendor/interactive-qa/tools/vendored-helpers.manifest.json'
+            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            $hash = Get-Sha256Hex -Path $vendoredBeta
+            ($manifest.vendored | Where-Object { $_.Canonical -eq 'demo/Beta.ps1' }).Sha256 = $hash
+            ($manifest.vendored | Where-Object { $_.Canonical -eq 'demo/Beta.ps1' }).Sha256Lf = $hash
+            $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding utf8 -NoNewline
+            Save-BranchCommit -Repo $repo -Message 're-vendor beta'
+
+            # Relative: resolved against -RepoPath, not the caller's cwd.
+            $relative = Invoke-Guard -Repo $repo -Branch 'feat/explicit-manifest' -ManifestPath 'vendor/interactive-qa/tools/vendored-helpers.manifest.json'
+            $relative.ExitCode | Should -Be 0 -Because $relative.Output
+            $relative.Output | Should -Match 'Test-VendoredSync: OK'
+            $relative.Output | Should -Match 'vendored row\(s\) in sync'
+
+            # Absolute: the same file, same verdict.
+            $absolute = Invoke-Guard -Repo $repo -Branch 'feat/explicit-manifest' -ManifestPath $manifestPath
+            $absolute.ExitCode | Should -Be 0 -Because $absolute.Output
+            $absolute.Output | Should -Match 'vendored row\(s\) in sync'
+        }
+
+        It 'refuses an explicit manifest that is not inside the repository' {
+            $repo = New-SyncFixture -Name "explicit-outside-$(Get-Random)"
+            $outside = Join-Path $TestDrive ("outside-{0}/tools/vendored-helpers.manifest.json" -f (Get-Random))
+            New-Item -ItemType Directory -Path (Split-Path -Parent $outside) -Force | Out-Null
+            Set-Content -LiteralPath $outside -Value '{"vendored":[]}' -Encoding utf8
+
+            $result = Invoke-Guard -Repo $repo -Branch 'dev' -ManifestPath $outside
+
+            $result.ExitCode | Should -Be 2 -Because $result.Output
+            $result.Output | Should -Match 'CANNOT-EVALUATE'
+            $result.Output | Should -Match 'outside the measured repository'
         }
     }
 

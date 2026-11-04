@@ -44,6 +44,23 @@
     repository with no vendored-helper manifest is not governed by this gate and
     says so.
 
+    WHERE THE MANIFEST IS LOOKED FOR
+    The package is a repository of its own, so in the owner checkout its `tools/`
+    sits at the repo root; it is also vendored into host repositories under
+    `vendor/<pkg>/`, which is where `cl-common` carries it. Both layouts are
+    probed, package-root first, for both package names:
+
+      interactive-qa/tools/vendored-helpers.manifest.json
+      interactive-qa-agent/tools/vendored-helpers.manifest.json
+      vendor/interactive-qa/tools/vendored-helpers.manifest.json
+      vendor/interactive-qa-agent/tools/vendored-helpers.manifest.json
+
+    A layout that was not probed is not "not governed": it is a false green, so
+    the skip message names every layout that was tried. `-ManifestPath` overrides
+    the probe entirely and accepts a repo-relative or an absolute value; its
+    `tools/` parent becomes the package folder, so the manifest and the vendored
+    copies it names are always read from the same place.
+
     Exit codes
       0  the branch touches no governed canonical, or every vendored row is in
          sync (MATCH)
@@ -71,21 +88,35 @@
     caller already knows the change set (a brief, a merge-queue row, a patch).
 
 .PARAMETER ManifestPath
-    Manifest to read. Defaults to
-    `<RepoPath>/interactive-qa/tools/vendored-helpers.manifest.json`.
+    Manifest to read, instead of probing the layouts. Accepts a repo-relative or
+    an absolute path; a relative one is resolved against `-RepoPath`. The folder
+    above its `tools/` becomes the package folder, so the vendored copies and the
+    sync owner are read from the same package the manifest belongs to. Defaults to
+    the first matching package-root (`interactive-qa/`, `interactive-qa-agent/`)
+    or vendored (`vendor/interactive-qa/`, `vendor/interactive-qa-agent/`)
+    manifest under `-RepoPath`.
 
 .PARAMETER SyncScript
     The single owner of the mapping. Defaults to
-    `<RepoPath>/interactive-qa/tools/Sync-VendoredHelpers.ps1`.
+    `<package>/tools/Sync-VendoredHelpers.ps1` in the package folder resolved
+    above.
 
 .PARAMETER Json
     Emit one JSON object instead of the human report.
 
 .EXAMPLE
-    pwsh -NoProfile -File Skills/iqa-merge/Test-VendoredSync.ps1 -RepoPath . -Branch fix/e93-vendor-sync-gate
+    pwsh -NoProfile -File tools/Test-VendoredSync.ps1 -RepoPath . -Branch fix/e93-vendor-sync-gate
 
 .EXAMPLE
-    pwsh -NoProfile -File Skills/iqa-merge/Test-VendoredSync.ps1 -Paths Skills/credential-rescue/scripts/Invoke-KeyCheck.ps1
+    pwsh -NoProfile -File tools/Test-VendoredSync.ps1 -Paths Skills/credential-rescue/scripts/Invoke-KeyCheck.ps1
+
+.EXAMPLE
+    # A host repository that vendors the package under vendor/<pkg>/ (cl-common).
+    pwsh -NoProfile -File tools/Test-VendoredSync.ps1 -RepoPath E:\repos\cl-common -Trunk dev -Branch fix/vendored-sync-ttr
+
+.EXAMPLE
+    # Name the manifest explicitly - relative to -RepoPath, or absolute.
+    pwsh -NoProfile -File tools/Test-VendoredSync.ps1 -RepoPath . -ManifestPath vendor/interactive-qa/tools/vendored-helpers.manifest.json
 #>
 [CmdletBinding()]
 param(
@@ -102,21 +133,51 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# The package folder name is part of the mapping this gate measures, not a
-# constant: it was renamed `interactive-qa-agent` -> `interactive-qa` on
-# 2026-11-03, and a hardcoded old name made this gate print SKIP (a false green)
-# on every repository that had already taken the rename. Probe the candidates,
-# newest name first, at whichever root or ref is being measured.
-$script:PackageFolderCandidates = @('interactive-qa', 'interactive-qa-agent')
+# Where the package folder sits is part of the mapping this gate measures, not a
+# constant, for TWO reasons:
+#
+#   name    it was renamed `interactive-qa-agent` -> `interactive-qa` on
+#           2026-11-03, and a hardcoded old name made this gate print SKIP (a
+#           false green) on every repository that had already taken the rename.
+#   layout  the package is a repository of its own (its `tools/` sits at the repo
+#           root) AND it is vendored into host repositories under `vendor/<pkg>/`,
+#           which is where `cl-common` carries it. A resolver that only knew the
+#           package-root layout printed SKIP on `cl-common` while the manifest sat
+#           at `vendor/interactive-qa/tools/vendored-helpers.manifest.json`
+#           (bead cl-common-ttr) - a false green, and the exact defect this probe
+#           exists to prevent.
+#
+# Probe name x layout, package-root first so the owner repository keeps winning,
+# at whichever root or ref is being measured.
+$script:ManifestTail = 'tools/vendored-helpers.manifest.json'
+$script:PackageNames = @('interactive-qa', 'interactive-qa-agent')
+$script:PackageLayoutPrefixes = @('', 'vendor/')
+$script:PackageFolderCandidates = @(
+    foreach ($prefix in $script:PackageLayoutPrefixes) {
+        foreach ($name in $script:PackageNames) { "$prefix$name" }
+    }
+)
 $script:PackageRelativePath = $script:PackageFolderCandidates[0]
-$script:ManifestRelativePath = "$($script:PackageRelativePath)/tools/vendored-helpers.manifest.json"
+$script:ManifestRelativePath = "$($script:PackageRelativePath)/$($script:ManifestTail)"
 $script:SyncRelativePath = "$($script:PackageRelativePath)/tools/Sync-VendoredHelpers.ps1"
+# Set only when -ManifestPath names a manifest inside the measured repository.
+$script:ExplicitPackageRelativePath = ''
+
+function Get-ProbeFolders {
+    # An explicit -ManifestPath names its own package folder, so that folder is
+    # probed FIRST - the caller already said which file is being measured.
+    if ($script:ExplicitPackageRelativePath) {
+        return @($script:ExplicitPackageRelativePath) +
+            @($script:PackageFolderCandidates | Where-Object { $_ -ne $script:ExplicitPackageRelativePath })
+    }
+    return @($script:PackageFolderCandidates)
+}
 
 function Resolve-PackageFolder {
     param([Parameter(Mandatory)][string] $Root)
 
-    foreach ($candidate in $script:PackageFolderCandidates) {
-        $manifest = Join-Path (Join-Path $Root $candidate) 'tools/vendored-helpers.manifest.json'
+    foreach ($candidate in (Get-ProbeFolders)) {
+        $manifest = Join-Path (Join-Path $Root $candidate) $script:ManifestTail
         if (Test-Path -LiteralPath $manifest -PathType Leaf) { return $candidate }
     }
     return $null
@@ -125,8 +186,8 @@ function Resolve-PackageFolder {
 function Resolve-PackageFolderAtRef {
     param([Parameter(Mandatory)][string] $Ref)
 
-    foreach ($candidate in $script:PackageFolderCandidates) {
-        $null = & git -C $RepoPath cat-file -e "${Ref}:$candidate/tools/vendored-helpers.manifest.json" 2>&1
+    foreach ($candidate in (Get-ProbeFolders)) {
+        $null = & git -C $RepoPath cat-file -e "${Ref}:$candidate/$($script:ManifestTail)" 2>&1
         if ($LASTEXITCODE -eq 0) { return $candidate }
     }
     return $null
@@ -292,24 +353,46 @@ if ($insideWorkTree.ExitCode -ne 0 -or $insideWorkTree.Output[0].Trim() -ne 'tru
 }
 
 # --- 2. applicability -------------------------------------------------------
+# An explicit -ManifestPath is honoured as given: an absolute value is used as it
+# is, a relative one is resolved against -RepoPath (never the caller's cwd, so the
+# same value names the same file from any directory). Whichever layout it names
+# becomes the package folder for every later path, so an explicit manifest and a
+# probed one cannot disagree about where the vendored copies live.
+$manifestIsExplicit = [bool]$ManifestPath
+if ($manifestIsExplicit) {
+    if (-not [System.IO.Path]::IsPathRooted($ManifestPath)) {
+        $ManifestPath = Join-Path $RepoPath $ManifestPath
+    }
+    $ManifestPath = [System.IO.Path]::GetFullPath($ManifestPath)
+
+    if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
+        Stop-CannotEvaluate "the manifest passed with -ManifestPath does not exist: $ManifestPath"
+    }
+
+    $explicitRelative = [System.IO.Path]::GetRelativePath($RepoPath, $ManifestPath) -replace '\\', '/'
+    if ($explicitRelative.StartsWith('..')) {
+        Stop-CannotEvaluate "the manifest passed with -ManifestPath is outside the measured repository: $ManifestPath (relative '$explicitRelative'), so its vendored paths and branch refs cannot be resolved against $RepoPath"
+    }
+    if ($explicitRelative -notmatch "^(?<folder>.+)/$([regex]::Escape($script:ManifestTail))$") {
+        Stop-CannotEvaluate "the manifest passed with -ManifestPath is not a $($script:ManifestTail) inside $RepoPath (got '$explicitRelative'), so the package folder it belongs to cannot be derived"
+    }
+    $script:ExplicitPackageRelativePath = $Matches['folder']
+}
+
 # Bind the package folder to the repository being measured; every later path is
-# derived from it, so a repository on the other side of the rename still measures.
+# derived from it, so a repository on the other side of the rename - or one that
+# vendors the package under vendor/<pkg>/ - still measures.
 $resolvedFolder = Resolve-PackageFolder -Root $RepoPath
 if ($resolvedFolder) {
     $script:PackageRelativePath = $resolvedFolder
-    $script:ManifestRelativePath = "$resolvedFolder/tools/vendored-helpers.manifest.json"
+    $script:ManifestRelativePath = "$resolvedFolder/$($script:ManifestTail)"
     $script:SyncRelativePath = "$resolvedFolder/tools/Sync-VendoredHelpers.ps1"
 }
-
-$manifestIsExplicit = [bool]$ManifestPath
-if (-not $ManifestPath) { $ManifestPath = Join-Path $RepoPath $script:ManifestRelativePath }
-
-if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
-    if ($manifestIsExplicit) {
-        Stop-CannotEvaluate "the manifest passed with -ManifestPath does not exist: $ManifestPath"
-    }
-    Write-Verdict "Test-VendoredSync: SKIP - no vendored-helper manifest at $script:ManifestRelativePath; this repository does not vendor canonical Skills helpers"
+elseif (-not $manifestIsExplicit) {
+    Write-Verdict "Test-VendoredSync: SKIP - no vendored-helper manifest at any probed layout ($((Get-ProbeFolders) -join ', ')), each at $($script:ManifestTail); this repository does not vendor canonical Skills helpers"
 }
+
+if (-not $ManifestPath) { $ManifestPath = Join-Path $RepoPath $script:ManifestRelativePath }
 
 if (-not $SyncScript) { $SyncScript = Join-Path $RepoPath $script:SyncRelativePath }
 
