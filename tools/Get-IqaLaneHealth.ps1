@@ -235,7 +235,7 @@ function Invoke-LaneReap {
     }
   }
 
-  $repoRoot = $Lane.Repo
+  $repoRoot = if ($Lane.PSObject.Properties.Name -contains 'RepoRoot' -and $Lane.RepoRoot) { $Lane.RepoRoot } else { $Lane.Repo }
   & git -C $repoRoot worktree remove $Lane.Path --force 2>&1 | Out-Null
   if ($LASTEXITCODE -ne 0) {
     Write-Output ("REAP-FAILED {0}: git worktree remove exited {1}" -f $Lane.Path, $LASTEXITCODE)
@@ -343,6 +343,7 @@ function Invoke-Main {
     $entry = [pscustomobject]@{
       Verdict   = $verdict
       Repo      = (Split-Path $lane.Repo -Leaf)
+      RepoRoot  = $lane.Repo
       Path      = $lane.Path
       Branch    = $lane.Branch
       Ahead     = $facts.Ahead
@@ -364,7 +365,9 @@ function Invoke-Main {
   if ($Reap) {
     $failed = 0
     foreach ($r in @($results | Where-Object { $_.Reapable })) {
-      $ok = Invoke-LaneReap -Lane $r -PaseoCommand $paseo
+      $log = @(Invoke-LaneReap -Lane $r -PaseoCommand $paseo)
+      $ok = ($log.Count -gt 0 -and $log[-1] -eq $true)
+      $log | Where-Object { $_ -is [string] } | ForEach-Object { Write-Output $_ }
       if (-not $ok) { $failed++ }
     }
     if ($failed -gt 0) { $script:LaneHealthExit = 1; return }
