@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-04T04:43:37.3435597-07:00",
+  "generatedAt": "2026-11-04T05:23:39.7448053-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -903,9 +903,9 @@
       "Vendored": "vendor/iqa-merge/Test-SingleHubRung.ps1",
       "Owner": "this package",
       "Why": "One-rung-per-repo guard; the fleet source was retired at Phase 5 and the iqa-hub member cites this copy.",
-      "Sha256": "645D7823F4F56B3ED48D97C2728A8F94F0B4AD43558AA9D47FABA3909DF73DB7",
-      "Sha256Lf": "581FD2D75376B591595747446B0DBDC75CF540EE989E2853557D1813D97A4255",
-      "Bytes": 19695,
+      "Sha256": "AA835EAC6A7B64F43E46A41D1507E65B8B9DA5D1E1CB2B87FCCC93093EDF5FC2",
+      "Sha256Lf": "FC18F950FD77A3E440BAA370ED06A6504803D350F5A12848B12A5C9F03936D4D",
+      "Bytes": 22614,
       "Tree": ""
     },
     {
@@ -918,6 +918,18 @@
       "Sha256": "A0B9ECD94F34DF08AA216ED3BF0ADBEF91C29AACB477A336DF10972F76D4328C",
       "Sha256Lf": "A0B9ECD94F34DF08AA216ED3BF0ADBEF91C29AACB477A336DF10972F76D4328C",
       "Bytes": 7963,
+      "Tree": ""
+    },
+    {
+      "Kind": "owned",
+      "Name": "Test-SingleHubRung.Tests.ps1",
+      "Canonical": "",
+      "Vendored": "vendor/iqa-merge/Tests/Test-SingleHubRung.Tests.ps1",
+      "Owner": "this package",
+      "Why": "Pins the one-rung-per-repo guard (cl-common-5wy: a spent one-shot lane dispatch cannot fire again, so it is tolerated rather than counted as a competing rung); the package owns the guard, so the pin ships beside it.",
+      "Sha256": "3A5AE4773A6D6EC0330A9826383502AD0912620C081C6E11F3FF2594F9A02ECB",
+      "Sha256Lf": "9608D81FAF3362CFC066E9C8F695159FBAA5C1FD659DE0A4DB7D25C5D73FE05C",
+      "Bytes": 7783,
       "Tree": ""
     },
     {
@@ -1009,11 +1021,6 @@
     },
     {
       "Name": "Test-Landed.Tests.ps1",
-      "Owner": "Skills/iqa-merge/Tests",
-      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof. Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because the cadence gate is now owned here and the no-CREATE rule needs a shipped pin."
-    },
-    {
-      "Name": "Test-SingleHubRung.Tests.ps1",
       "Owner": "Skills/iqa-merge/Tests",
       "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof. Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because the cadence gate is now owned here and the no-CREATE rule needs a shipped pin."
     },
