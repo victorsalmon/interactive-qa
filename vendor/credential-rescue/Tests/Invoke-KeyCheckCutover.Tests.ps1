@@ -140,6 +140,7 @@ Describe 'Invoke-KeyCheckCutover' {
         $run = Invoke-CutoverHelper -Fixture $fixture
 
         $run.ExitCode | Should -Be 0 -Because $run.Output
+        $run.Output | Should -Match 'cutover OPENCODE_GO2_KEY: COMPLETE \(runId run-kc2\)' -Because 'a completed cutover must state its verdict, not only its booleans'
         $run.Steps.Count | Should -Be 2
         $run.Steps[0] | Should -Be 'switch GO2'
         $run.Steps[1] | Should -Be 'repair GO2'
@@ -171,6 +172,7 @@ Describe 'Invoke-KeyCheckCutover' {
         $run.Outcome.verified | Should -BeFalse
         ($run.Outcome.steps | Where-Object { $_.name -eq 'switch' }).exitCode | Should -Be 1
         @($run.Outcome.steps | Where-Object { $_.name -eq 'repair' }).Count | Should -Be 0
+        $run.Output | Should -Match 'cutover OPENCODE_GO2_KEY: FAILED \(runId run-kc2\)' -Because 'a failed cutover must state its verdict too'
     }
 
     It 'refuses to repair when the switch left its own surfaces disagreeing (4, nothing moved)' {
@@ -232,6 +234,7 @@ Describe 'Invoke-KeyCheckCutover' {
         $run = Invoke-CutoverHelper -Fixture $fixture
 
         $run.ExitCode | Should -Be 0 -Because $run.Output
+        $run.Output | Should -Match 'cutover OPENCODE_GO2_KEY: COMPLETE \(runId run-kc2\)' -Because 'a completed cutover must state its verdict, not only its booleans'
         $run.Output | Should -Not -Match 'cutover-value-alpha'
         $run.Output | Should -Not -Match 'cutover-value-bravo'
         $run.RawOutcome | Should -Not -Match 'cutover-value-alpha'
@@ -254,6 +257,7 @@ exit 0
         $run = Invoke-CutoverHelper -Fixture $fixture
 
         $run.ExitCode | Should -Be 0 -Because $run.Output
+        $run.Output | Should -Match 'cutover OPENCODE_GO2_KEY: COMPLETE \(runId run-kc2\)' -Because 'a completed cutover must state its verdict, not only its booleans'
         $run.Steps.Count | Should -Be 2
         $run.Steps[1] | Should -Be 'repair GO2'
 
@@ -317,6 +321,7 @@ exit 0
         $run = Invoke-CutoverHelper -Fixture $fixture
 
         $run.ExitCode | Should -Be 0 -Because $run.Output
+        $run.Output | Should -Match 'cutover OPENCODE_GO2_KEY: COMPLETE \(runId run-kc2\)' -Because 'a completed cutover must state its verdict, not only its booleans'
         $run.Steps | Should -Be @('resume GO2', 'repair GO2')
         $run.Output | Should -Match 'partial-cutover marker found'
         $run.Outcome.applied | Should -BeTrue

@@ -344,11 +344,37 @@ function Write-CutoverAudit {
 function Exit-Cutover {
     <#
     .SYNOPSIS
-        Leave the sequence, always releasing the marker. A cutover is over
-        whether it worked or not; a marker left behind by a live helper would
-        block every backstop for a cutover that is not running.
+        Leave the sequence, always releasing the marker, and always state the
+        terminal verdict. A cutover is over whether it worked or not; a marker
+        left behind by a live helper would block every backstop for a cutover
+        that is not running.
+
+    .DESCRIPTION
+        The start line is `cutover <target>: starting (runId <id>)`. This is its
+        counterpart and the thing a human or a monitor greps for: exactly one
+        line, printed last, saying whether the cutover COMPLETED. "applied=True
+        verified=True" is a fact about two booleans, not a statement that the
+        machine finished moving; the verdict is.
+
+        COMPLETE   every surface applied and verified, nothing left pending
+        INCOMPLETE applied, but a resume still has to complete or revert it
+        FAILED     nothing usable moved
     #>
-    param([int]$Code)
+    param(
+        [int]$Code,
+        [bool]$Applied = $false,
+        [bool]$Verified = $false,
+        [string]$Reason = ''
+    )
+
+    $verdict = if (-not $Applied) { 'FAILED' } elseif (-not $Verified) { 'INCOMPLETE' } else { 'COMPLETE' }
+    $detail = switch ($verdict) {
+        'COMPLETE' { 'applied and verified on every surface; no restart pending' }
+        'INCOMPLETE' { "applied but not verified (reason=$Reason); a resume completes or reverts it" }
+        default { "nothing applied (reason=$Reason)" }
+    }
+    Write-Output ("cutover {0}: {1} (runId {2}) - {3}" -f $targetName, $verdict, $RunId, $detail)
+
     $null = Remove-CutoverMarkerFile -Path $MarkerPath
     exit $Code
 }
@@ -682,7 +708,7 @@ if (Test-Path -LiteralPath $PartialMarkerPath) {
             $null = Write-CutoverOutcome -Applied $true -Verified $false -Reason 'partial-cutover' -RestartPending $false `
                 -Steps $steps -Surfaces $surfaces
             Write-Output ("cutover {0}: applied=True verified=False reason=partial-cutover (marker left in place)" -f $targetName)
-            Exit-Cutover 5
+            Exit-Cutover 5 -Applied $true -Verified $false -Reason 'partial-cutover'
         }
         # Reverted to the recorded `from` key: nothing usable moved.
         $surfaces = Get-CutoverSurfaces
@@ -690,7 +716,7 @@ if (Test-Path -LiteralPath $PartialMarkerPath) {
         $null = Write-CutoverOutcome -Applied $false -Verified $false -Reason 'partial-reverted' -RestartPending $false `
             -Steps $steps -Surfaces $surfaces
         Write-Output ("cutover {0}: applied=False verified=False reason=partial-reverted" -f $targetName)
-        Exit-Cutover 4
+        Exit-Cutover 4 -Applied $false -Verified $false -Reason 'partial-reverted'
     }
     Write-Output '  partial cutover completed; continuing with the Paseo track'
     $switchOk = $true
@@ -711,7 +737,7 @@ else {
             $null = Write-CutoverOutcome -Applied $true -Verified $false -Reason 'partial-cutover' -RestartPending $false `
                 -Steps $steps -Surfaces $surfaces
             Write-Output ("cutover {0}: applied=True verified=False reason=partial-cutover" -f $targetName)
-            Exit-Cutover 5
+            Exit-Cutover 5 -Applied $true -Verified $false -Reason 'partial-cutover'
         }
         # A repair on top of a failed switch only split-brains the machine, so the
         # sequence stops here and the outcome says nothing moved.
@@ -721,7 +747,7 @@ else {
         $null = Write-CutoverOutcome -Applied $false -Verified $false -Reason 'switch-failed' -RestartPending $false `
             -Steps $steps -Surfaces $preSurfaces
         Write-Output ("cutover {0}: applied=False verified=False reason=switch-failed" -f $targetName)
-        Exit-Cutover 4
+        Exit-Cutover 4 -Applied $false -Verified $false -Reason 'switch-failed'
     }
     $switchOk = $true
 }
@@ -738,7 +764,7 @@ if ($preDisagrees.Count -gt 0) {
     $null = Write-CutoverOutcome -Applied $false -Verified $false -Reason 'surface-disagrees' -RestartPending $false `
         -Steps $steps -Surfaces $preSurfaces
     Write-Output ("cutover {0}: applied=False verified=False reason=surface-disagrees" -f $targetName)
-    Exit-Cutover 4
+    Exit-Cutover 4 -Applied $false -Verified $false -Reason 'surface-disagrees'
 }
 
 # --- 3. the pre-restart outcome: applied, verification still pending --------
@@ -815,7 +841,6 @@ $null = Write-CutoverOutcome -Applied $applied -Verified ([bool]$verified) -Reas
     -WitnessFile ([string]$recovery.witnessPath) -WitnessVerdict ([string]$recovery.witnessVerdict)
 Write-Output ("cutover {0}: applied={1} verified={2} pending=False reason={3}" -f $targetName, $applied, $verified, $reason)
 
-if (-not $applied) { Exit-Cutover 4 }
-if (-not $verified) { Exit-Cutover 5 }
-Exit-Cutover 0
-
+if (-not $applied) { Exit-Cutover 4 -Applied $applied -Verified ([bool]$verified) -Reason $reason }
+if (-not $verified) { Exit-Cutover 5 -Applied $applied -Verified ([bool]$verified) -Reason $reason }
+Exit-Cutover 0 -Applied $applied -Verified ([bool]$verified) -Reason $reason

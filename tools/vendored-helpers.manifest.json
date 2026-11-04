@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T23:27:30.1464944-07:00",
+  "generatedAt": "2026-11-03T23:48:37.3584679-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -138,9 +138,9 @@
       "Name": "opencode-go-cutover.json",
       "Canonical": "credential-rescue/assets/opencode-go-cutover.json",
       "Vendored": "vendor/credential-rescue/assets/opencode-go-cutover.json",
-      "Sha256": "56C8FAC9FAA8793BEA05FE4B87625A382CDDDC91DCCB674AD30E0040A1BF3ED3",
-      "Sha256Lf": "A0B37864600169DE4201E727D6F4C09420863AC3401E4624148E33DCCCB9E958",
-      "Bytes": 9032,
+      "Sha256": "8612E57F70E536EDD38F5898F669A2544740B890F21C8963B95C73F5314BB5E1",
+      "Sha256Lf": "F8881053F9F5595B88F2354A507A9CDA39FF2B69C072B4E48BE2A38E9C6BE14A",
+      "Bytes": 9030,
       "Tree": "credential-rescue"
     },
     {
@@ -253,9 +253,9 @@
       "Name": "Invoke-KeyCheckCutover.ps1",
       "Canonical": "credential-rescue/scripts/Invoke-KeyCheckCutover.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Invoke-KeyCheckCutover.ps1",
-      "Sha256": "D77EA484D59DF8BAA0C3853436D23713B6370F55094039AE166BA8DE8020A480",
-      "Sha256Lf": "40A0519AC9C82C0FCE9E3A32C63B3778E4D66503AF2382B39B7DDFF6860322B6",
-      "Bytes": 38579,
+      "Sha256": "059123DFCCF0C07909D296C9A76E19DA5DA7956B005EC1A383B5E34099BB320C",
+      "Sha256Lf": "C9CC8A3BB86341B9E95FAD79E0AAFB381BC8902DEB120E461D866BAC3EA11744",
+      "Bytes": 40307,
       "Tree": "credential-rescue"
     },
     {
@@ -661,9 +661,9 @@
       "Name": "Invoke-KeyCheckCutover.Tests.ps1",
       "Canonical": "credential-rescue/Tests/Invoke-KeyCheckCutover.Tests.ps1",
       "Vendored": "vendor/credential-rescue/Tests/Invoke-KeyCheckCutover.Tests.ps1",
-      "Sha256": "36E45F80A28CEF212441C49265520D424E9702E29E4FE985F82AC1891483DAEB",
-      "Sha256Lf": "B00E4EC0963B4395A033E99F93298B097EC7BC8F89D0D0C5BF1206D97C33879E",
-      "Bytes": 16944,
+      "Sha256": "86696BA8FA663AA8DB8E2A703ECCC1D8DB27ACB898A5635EE7B1FB7444CD4384",
+      "Sha256Lf": "A9CF9744B065C55E073050922110A4DE51AA8DCC1957DAA997A0B13CAFEC3F9E",
+      "Bytes": 17765,
       "Tree": "credential-rescue"
     },
     {
