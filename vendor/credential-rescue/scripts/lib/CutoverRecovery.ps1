@@ -9,7 +9,13 @@
 function Get-CutoverStateDir {
     param([string]$Override)
     if (-not [string]::IsNullOrWhiteSpace($Override)) { return $Override }
-    return (Join-Path $env:USERPROFILE '.salmon\State\key-check')
+    # Cutover markers are machine state, and machine state moved to ~/.machine.
+    # This default was the last live writer into the retired ~/.salmon tree: a
+    # cutover would have recreated it after the migration said it was gone.
+    if (-not [string]::IsNullOrWhiteSpace($env:MACHINE_STATE_HOME)) {
+        return (Join-Path $env:MACHINE_STATE_HOME 'key-check')
+    }
+    return (Join-Path $env:USERPROFILE '.machine\state\key-check')
 }
 
 function Get-CutoverMarkerPath {

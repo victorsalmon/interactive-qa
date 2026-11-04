@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T22:01:27.1949838-07:00",
+  "generatedAt": "2026-11-03T22:25:03.6244621-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -297,9 +297,9 @@
       "Name": "CutoverRecovery.ps1",
       "Canonical": "credential-rescue/scripts/lib/CutoverRecovery.ps1",
       "Vendored": "vendor/credential-rescue/scripts/lib/CutoverRecovery.ps1",
-      "Sha256": "A1B915B0281EF61E21CEDF64EBC45FD4BCBA6157834D78280A3C37B72B3ED3DD",
-      "Sha256Lf": "AB2297726843B565BD23E5A2D9CAF373739203708AAFA517815A7708A9A814FD",
-      "Bytes": 11338,
+      "Sha256": "52D93B4A850D846B9830E2DE08CCC0E4BACCC1C51712417CE524962B8B9A9915",
+      "Sha256Lf": "9C7798172E0EA30A4DD4903E9FF65DA77CB4E3C7BBBF371EDC930F7347EB6596",
+      "Bytes": 11719,
       "Tree": "credential-rescue"
     },
     {
