@@ -19,6 +19,7 @@ decision is enforced rather than described.
 | `vendor/` | Every executable a member prescribes, byte-identical to its canonical source. This is what makes a cold start possible. |
 | `README.md` | Install, use, verify. |
 | `MANIFEST.md` | This decision. |
+| `TESTING.md` | The local test runbook: what to run, what a pass looks like, and what a local run does not prove. |
 | `LICENSE` | MIT. |
 
 ## Does not ship

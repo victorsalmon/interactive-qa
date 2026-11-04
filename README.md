@@ -105,6 +105,8 @@ variable, no machine path.
 
 ## Verify
 
+The full local runbook - gates, cold start, the queue, the monitor, the scheduler - is [TESTING.md](TESTING.md).
+
 ```
 pwsh -NoProfile -File tools/Test-PluginLinks.ps1              # 0 dead, 0 escaping
 pwsh -NoProfile -File tools/Sync-VendoredHelpers.ps1 -Check   # every row MATCH

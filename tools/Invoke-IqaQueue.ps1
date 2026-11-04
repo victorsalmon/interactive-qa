@@ -304,7 +304,11 @@ function Write-Row {
 
     if ($Json) { $Row | ConvertTo-Json -Compress -Depth 6; return }
     $urgentFlag = if ((Get-Field $Row 'urgent') -eq $true) { ' URGENT' } else { '' }
-    "{0,-10} {1}{2} @ {3}  base={4}  by {5}" -f (Get-Field $Row 'status'), (Get-Field $Row 'branch'), $urgentFlag, (Get-Field $Row 'sha'), (Get-Field $Row 'base'), (Get-Field $Row 'owner')
+    # On a merging row the question is "who has it", not "who wrote it": the owner
+    # is the Sub that parked the branch, the claimant is the Hub that owns the push.
+    $claimant = Get-Field $Row 'claimedBy'
+    $claimNote = if ($claimant) { " (claimed by $claimant)" } else { '' }
+    "{0,-10} {1}{2} @ {3}  base={4}  by {5}{6}" -f (Get-Field $Row 'status'), (Get-Field $Row 'branch'), $urgentFlag, (Get-Field $Row 'sha'), (Get-Field $Row 'base'), (Get-Field $Row 'owner'), $claimNote
 }
 
 # ---------------------------------------------------------------------------
