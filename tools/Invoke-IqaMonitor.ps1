@@ -124,6 +124,10 @@ function Resolve-PaseoCli {
     if ($onPath) { return $onPath.Source }
 
     foreach ($candidate in @(
+            # Paseo's own launcher first: it is the entry point its CLI documents and
+            # the one lane-watch.mjs uses. paseo.exe beside it answers --help but is
+            # not the daemon-aware wrapper.
+            (Join-Path $env:ProgramFiles 'Paseo\resources\bin\paseo.cmd'),
             (Join-Path $env:ProgramFiles 'Paseo\paseo.exe'),
             (Join-Path $env:LOCALAPPDATA 'Programs\Paseo\paseo.exe')
         )) {
