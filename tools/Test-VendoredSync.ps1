@@ -27,7 +27,10 @@
          predate, and stays CANNOT-EVALUATE (exit 2);
       3. intersect the changed paths with those rows;
       4. when the intersection is empty, pass without opening anything (a branch
-         that touches no governed canonical cannot introduce vendored drift);
+         that touches no governed path cannot introduce vendored drift). The
+         intersection covers BOTH sides of the mapping: a changed canonical
+         `Skills/**` file with a row, and a changed vendored body (a copy, owned
+         or snapshot row inside the package) whose recorded hash governs it;
       5. when it is not empty, check out the branch tip into a throwaway detached
          worktree and run the one owner of the mapping,
          `interactive-qa/tools/Sync-VendoredHelpers.ps1 -Check`, against it.
@@ -41,8 +44,10 @@
     A branch that changes a governed canonical AND re-vendors it passes. A branch
     that changes a non-governed canonical (or any other file) passes - including a
     pre-manifest branch, whose changed paths are judged against the trunk rows. A
-    repository with no vendored-helper manifest is not governed by this gate and
-    says so.
+    repository that carries no vendored-helper manifest in ANY known package
+    layout, at the working tree or at the refs being measured, is not governed by
+    this gate and says so - naming every root it probed, because "not found where
+    I looked" is not the same claim as "vendors nothing" (bead `cl-common-4m8`).
 
     Exit codes
       0  the branch touches no governed canonical, or every vendored row is in
@@ -71,12 +76,16 @@
     caller already knows the change set (a brief, a merge-queue row, a patch).
 
 .PARAMETER ManifestPath
-    Manifest to read. Defaults to
-    `<RepoPath>/interactive-qa/tools/vendored-helpers.manifest.json`.
+    Manifest to read. Defaults to the first package layout found under `RepoPath`:
+    `interactive-qa/tools/...`, `interactive-qa-agent/tools/...`, then the
+    vendored layouts `vendor/interactive-qa/tools/...` and
+    `vendor/interactive-qa-agent/tools/...`, then the repository root itself
+    (the package IS the repository). An explicit path is honored end to end: the
+    package layout is bound to it, so the ref reads measure that same file.
 
 .PARAMETER SyncScript
     The single owner of the mapping. Defaults to
-    `<RepoPath>/interactive-qa/tools/Sync-VendoredHelpers.ps1`.
+    `<package>/tools/Sync-VendoredHelpers.ps1` beside the resolved manifest.
 
 .PARAMETER Json
     Emit one JSON object instead of the human report.
@@ -102,22 +111,71 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# The package folder name is part of the mapping this gate measures, not a
-# constant: it was renamed `interactive-qa-agent` -> `interactive-qa` on
-# 2026-11-03, and a hardcoded old name made this gate print SKIP (a false green)
-# on every repository that had already taken the rename. Probe the candidates,
-# newest name first, at whichever root or ref is being measured.
-$script:PackageFolderCandidates = @('interactive-qa', 'interactive-qa-agent')
+# The package folder name AND its layout are part of the mapping this gate
+# measures, not constants. The package was renamed `interactive-qa-agent` ->
+# `interactive-qa` on 2026-11-03, and a consumer embeds it under `vendor/`
+# (cl-common keeps its one copy at `vendor/interactive-qa/`). A hardcoded name
+# made this gate print SKIP (a false green) on every repository that had already
+# taken the rename; a plain-layout-only probe made it print SKIP on every
+# repository that embeds the package under `vendor/` - including cl-common, whose
+# manifest was present at `vendor/interactive-qa/` the whole time (bead
+# cl-common-4m8). Probe every layout, newest name first, at whichever root or ref
+# is being measured. The empty candidate is the package repository itself: there
+# the repo root IS the package and its own `vendor/` tree is the same mapping.
+$script:PackageFolderCandidates = @(
+    'interactive-qa'
+    'interactive-qa-agent'
+    'vendor/interactive-qa'
+    'vendor/interactive-qa-agent'
+    ''
+)
 $script:PackageRelativePath = $script:PackageFolderCandidates[0]
-$script:ManifestRelativePath = "$($script:PackageRelativePath)/tools/vendored-helpers.manifest.json"
-$script:SyncRelativePath = "$($script:PackageRelativePath)/tools/Sync-VendoredHelpers.ps1"
+
+function Get-PackageRelativePath {
+    param(
+        [Parameter(Mandatory)][string] $Suffix,
+        [AllowEmptyString()][string] $PackageFolder = ''
+    )
+
+    # The package-is-the-repo layout has an empty prefix, which must never render
+    # a leading slash: `/tools/...` is not a repo-relative path. The branch under
+    # measurement may sit in a different layout from the caller, so the folder is
+    # a parameter with the script's resolved layout as its default.
+    $folder = if ($PSBoundParameters.ContainsKey('PackageFolder')) { $PackageFolder } else { $script:PackageRelativePath }
+    if ([string]::IsNullOrEmpty($folder)) { return $Suffix }
+    return "$folder/$Suffix"
+}
+
+function Join-RepoPath {
+    param([Parameter(Mandatory)][string] $Relative)
+
+    [System.IO.Path]::Combine($RepoPath, ($Relative -replace '/', [System.IO.Path]::DirectorySeparatorChar))
+}
+
+function ConvertTo-RepoRelativePath {
+    param([Parameter(Mandatory)][string] $Path)
+
+    $full = [System.IO.Path]::GetFullPath($Path)
+    $root = [System.IO.Path]::GetFullPath($RepoPath).TrimEnd([System.IO.Path]::DirectorySeparatorChar)
+    if ($full.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $relative = $full.Substring($root.Length).TrimStart('\', '/')
+        return ($relative -replace '\\', '/')
+    }
+    return $null
+}
 
 function Resolve-PackageFolder {
     param([Parameter(Mandatory)][string] $Root)
 
     foreach ($candidate in $script:PackageFolderCandidates) {
-        $manifest = Join-Path (Join-Path $Root $candidate) 'tools/vendored-helpers.manifest.json'
-        if (Test-Path -LiteralPath $manifest -PathType Leaf) { return $candidate }
+        $relative = if ([string]::IsNullOrEmpty($candidate)) {
+            'tools/vendored-helpers.manifest.json'
+        }
+        else {
+            "$candidate/tools/vendored-helpers.manifest.json"
+        }
+        $full = [System.IO.Path]::Combine($Root, ($relative -replace '/', [System.IO.Path]::DirectorySeparatorChar))
+        if (Test-Path -LiteralPath $full -PathType Leaf) { return $candidate }
     }
     return $null
 }
@@ -126,12 +184,63 @@ function Resolve-PackageFolderAtRef {
     param([Parameter(Mandatory)][string] $Ref)
 
     foreach ($candidate in $script:PackageFolderCandidates) {
-        $null = & git -C $RepoPath cat-file -e "${Ref}:$candidate/tools/vendored-helpers.manifest.json" 2>&1
+        $relative = if ([string]::IsNullOrEmpty($candidate)) {
+            'tools/vendored-helpers.manifest.json'
+        }
+        else {
+            "$candidate/tools/vendored-helpers.manifest.json"
+        }
+        $null = & git -C $RepoPath cat-file -e "${Ref}:$relative" 2>&1
         if ($LASTEXITCODE -eq 0) { return $candidate }
     }
     return $null
 }
+
+function Resolve-ManifestRelativePathAtRef {
+    param([Parameter(Mandatory)][string] $Ref)
+
+    # The repo-relative manifest path this ref carries, or $null. An explicit
+    # -ManifestPath pins the exact path, so the ref is judged against THAT file
+    # and never against a different manifest the probe happens to find.
+    if ($script:ManifestOutsideRepo) { return $null }
+    if ($script:PinnedManifestRelativePath) {
+        $null = & git -C $RepoPath cat-file -e "${Ref}:$($script:PinnedManifestRelativePath)" 2>&1
+        if ($LASTEXITCODE -eq 0) { return $script:PinnedManifestRelativePath }
+        return $null
+    }
+
+    $folder = Resolve-PackageFolderAtRef -Ref $Ref
+    if ($null -eq $folder) { return $null }
+    return (Get-PackageRelativePath -Suffix 'tools/vendored-helpers.manifest.json' -PackageFolder $folder)
+}
+
+function Get-ProbedManifestPath {
+    param([string] $Root = '')
+
+    @($script:PackageFolderCandidates | ForEach-Object {
+            $relative = if ([string]::IsNullOrEmpty($_)) {
+                'tools/vendored-helpers.manifest.json (this repository IS the package)'
+            }
+            else {
+                "$_/tools/vendored-helpers.manifest.json"
+            }
+            if ($Root) { "$Root\$relative" } else { $relative }
+        })
+}
+
+function Set-PackageLayout {
+    param([Parameter(Mandatory)][AllowEmptyString()][string] $Folder)
+
+    $script:PackageRelativePath = $Folder
+    $script:ManifestRelativePath = Get-PackageRelativePath -Suffix 'tools/vendored-helpers.manifest.json'
+    $script:SyncRelativePath = Get-PackageRelativePath -Suffix 'tools/Sync-VendoredHelpers.ps1'
+}
+$script:ManifestRelativePath = Get-PackageRelativePath -Suffix 'tools/vendored-helpers.manifest.json'
+$script:SyncRelativePath = Get-PackageRelativePath -Suffix 'tools/Sync-VendoredHelpers.ps1'
 $script:KnownStatuses = @('MATCH', 'DRIFT', 'MISSING', 'ORPHAN', 'CONFLICT')
+$script:ManifestOutsideRepo = $false
+$script:ManifestFoundAtRef = ''
+$script:PinnedManifestRelativePath = ''
 
 function Write-Verdict {
     param([Parameter(Mandatory)][string] $Line, [switch] $AsError)
@@ -202,10 +311,14 @@ function Get-ChangedPaths {
 function Read-ManifestForRef {
     param([Parameter(Mandatory)][string] $Ref)
 
-    $folder = Resolve-PackageFolderAtRef -Ref $Ref
-    if (-not $folder) { return $null }
+    if ($script:ManifestOutsideRepo) {
+        Stop-CannotEvaluate "the manifest named by -ManifestPath lives outside the measured repository ($ManifestPath), so it cannot be read at ref '$Ref'; pass a manifest inside $RepoPath so the branch is judged against the same file"
+    }
 
-    $json = (Invoke-Git show "${Ref}:$folder/tools/vendored-helpers.manifest.json").Output
+    $folder = Resolve-ManifestRelativePathAtRef -Ref $Ref
+    if ($null -eq $folder) { return $null }
+
+    $json = (Invoke-Git show "${Ref}:$folder").Output
     if ($json.Count -eq 0) { return $null }
 
     try {
@@ -223,8 +336,8 @@ function Test-ManifestPresentForRef {
     # unparseable manifest still EXISTS in the tree and must not be confused with
     # a branch that predates the mapping (bead cl-common-7cu). Called directly
     # because a single-dash `-e` binds as a parameter name on a splatting wrapper.
-    $folder = Resolve-PackageFolderAtRef -Ref $Ref
-    return [bool]$folder
+    $relative = Resolve-ManifestRelativePathAtRef -Ref $Ref
+    return ($null -ne $relative)
 }
 
 function Get-RowIndex {
@@ -292,26 +405,72 @@ if ($insideWorkTree.ExitCode -ne 0 -or $insideWorkTree.Output[0].Trim() -ne 'tru
 }
 
 # --- 2. applicability -------------------------------------------------------
-# Bind the package folder to the repository being measured; every later path is
-# derived from it, so a repository on the other side of the rename still measures.
-$resolvedFolder = Resolve-PackageFolder -Root $RepoPath
-if ($resolvedFolder) {
-    $script:PackageRelativePath = $resolvedFolder
-    $script:ManifestRelativePath = "$resolvedFolder/tools/vendored-helpers.manifest.json"
-    $script:SyncRelativePath = "$resolvedFolder/tools/Sync-VendoredHelpers.ps1"
+# The refs this run measures are resolved BEFORE the manifest, because a
+# repository whose WORKING TREE carries no copy can still carry the mapping at a
+# measured ref (a checkout parked on a pre-mapping commit, or -Paths judging
+# another branch). Treating that as "vendors nothing" is the false green this
+# gate exists to prevent.
+$baseRef = Resolve-BaseRef
+$currentBranch = (Invoke-Git rev-parse --abbrev-ref HEAD).Output
+$branchNames = if ($Branch.Count -gt 0) { @($Branch) } else { @($currentBranch[0].Trim()) }
+
+$refsToProbe = [System.Collections.Generic.List[string]]::new()
+if ($baseRef) { $refsToProbe.Add($baseRef) }
+foreach ($name in $branchNames) {
+    if ($name -ne 'HEAD' -and -not $refsToProbe.Contains($name)) { $refsToProbe.Add($name) }
 }
 
 $manifestIsExplicit = [bool]$ManifestPath
-if (-not $ManifestPath) { $ManifestPath = Join-Path $RepoPath $script:ManifestRelativePath }
-
-if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
-    if ($manifestIsExplicit) {
+if ($manifestIsExplicit) {
+    if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
         Stop-CannotEvaluate "the manifest passed with -ManifestPath does not exist: $ManifestPath"
     }
-    Write-Verdict "Test-VendoredSync: SKIP - no vendored-helper manifest at $script:ManifestRelativePath; this repository does not vendor canonical Skills helpers"
+    $ManifestPath = (Resolve-Path -LiteralPath $ManifestPath).Path
+
+    # Honor it end to end. An explicit path used to be consulted only for the
+    # working-tree existence test and then silently replaced by the probed
+    # default for every ref read, which also reported the default path in the
+    # verdict (bead cl-common-4m8). Bind the layout to the file the caller named.
+    $explicitRelative = ConvertTo-RepoRelativePath -Path $ManifestPath
+    if ($null -ne $explicitRelative) {
+        $script:ManifestRelativePath = $explicitRelative
+        $script:PinnedManifestRelativePath = $explicitRelative
+        $packageRelative = ConvertTo-RepoRelativePath -Path (Split-Path -Parent (Split-Path -Parent $ManifestPath))
+        if ($null -ne $packageRelative) { Set-PackageLayout -Folder $packageRelative }
+    }
+    else {
+        # Readable here, unreadable at a ref: never substitute another manifest.
+        $script:ManifestOutsideRepo = $true
+    }
+}
+else {
+    $resolvedFolder = Resolve-PackageFolder -Root $RepoPath
+    if ($null -ne $resolvedFolder) {
+        Set-PackageLayout -Folder $resolvedFolder
+    }
+    else {
+        foreach ($probeRef in $refsToProbe) {
+            $folder = Resolve-PackageFolderAtRef -Ref $probeRef
+            if ($null -eq $folder) { continue }
+            Set-PackageLayout -Folder $folder
+            $script:ManifestFoundAtRef = $probeRef
+            break
+        }
+
+        if ([string]::IsNullOrEmpty($script:ManifestFoundAtRef)) {
+            $probes = (Get-ProbedManifestPath) -join ', '
+            $refNote = if ($refsToProbe.Count -gt 0) {
+                " or at the measured ref(s) $($refsToProbe -join ', ')"
+            }
+            else {
+                ' (no ref was resolved to probe)'
+            }
+            Write-Verdict "Test-VendoredSync: SKIP - no vendored-helper manifest at any probed root ($probes) in the working tree $RepoPath$refNote; this repository does not vendor canonical Skills helpers"
+        }
+    }
 }
 
-if (-not $SyncScript) { $SyncScript = Join-Path $RepoPath $script:SyncRelativePath }
+if (-not $SyncScript) { $SyncScript = Join-RepoPath -Relative $script:SyncRelativePath }
 
 # The sync script is measured as the BRANCH ships it: the branch may be the one
 # changing the mapping, and a worktree run must not borrow the caller's copy.
@@ -324,10 +483,6 @@ if (Test-Path -LiteralPath $SyncScript -PathType Leaf) {
 }
 
 # --- 3. targets and their changed paths -------------------------------------
-$baseRef = Resolve-BaseRef
-$currentBranch = (Invoke-Git rev-parse --abbrev-ref HEAD).Output
-$branchNames = if ($Branch.Count -gt 0) { @($Branch) } else { @($currentBranch[0].Trim()) }
-
 if ($Paths.Count -gt 0) {
     $targets = @([pscustomobject]@{
             Branch       = if ($Branch.Count -gt 0) { $Branch[0] } else { $currentBranch[0].Trim() }
@@ -415,15 +570,41 @@ foreach ($target in $targets) {
     $target.Paths = @($target.Paths)
     $totalChanged += $target.Paths.Count
 
+    $packagePrefix = if ([string]::IsNullOrEmpty($script:PackageRelativePath)) { '' } else { "$($script:PackageRelativePath)/" }
     foreach ($path in $target.Paths) {
-        $canonical = ConvertTo-CanonicalRelative -Path $path
-        if ([string]::IsNullOrWhiteSpace($canonical)) { continue }
-        if (-not $index.ByCanonical.ContainsKey($canonical)) { continue }
+        $normalized = ($path.Trim() -replace '\\', '/') -replace '^\./', ''
+
+        $canonical = ConvertTo-CanonicalRelative -Path $normalized
+        if (-not [string]::IsNullOrWhiteSpace($canonical) -and $index.ByCanonical.ContainsKey($canonical)) {
+            $touched.Add([pscustomobject]@{
+                    Branch    = $target.Branch
+                    Canonical = $canonical
+                    Row       = $index.ByCanonical[$canonical]
+                    MergeBase = $target.MergeBase
+                })
+            continue
+        }
+
+        # A changed VENDORED body that has a manifest row is governed too: an
+        # owned, snapshot or copy file edited without re-recording its hash is
+        # exactly the drift this gate measures, and the intersection used to look
+        # only at canonicals, so a stale owned row landed as a pass. Report it as
+        # a row - never as a skip (bead cl-common-4m8).
+        if (-not $packagePrefix) { continue }
+        if (-not $normalized.StartsWith($packagePrefix, [System.StringComparison]::OrdinalIgnoreCase)) { continue }
+
+        $vendoredRelative = $normalized.Substring($packagePrefix.Length)
+        if (-not $index.ByVendored.ContainsKey($vendoredRelative)) { continue }
+
+        $row = $index.ByVendored[$vendoredRelative]
+        $rowCanonical = ''
+        $canonicalProperty = $row.PSObject.Properties['Canonical']
+        if ($canonicalProperty) { $rowCanonical = [string]$canonicalProperty.Value }
 
         $touched.Add([pscustomobject]@{
                 Branch    = $target.Branch
-                Canonical = $canonical
-                Row       = $index.ByCanonical[$canonical]
+                Canonical = $rowCanonical
+                Row       = $row
                 MergeBase = $target.MergeBase
             })
     }
@@ -440,7 +621,7 @@ $preManifestNote = if ($preManifestBranches.Count -gt 0) {
 } else { '' }
 
 if ($touched.Count -eq 0) {
-    $summary = "Test-VendoredSync: OK - $totalChanged changed path(s) across $(@($targets | ForEach-Object { $_.Branch }) -join ', '); none is a canonical file with a vendored manifest row ($rowCount row(s) watched)$preManifestNote"
+    $summary = "Test-VendoredSync: OK - $totalChanged changed path(s) across $(@($targets | ForEach-Object { $_.Branch }) -join ', '); none is a canonical file with a vendored manifest row (nor a vendored body with a recorded hash) ($rowCount row(s) watched)$preManifestNote"
     if ($Json) {
         [pscustomobject]@{
             verdict       = 'ok'
@@ -481,8 +662,8 @@ foreach ($name in @($touched | ForEach-Object { $_.Branch } | Select-Object -Uni
 
         $branchSync = Join-Path $worktree $syncRelative
         $branchFolder = Resolve-PackageFolder -Root $worktree
-        if (-not $branchFolder) { $branchFolder = $script:PackageRelativePath }
-        $branchSyncRelative = "$branchFolder/tools/Sync-VendoredHelpers.ps1"
+        if ($null -eq $branchFolder) { $branchFolder = $script:PackageRelativePath }
+        $branchSyncRelative = Get-PackageRelativePath -Suffix 'tools/Sync-VendoredHelpers.ps1' -PackageFolder $branchFolder
         $branchSync = Join-Path $worktree $branchSyncRelative
         $packageRoot = Join-Path $worktree $branchFolder
         $shipsMapping = (Test-Path -LiteralPath $branchSync -PathType Leaf) -and
@@ -498,13 +679,24 @@ foreach ($name in @($touched | ForEach-Object { $_.Branch } | Select-Object -Uni
             # construction. Name the row (and the canonical) rather than pretend
             # to measure a package the branch does not ship.
             foreach ($entry in $touchedForBranch) {
+                $entryCanonical = ''
+                $canonicalProperty = $entry.Row.PSObject.Properties['Canonical']
+                if ($canonicalProperty) { $entryCanonical = [string]$canonicalProperty.Value }
+                $entryVendored = ''
+                $vendoredProperty = $entry.Row.PSObject.Properties['Vendored']
+                if ($vendoredProperty) { $entryVendored = [string]$vendoredProperty.Value }
+                $entryKind = ''
+                $kindProperty = $entry.Row.PSObject.Properties['Kind']
+                if ($kindProperty) { $entryKind = [string]$kindProperty.Value }
+
                 $offending.Add([pscustomobject]@{
                         Branch    = $name
-                        Row       = [string]$entry.Row.Canonical
-                        Canonical = [string]$entry.Row.Canonical
-                        Vendored  = [string]$entry.Row.Vendored
+                        Row       = if ($entryCanonical) { $entryCanonical } else { $entryVendored }
+                        Canonical = $entryCanonical
+                        Kind      = $entryKind
+                        Vendored  = $entryVendored
                         Status    = 'MISSING'
-                        Detail    = "the branch predates the vendored-helper mapping (rows read from base $($targetForBranch.ManifestRef)) and ships no vendored copy, so this canonical would land unsynced"
+                        Detail    = "the branch predates the vendored-helper mapping (rows read from base $($targetForBranch.ManifestRef)) and ships no vendored copy, so this row would land unsynced"
                         Touched   = $true
                     })
             }
@@ -520,9 +712,11 @@ foreach ($name in @($touched | ForEach-Object { $_.Branch } | Select-Object -Uni
             # is modified.
             $branchManifestRelative = 'tools/vendored-helpers.manifest.json'
             $branchManifestPath = Join-Path $packageRoot $branchManifestRelative
-            $baseFolder = Resolve-PackageFolderAtRef -Ref $targetForBranch.ManifestRef
-            if (-not $baseFolder) { $baseFolder = $script:PackageRelativePath }
-            $baseManifestJson = (Invoke-Git show "$($targetForBranch.ManifestRef):$baseFolder/tools/vendored-helpers.manifest.json").Output
+            $baseManifestRelative = Resolve-ManifestRelativePathAtRef -Ref $targetForBranch.ManifestRef
+            if ($null -eq $baseManifestRelative) {
+                $baseManifestRelative = Get-PackageRelativePath -Suffix 'tools/vendored-helpers.manifest.json'
+            }
+            $baseManifestJson = (Invoke-Git show "$($targetForBranch.ManifestRef):$baseManifestRelative").Output
             $branchManifestDir = Split-Path -Parent $branchManifestPath
             if (-not (Test-Path -LiteralPath $branchManifestDir -PathType Container)) {
                 New-Item -ItemType Directory -Path $branchManifestDir -Force | Out-Null
@@ -545,21 +739,32 @@ foreach ($name in @($touched | ForEach-Object { $_.Branch } | Select-Object -Uni
 
         $index = Get-RowIndex -Manifest $targetForBranch.Manifest
         $touchedCanonicals = @($touchedForBranch | ForEach-Object { $_.Canonical })
+        $touchedVendored = @($touchedForBranch | ForEach-Object { [string]$_.Row.Vendored })
 
         foreach ($row in $rows) {
             if ($row.Status -eq 'MATCH') { continue }
             $manifestRow = $null
             if ($index.ByVendored.ContainsKey($row.Vendored)) { $manifestRow = $index.ByVendored[$row.Vendored] }
 
-            $canonical = if ($manifestRow) { [string]$manifestRow.Canonical } else { '' }
+            $canonical = ''
+            $kind = ''
+            if ($manifestRow) {
+                $canonicalProperty = $manifestRow.PSObject.Properties['Canonical']
+                if ($canonicalProperty) { $canonical = [string]$canonicalProperty.Value }
+                $kindProperty = $manifestRow.PSObject.Properties['Kind']
+                if ($kindProperty) { $kind = [string]$kindProperty.Value }
+            }
+
             $offending.Add([pscustomobject]@{
                     Branch    = $name
                     Row       = if ($canonical) { $canonical } else { $row.Vendored }
                     Canonical = $canonical
+                    Kind      = $kind
                     Vendored  = $row.Vendored
                     Status    = $row.Status
                     Detail    = $row.Detail
-                    Touched   = ($canonical -and ($touchedCanonicals -contains $canonical))
+                    Touched   = (($canonical -and ($touchedCanonicals -contains $canonical)) -or
+                        ($touchedVendored -contains $row.Vendored))
                 })
         }
     }
@@ -574,7 +779,9 @@ foreach ($name in @($touched | ForEach-Object { $_.Branch } | Select-Object -Uni
 $branchesMeasured = @($checkedBranches) -join ', '
 
 if ($offending.Count -eq 0) {
-    $summary = "Test-VendoredSync: OK - $checkedRows vendored row(s) in sync on $branchesMeasured; $(@($touched | ForEach-Object { $_.Canonical } | Select-Object -Unique).Count) canonical file(s) changed by these branches each carries its vendored copy and manifest hash in step"
+    $governedCount = @($touched | Where-Object { $_.Canonical } | ForEach-Object { $_.Canonical } | Select-Object -Unique).Count +
+        @($touched | Where-Object { -not $_.Canonical } | ForEach-Object { [string]$_.Row.Vendored } | Select-Object -Unique).Count
+    $summary = "Test-VendoredSync: OK (MATCH) - $checkedRows vendored row(s) in sync on $branchesMeasured; $governedCount governed path(s) changed by these branches, each carrying its vendored copy and recorded manifest hash in step"
     if ($Json) {
         [pscustomobject]@{
             verdict       = 'ok'
@@ -591,11 +798,19 @@ if ($offending.Count -eq 0) {
     Write-Verdict $summary
 }
 
-$failHead = "Test-VendoredSync: FAIL - $($offending.Count) of $checkedRows vendored row(s) are not in sync; $(@($offending | Where-Object { $_.Touched }).Count) belong to canonical file(s) these branches change ($branchesMeasured vs $baseRef)"
+$failHead = "Test-VendoredSync: FAIL - $($offending.Count) of $checkedRows vendored row(s) are not in sync; $(@($offending | Where-Object { $_.Touched }).Count) belong to governed path(s) these branches change ($branchesMeasured vs $baseRef)"
 $failLines = @()
 foreach ($row in $offending) {
     $failLines += "  ROW       $($row.Row)"
-    if ($row.Canonical) { $failLines += "  CANONICAL Skills/$($row.Canonical)" } else { $failLines += '  CANONICAL (no manifest row - orphan copy)' }
+    if ($row.Canonical) {
+        $failLines += "  CANONICAL Skills/$($row.Canonical)"
+    }
+    elseif ($row.Kind -eq 'owned') {
+        $failLines += "  CANONICAL (owned in-package row - this package is the owner; re-record the hash with a no-argument run)"
+    }
+    else {
+        $failLines += '  CANONICAL (no manifest row - orphan copy)'
+    }
     $failLines += "  VENDORED  $($row.Vendored)"
     $failLines += "  STATUS    $($row.Status)  $($row.Detail)"
     $failLines += "  TOUCHED   $(if ($row.Touched) { "yes - changed on $($row.Branch)" } else { 'no - not this branch''s change (trunk debt; still a hard failure)' })"

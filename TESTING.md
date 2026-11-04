@@ -30,7 +30,7 @@ The four gates have their own proofs:
 ```powershell
 pwsh -NoProfile -File tools/Test-PluginLinks.Tests.ps1        # 11 tests
 pwsh -NoProfile -File tools/Test-VendoredHelpers.Tests.ps1    # 16 tests, 5 skipped by design
-pwsh -NoProfile -File tools/Test-VendoredSync.Tests.ps1       # 12 tests
+pwsh -NoProfile -File tools/Test-VendoredSync.Tests.ps1       # 18 tests
 ```
 
 A skipped test prints why it skipped. A red gate is a defect in the package, not a

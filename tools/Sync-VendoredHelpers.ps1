@@ -512,9 +512,24 @@ $script:Residuals = @(
     }
 )
 
+function Resolve-RepoRoot {
+    # tools/ -> package -> repo root. A consumer embeds this package at
+    # `<repo>/vendor/interactive-qa`, so the package's parent is `<repo>/vendor`
+    # and the repository root is one level further up. Prefer whichever candidate
+    # actually carries a Skills/ tree, so the checkout that OWNS the package is
+    # measured rather than a parent directory that never had one.
+    $packageRoot = Split-Path -Parent $PSScriptRoot
+    $parent = Split-Path -Parent $packageRoot
+    if (Test-Path -LiteralPath (Join-Path $parent 'Skills') -PathType Container) { return $parent }
+
+    $grandparent = Split-Path -Parent $parent
+    if ($grandparent -and (Test-Path -LiteralPath (Join-Path $grandparent 'Skills') -PathType Container)) { return $grandparent }
+
+    return $parent
+}
+
 function Resolve-RepoSkillsRoot {
-    # tools/ -> package -> repo root
-    $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+    $repoRoot = Resolve-RepoRoot
     $candidate = Join-Path $repoRoot 'Skills'
     if (Test-Path -LiteralPath $candidate -PathType Container) { return $candidate }
     return $null
@@ -664,8 +679,9 @@ if ($resolvedCanonical) {
 if ($Check) {
     $canonicalHint = if ($env:CL_REPOS_ROOT) {
         "$env:CL_REPOS_ROOT\cl-common\Skills"
-    } else {
-        "$(Split-Path -Parent (Split-Path -Parent $PSScriptRoot))\Skills"
+    }
+    else {
+        "$(Resolve-RepoRoot)\Skills"
     }
 
     $stored = Read-ManifestFile
@@ -929,8 +945,9 @@ foreach ($file in $script:VendoredFiles) {
 if (-not $canonicalRoot) {
     $hint = if ($env:CL_REPOS_ROOT) {
         "$env:CL_REPOS_ROOT\cl-common\Skills"
-    } else {
-        "$(Split-Path -Parent (Split-Path -Parent $PSScriptRoot))\Skills"
+    }
+    else {
+        "$(Resolve-RepoRoot)\Skills"
     }
     Write-Host "Sync-VendoredHelpers: CANNOT-EVALUATE - canonical Skills root not found (looked for $hint)" -ForegroundColor Yellow
     Write-Host 'Set CL_REPOS_ROOT, or run this script from a cl-common checkout that has a Skills/ sibling.' -ForegroundColor Yellow

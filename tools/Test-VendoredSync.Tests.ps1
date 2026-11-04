@@ -49,7 +49,18 @@ param([switch] $Check, [string] $PackageRoot)
 if (-not $PackageRoot) { $PackageRoot = Split-Path -Parent $PSScriptRoot }
 $manifestPath = Join-Path $PackageRoot 'tools/vendored-helpers.manifest.json'
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+
+# Resolve the repo root the way the owning script does: the package can sit at
+# <repo>/interactive-qa, at <repo>/vendor/interactive-qa, or AT the repo root
+# (the package repository itself). Prefer whichever level owns a Skills/ tree.
 $repoRoot = Split-Path -Parent $PackageRoot
+if (Test-Path -LiteralPath (Join-Path $PackageRoot 'Skills') -PathType Container) {
+    $repoRoot = $PackageRoot
+}
+elseif (-not (Test-Path -LiteralPath (Join-Path $repoRoot 'Skills') -PathType Container)) {
+    $grandparent = Split-Path -Parent $repoRoot
+    if (Test-Path -LiteralPath (Join-Path $grandparent 'Skills') -PathType Container) { $repoRoot = $grandparent }
+}
 $bad = 0
 
 foreach ($row in @($manifest.vendored)) {
@@ -112,18 +123,57 @@ exit 0
         }
     }
 
+    function Get-FixturePackageDir {
+        param(
+            [Parameter(Mandatory)][string] $Repo,
+            [ValidateSet('plain', 'vendor', 'root')][string] $Layout = 'plain'
+        )
+        switch ($Layout) {
+            'vendor' { Join-Path $Repo 'vendor/interactive-qa' }
+            'root' { $Repo }
+            default { Join-Path $Repo 'interactive-qa' }
+        }
+    }
+
+    function Update-VendoredRowHash {
+        param(
+            [Parameter(Mandatory)][string] $ManifestPath,
+            [Parameter(Mandatory)][string] $Canonical,
+            [Parameter(Mandatory)][string] $VendoredPath
+        )
+
+        $manifest = Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json
+        $hash = Get-Sha256Hex -Path $VendoredPath
+        $row = $manifest.vendored | Where-Object { $_.Canonical -eq $Canonical }
+        $row.Sha256 = $hash
+        $row.Sha256Lf = $hash
+        $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ManifestPath -Encoding utf8 -NoNewline
+    }
+
     function New-SyncFixture {
         param(
             [Parameter(Mandatory)][string] $Name,
-            [switch] $ManifestIntroducedLater
+            [switch] $ManifestIntroducedLater,
+            # Where the package lives: a consumer that adopts the package plain
+            # (`interactive-qa/`), a consumer that embeds it (`vendor/`), or the
+            # package repository itself (the repo root IS the package).
+            [ValidateSet('plain', 'vendor', 'root')][string] $Layout = 'plain'
         )
+
+        if ($ManifestIntroducedLater -and $Layout -eq 'root') {
+            throw 'the pre-manifest fixture cannot use the root layout: it moves the package out of the tree'
+        }
 
         $root = Join-Path $TestDrive $Name
         New-Item -ItemType Directory -Path $root -Force | Out-Null
 
         # The two governed canonical files, their vendored copies, and the owner.
         $canonicalDir = Join-Path $root 'Skills/demo'
-        $packageDir = Join-Path $root 'interactive-qa'
+        $packageDir = switch ($Layout) {
+            'vendor' { Join-Path $root 'vendor/interactive-qa' }
+            'root' { $root }
+            default { Join-Path $root 'interactive-qa' }
+        }
         $toolsDir = Join-Path $packageDir 'tools'
         $vendoredDir = Join-Path $packageDir 'vendor/demo'
         New-Item -ItemType Directory -Path $canonicalDir, $toolsDir, $vendoredDir -Force | Out-Null
@@ -335,6 +385,16 @@ Describe 'Test-VendoredSync merge gate' {
             $result.ExitCode | Should -Be 0 -Because $result.Output
             $result.Output | Should -Match 'SKIP - no vendored-helper manifest'
             $result.Output | Should -Match 'does not vendor canonical Skills helpers'
+
+            # A genuine "vendors nothing" must name EVERY root it probed: "not
+            # found where I looked" is not the claim "vendors nothing" (bead
+            # cl-common-4m8 printed SKIP while the manifest was in the tree).
+            $result.Output | Should -Match 'interactive-qa/tools/vendored-helpers\.manifest\.json'
+            $result.Output | Should -Match 'interactive-qa-agent/tools/vendored-helpers\.manifest\.json'
+            $result.Output | Should -Match 'vendor/interactive-qa/tools/vendored-helpers\.manifest\.json'
+            $result.Output | Should -Match 'vendor/interactive-qa-agent/tools/vendored-helpers\.manifest\.json'
+            $result.Output | Should -Match 'this repository IS the package'
+            $result.Output | Should -Match 'measured ref\(s\) dev'
         }
     }
 
@@ -351,6 +411,119 @@ Describe 'Test-VendoredSync merge gate' {
             $result.ExitCode | Should -Be 1 -Because $result.Output
             $result.Output | Should -Match 'ROW\s+demo/Beta\.ps1'
             $result.Output | Should -Match 'CANONICAL Skills/demo/Beta\.ps1'
+        }
+    }
+
+    Context 'the vendored package layout (cl-common embeds the package under vendor/)' {
+        # bead cl-common-4m8: the probe only knew `interactive-qa/` and
+        # `interactive-qa-agent/`. cl-common embeds the package at
+        # `vendor/interactive-qa/`, so the gate printed SKIP - a false green -
+        # while the manifest sat in the tree at 29f0552a.
+
+        It 'finds the manifest under vendor/ and reports a stale row as DRIFT, never SKIP' {
+            $repo = New-SyncFixture -Name "vendor-drift-$(Get-Random)" -Layout vendor
+            New-Branch -Repo $repo -Name 'feat/vendor-drift'
+            Set-Content -LiteralPath (Join-Path $repo 'Skills/demo/Alpha.ps1') -Value "#Requires -Version 7`n# alpha CANONICAL EDIT" -Encoding utf8 -NoNewline
+            Save-BranchCommit -Repo $repo -Message 'edit canonical only'
+
+            $result = Invoke-Guard -Repo $repo -Branch 'feat/vendor-drift'
+
+            $result.ExitCode | Should -Be 1 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            foreach ($pattern in $script:FailPatterns) {
+                $result.Output | Should -Match $pattern
+            }
+        }
+
+        It 'passes with MATCH when the vendored layout is re-vendored in the same branch' {
+            $repo = New-SyncFixture -Name "vendor-synced-$(Get-Random)" -Layout vendor
+            New-Branch -Repo $repo -Name 'feat/vendor-synced'
+            $packageDir = Get-FixturePackageDir -Repo $repo -Layout vendor
+            $canonical = Join-Path $repo 'Skills/demo/Alpha.ps1'
+            Set-Content -LiteralPath $canonical -Value "#Requires -Version 7`n# alpha canonical v2" -Encoding utf8 -NoNewline
+            $vendoredCopy = Join-Path $packageDir 'vendor/demo/Alpha.ps1'
+            Copy-Item -LiteralPath $canonical -Destination $vendoredCopy -Force
+            Update-VendoredRowHash -ManifestPath (Join-Path $packageDir 'tools/vendored-helpers.manifest.json') -Canonical 'demo/Alpha.ps1' -VendoredPath $vendoredCopy
+            Save-BranchCommit -Repo $repo -Message 're-vendor alpha under vendor/'
+
+            $result = Invoke-Guard -Repo $repo -Branch 'feat/vendor-synced'
+
+            $result.ExitCode | Should -Be 0 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            $result.Output | Should -Match 'OK \(MATCH\)'
+            $result.Output | Should -Match 'vendored row\(s\) in sync'
+        }
+
+        It 'treats a vendored body edited without re-recording its hash as DRIFT, not a pass' {
+            $repo = New-SyncFixture -Name "vendor-owned-$(Get-Random)" -Layout vendor
+            New-Branch -Repo $repo -Name 'feat/vendored-body-stale'
+            Set-Content -LiteralPath (Join-Path $repo 'vendor/interactive-qa/vendor/demo/Alpha.ps1') -Value "#Requires -Version 7`n# alpha VENDORED EDIT" -Encoding utf8 -NoNewline
+            Save-BranchCommit -Repo $repo -Message 'edit the vendored copy only'
+
+            $result = Invoke-Guard -Repo $repo -Branch 'feat/vendored-body-stale'
+
+            $result.ExitCode | Should -Be 1 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            $result.Output | Should -Match 'VENDORED\s+vendor/demo/Alpha\.ps1'
+            $result.Output | Should -Match 'STATUS\s+DRIFT'
+            $result.Output | Should -Match 'TOUCHED\s+yes'
+        }
+    }
+
+    Context 'the plain package layout' {
+
+        It 'still measures a consumer that adopts the package at interactive-qa/' {
+            $repo = New-SyncFixture -Name "plain-drift-$(Get-Random)" -Layout plain
+            New-Branch -Repo $repo -Name 'feat/plain-drift'
+            Set-Content -LiteralPath (Join-Path $repo 'Skills/demo/Alpha.ps1') -Value "#Requires -Version 7`n# alpha CANONICAL EDIT" -Encoding utf8 -NoNewline
+            Save-BranchCommit -Repo $repo -Message 'edit canonical only'
+
+            $result = Invoke-Guard -Repo $repo -Branch 'feat/plain-drift'
+
+            $result.ExitCode | Should -Be 1 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            $result.Output | Should -Match 'STATUS\s+DRIFT'
+        }
+    }
+
+    Context 'the package repository itself' {
+
+        It 'measures a repository whose root IS the package' {
+            $repo = New-SyncFixture -Name "root-drift-$(Get-Random)" -Layout root
+            New-Branch -Repo $repo -Name 'feat/root-drift'
+            Set-Content -LiteralPath (Join-Path $repo 'Skills/demo/Alpha.ps1') -Value "#Requires -Version 7`n# alpha CANONICAL EDIT" -Encoding utf8 -NoNewline
+            Save-BranchCommit -Repo $repo -Message 'edit canonical only'
+
+            $result = Invoke-Guard -Repo $repo -Branch 'feat/root-drift'
+
+            $result.ExitCode | Should -Be 1 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            $result.Output | Should -Match 'STATUS\s+DRIFT'
+        }
+    }
+
+    Context 'a working tree that predates the mapping while a measured ref carries it' {
+
+        It 'judges the branch from the ref manifest instead of skipping' {
+            $repo = New-SyncFixture -Name "ref-only-$(Get-Random)" -ManifestIntroducedLater
+            $oldTip = (& git -C $repo rev-parse 'HEAD~1').Trim()
+
+            & git -C $repo checkout --quiet -b 'feat/ref-only' 2>&1 | Out-Null
+            Set-Content -LiteralPath (Join-Path $repo 'Skills/demo/Alpha.ps1') -Value "#Requires -Version 7`n# alpha edited where the mapping lives only at the ref" -Encoding utf8 -NoNewline
+            Save-BranchCommit -Repo $repo -Message 'edit a governed canonical'
+
+            # Park the working tree on the pre-manifest commit: the manifest is
+            # now absent from the tree and present at both measured refs.
+            & git -C $repo checkout --quiet --detach $oldTip 2>&1 | Out-Null
+            $null = & git -C $repo cat-file -e 'HEAD:interactive-qa/tools/vendored-helpers.manifest.json' 2>&1
+            $LASTEXITCODE | Should -Be 128 -Because 'the working tree must genuinely have no manifest for this case'
+
+            $result = Invoke-Guard -Repo $repo -Branch 'feat/ref-only'
+
+            $result.ExitCode | Should -Be 1 -Because $result.Output
+            $result.Output | Should -Not -Match 'SKIP'
+            $result.Output | Should -Match 'ROW\s+demo/Alpha\.ps1'
+            $result.Output | Should -Match 'STATUS\s+DRIFT'
         }
     }
 
