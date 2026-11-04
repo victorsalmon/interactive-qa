@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-04T02:06:39.1898310-07:00",
+  "generatedAt": "2026-11-04T02:33:50.9834253-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -58,9 +58,9 @@
       "Name": "agent-capacity.json",
       "Canonical": "agent-spawn-capacity/assets/agent-capacity.json",
       "Vendored": "vendor/agent-spawn-capacity/assets/agent-capacity.json",
-      "Sha256": "318CF7C8A119669B0E12AE3E8B2478EC884120150C684C6346746C2100564457",
-      "Sha256Lf": "FF6E99012B100472A50362AA6E75FC921F09792F4B27EADC12E2A8BB6585C275",
-      "Bytes": 21790,
+      "Sha256": "FAC116682971AF973FE345B966CC4C418E12EE2EBAC75E0DD36A5B1D0E6EEF6C",
+      "Sha256Lf": "910A5046468F9FF524FBC81744420B6D06F54FD1B012185275052C06CE3EBC46",
+      "Bytes": 21835,
       "Tree": ""
     },
     {
@@ -563,12 +563,22 @@
     },
     {
       "Kind": "copy",
+      "Name": "REFERENCE.md",
+      "Canonical": "credential-rescue/skills/salmon-run/REFERENCE.md",
+      "Vendored": "vendor/credential-rescue/skills/salmon-run/REFERENCE.md",
+      "Sha256": "7D276FCB91AD2DD9FBB85C2626EF9BCBD274F20B673BDB3E3BC4B0DB7989E185",
+      "Sha256Lf": "58100C1EA4E64B8DCD54F3A82B5A3213888BE82ACF93903F3F0705CD2366B7AF",
+      "Bytes": 1002,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/salmon-run/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/salmon-run/SKILL.md",
-      "Sha256": "0C2F4D2C3008C0B2B96CBD6EF6029CDAA457BAC3DD6182C0F3E3A47679BD4B93",
-      "Sha256Lf": "F2492F62A8ADFA9116C1D756FDBAF6DAAC339936975170CA315E0AF9C91B4EEA",
-      "Bytes": 7083,
+      "Sha256": "F9A82CC9F589B38B7923AB410C17EA33931924CECA575657BBBA00FA0B3A5D6B",
+      "Sha256Lf": "6C2A30592262C3AB180FC002C4347E964287736410B5CA47632979001232CD90",
+      "Bytes": 6289,
       "Tree": "credential-rescue"
     },
     {

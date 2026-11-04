@@ -37,7 +37,7 @@
     "gemini": {
       "enabled": false,
       "disabledReason": "Operator decision 2026-10-29: inconsistent results; do not use Gemini for lane/subagent work.",
-      "priority": 3,
+      "priority": 4,
       "cap": 1,
       "capScope": "pool",
       "harness": "gemini",
@@ -218,7 +218,7 @@
     },
     "opencode-zen": {
       "enabled": true,
-      "priority": 2,
+      "priority": 3,
       "cap": 2,
       "capScope": "pool",
       "harness": "opencode",
@@ -283,18 +283,18 @@
       }
     },
     "codex": {
-      "enabled": false,
-      "priority": 5,
-      "cap": 12,
+      "enabled": true,
+      "priority": 2,
+      "cap": 4,
       "capScope": "pool",
       "harness": "codex",
       "matchPrefixes": [
         "codex/"
       ],
-      "description": "Disabled for automatic routing. Use only when the user explicitly requests Codex; pass -Pool codex -OptInCodex to Acquire. Quota is ACCOUNT-WIDE: one exhausted key kills every Codex worker at once.",
+      "description": "Enabled 2026-11-04 at operator request: Luna only, cap 4, medium effort by default and high for refactor/review/merge. Priority sits above the free Zen lane and below nothing else except the shared tie with opencode-go. Quota is ACCOUNT-WIDE: one exhausted key kills every Codex worker at once.",
       "roleCaps": {
-        "fix": 8,
-        "recon": 4
+        "fix": 4,
+        "recon": 2
       },
       "failurePolicy": {
         "windowMinutes": 15,
@@ -314,20 +314,20 @@
           "provider": "codex/gpt-6-luna",
           "modelLabel": "GPT-6 Luna",
           "thinking": "high",
-          "efforts": { "review": "high", "fix": "high", "code": "high", "refactor": "high", "merge": "high" },
+          "efforts": { "review": "high", "fix": "medium", "code": "medium", "refactor": "high", "merge": "high" },
           "mode": "full-access",
-          "note": "Opt-in only: never selected by -Pool auto while the Codex pool is disabled. Requires an explicit user request and -OptInCodex. Paseo supports this Codex model via --provider codex/gpt-6-luna."
+          "note": "Enabled for automatic routing (2026-11-04); -OptInCodex is no longer required to select this route. Paseo supports this Codex model via --provider codex/gpt-6-luna."
         },
         {
           "role": "recon",
-          "label": "Sol 6.1 (Recon)",
+          "label": "GPT-6 Luna (Recon)",
           "cli": "codex",
-          "provider": "codex/gpt-6.1-sol",
-          "modelLabel": "GPT-6.1 Sol",
+          "provider": "codex/gpt-6-luna",
+          "modelLabel": "GPT-6 Luna",
           "thinking": "medium",
           "efforts": { "recon": "medium" },
           "mode": "full-access",
-          "note": "Opt-in only: never selected by -Pool auto while the Codex pool is disabled. Requires an explicit user request and -OptInCodex. Paseo supports this Codex model via --provider codex/gpt-6.1-sol."
+          "note": "Enabled for automatic routing (2026-11-04); -OptInCodex is no longer required to select this route. Paseo supports this Codex model via --provider codex/gpt-6-luna."
         }
       ],
       "workRoles": {
@@ -342,7 +342,7 @@
     },
     "devin": {
       "enabled": false,
-      "priority": 6,
+      "priority": 7,
       "cap": 2,
       "capScope": "pool",
       "harness": "devin",
@@ -384,7 +384,7 @@
     },
     "openrouter": {
       "enabled": true,
-      "priority": 4,
+      "priority": 5,
       "cap": 2,
       "capScope": "pool",
       "harness": "openrouter",
