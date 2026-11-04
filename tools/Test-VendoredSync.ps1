@@ -102,9 +102,35 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$script:ManifestRelativePath = 'interactive-qa-agent/tools/vendored-helpers.manifest.json'
-$script:PackageRelativePath = 'interactive-qa-agent'
-$script:SyncRelativePath = 'interactive-qa-agent/tools/Sync-VendoredHelpers.ps1'
+# The package folder name is part of the mapping this gate measures, not a
+# constant: it was renamed `interactive-qa-agent` -> `interactive-qa` on
+# 2026-11-03, and a hardcoded old name made this gate print SKIP (a false green)
+# on every repository that had already taken the rename. Probe the candidates,
+# newest name first, at whichever root or ref is being measured.
+$script:PackageFolderCandidates = @('interactive-qa', 'interactive-qa-agent')
+$script:PackageRelativePath = $script:PackageFolderCandidates[0]
+$script:ManifestRelativePath = "$($script:PackageRelativePath)/tools/vendored-helpers.manifest.json"
+$script:SyncRelativePath = "$($script:PackageRelativePath)/tools/Sync-VendoredHelpers.ps1"
+
+function Resolve-PackageFolder {
+    param([Parameter(Mandatory)][string] $Root)
+
+    foreach ($candidate in $script:PackageFolderCandidates) {
+        $manifest = Join-Path (Join-Path $Root $candidate) 'tools/vendored-helpers.manifest.json'
+        if (Test-Path -LiteralPath $manifest -PathType Leaf) { return $candidate }
+    }
+    return $null
+}
+
+function Resolve-PackageFolderAtRef {
+    param([Parameter(Mandatory)][string] $Ref)
+
+    foreach ($candidate in $script:PackageFolderCandidates) {
+        $null = & git -C $RepoPath cat-file -e "${Ref}:$candidate/tools/vendored-helpers.manifest.json" 2>&1
+        if ($LASTEXITCODE -eq 0) { return $candidate }
+    }
+    return $null
+}
 $script:KnownStatuses = @('MATCH', 'DRIFT', 'MISSING', 'ORPHAN', 'CONFLICT')
 
 function Write-Verdict {
@@ -176,7 +202,10 @@ function Get-ChangedPaths {
 function Read-ManifestForRef {
     param([Parameter(Mandatory)][string] $Ref)
 
-    $json = (Invoke-Git show "${Ref}:$script:ManifestRelativePath").Output
+    $folder = Resolve-PackageFolderAtRef -Ref $Ref
+    if (-not $folder) { return $null }
+
+    $json = (Invoke-Git show "${Ref}:$folder/tools/vendored-helpers.manifest.json").Output
     if ($json.Count -eq 0) { return $null }
 
     try {
@@ -194,8 +223,8 @@ function Test-ManifestPresentForRef {
     # unparseable manifest still EXISTS in the tree and must not be confused with
     # a branch that predates the mapping (bead cl-common-7cu). Called directly
     # because a single-dash `-e` binds as a parameter name on a splatting wrapper.
-    $null = & git -C $RepoPath cat-file -e "${Ref}:$script:ManifestRelativePath" 2>&1
-    return ($LASTEXITCODE -eq 0)
+    $folder = Resolve-PackageFolderAtRef -Ref $Ref
+    return [bool]$folder
 }
 
 function Get-RowIndex {
@@ -263,6 +292,15 @@ if ($insideWorkTree.ExitCode -ne 0 -or $insideWorkTree.Output[0].Trim() -ne 'tru
 }
 
 # --- 2. applicability -------------------------------------------------------
+# Bind the package folder to the repository being measured; every later path is
+# derived from it, so a repository on the other side of the rename still measures.
+$resolvedFolder = Resolve-PackageFolder -Root $RepoPath
+if ($resolvedFolder) {
+    $script:PackageRelativePath = $resolvedFolder
+    $script:ManifestRelativePath = "$resolvedFolder/tools/vendored-helpers.manifest.json"
+    $script:SyncRelativePath = "$resolvedFolder/tools/Sync-VendoredHelpers.ps1"
+}
+
 $manifestIsExplicit = [bool]$ManifestPath
 if (-not $ManifestPath) { $ManifestPath = Join-Path $RepoPath $script:ManifestRelativePath }
 
@@ -442,13 +480,17 @@ foreach ($name in @($touched | ForEach-Object { $_.Branch } | Select-Object -Uni
         $added = $true
 
         $branchSync = Join-Path $worktree $syncRelative
-        $packageRoot = Join-Path $worktree $script:PackageRelativePath
+        $branchFolder = Resolve-PackageFolder -Root $worktree
+        if (-not $branchFolder) { $branchFolder = $script:PackageRelativePath }
+        $branchSyncRelative = "$branchFolder/tools/Sync-VendoredHelpers.ps1"
+        $branchSync = Join-Path $worktree $branchSyncRelative
+        $packageRoot = Join-Path $worktree $branchFolder
         $shipsMapping = (Test-Path -LiteralPath $branchSync -PathType Leaf) -and
             (Test-Path -LiteralPath $packageRoot -PathType Container)
 
         if (-not $shipsMapping) {
             if (-not $usingBaseManifest) {
-                Stop-CannotEvaluate "the branch '$name' does not ship the mapping owner at $syncRelative"
+                Stop-CannotEvaluate "the branch '$name' does not ship the mapping owner at $branchSyncRelative"
             }
 
             # A branch older than the mapping cannot carry a vendored copy or a
@@ -476,9 +518,11 @@ foreach ($name in @($touched | ForEach-Object { $_.Branch } | Select-Object -Uni
             # package a copy of it inside the THROWAWAY worktree so -Check can
             # still prove every copy the branch does ship. Nothing in the branch
             # is modified.
-            $branchManifestRelative = $script:ManifestRelativePath.Substring($script:PackageRelativePath.Length + 1)
+            $branchManifestRelative = 'tools/vendored-helpers.manifest.json'
             $branchManifestPath = Join-Path $packageRoot $branchManifestRelative
-            $baseManifestJson = (Invoke-Git show "$($targetForBranch.ManifestRef):$script:ManifestRelativePath").Output
+            $baseFolder = Resolve-PackageFolderAtRef -Ref $targetForBranch.ManifestRef
+            if (-not $baseFolder) { $baseFolder = $script:PackageRelativePath }
+            $baseManifestJson = (Invoke-Git show "$($targetForBranch.ManifestRef):$baseFolder/tools/vendored-helpers.manifest.json").Output
             $branchManifestDir = Split-Path -Parent $branchManifestPath
             if (-not (Test-Path -LiteralPath $branchManifestDir -PathType Container)) {
                 New-Item -ItemType Directory -Path $branchManifestDir -Force | Out-Null
