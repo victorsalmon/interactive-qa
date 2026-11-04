@@ -2077,3 +2077,25 @@ happened or re-run the proof.
   absence. Pinned by `vendor/iqa-merge/Tests/Get-HubCadence.Tests.ps1` (9 tests:
   heartbeat rung => no CREATE, real absence => CREATE with a reason,
   cannot-evaluate => no creation instruction).
+
+### Close-out: archive the lane's workspace after the merge
+
+A merged branch leaves three things behind: the branch, its worktree, and the Paseo
+workspace bound to that path. `git worktree remove` does not remove the workspace,
+so agents accumulate in the sidebar - measured 2026-11-04: 19 workspaces and 12
+agents idle past the capacity grace window.
+
+Close-out is two commands, in this order:
+
+1. **Archive the finished agents bound to the worktree.** `paseo agent ls --json`,
+   keep those whose `cwd` is under the worktree and whose `status` is not
+   `running`, then `paseo agent archive <id>` for each. A finished agent that is
+   no longer needed should not stay in the list.
+2. **Archive the workspace**, which archives everything it owns:
+   `paseo workspace archive <wks_id>` - or, with the guard,
+   `pwsh -File tools/Close-IqaWorkspace.ps1 -Path <worktree>` to plan and
+   `-Apply` to do it.
+
+The tool refuses (exit 3) while any live agent is still bound to the path, and exits
+2 when no workspace is bound - it never guesses. Archiving a workspace is destructive
+to anything still running in it, so the plan step is not optional.
