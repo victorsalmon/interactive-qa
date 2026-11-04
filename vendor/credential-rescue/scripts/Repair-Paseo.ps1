@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 <#
 .SYNOPSIS
     Single-entry Paseo repair: classify (BINARY/NAME/KEY), pin, restart, verify.
@@ -93,7 +93,7 @@ param(
     [string]$PaseoCli = '',
     [string]$PaseoConfig = '',
     [string]$Actor = 'agent/credential-rescue',
-    [string]$LogPath = "$($env:CL_REPOS_ROOT)\Tasks\Logs\credential-changes.jsonl"
+    [string]$LogPath = "$($env:USERPROFILE)\.machine\logs\credential-changes.jsonl"
 )
 
 $ErrorActionPreference = 'Stop'

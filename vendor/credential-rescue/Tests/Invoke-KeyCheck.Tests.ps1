@@ -236,7 +236,7 @@ if ($verifiedValue) { exit 0 } else { exit 5 }
             $authPath = Join-Path $dataHome 'opencode\auth.json'
             if (Test-Path -LiteralPath $authPath) { $auth = (Get-FileHash -LiteralPath $authPath -Algorithm SHA256).Hash }
         }
-        $credLog = if ($env:CL_REPOS_ROOT) { Join-Path $env:CL_REPOS_ROOT 'Tasks\Logs\credential-changes.jsonl' } else { '' }
+        $credLog = Join-Path $env:USERPROFILE '.machine\logs\credential-changes.jsonl'
         $credLogLines = if ($credLog -and (Test-Path -LiteralPath $credLog)) { (Get-Content -LiteralPath $credLog | Measure-Object -Line).Lines } else { -1 }
         [pscustomobject]@{
             Seam             = Get-SeamHash

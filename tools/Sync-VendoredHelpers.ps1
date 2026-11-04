@@ -442,20 +442,8 @@ $script:Residuals = @(
         Reason = 'Names CL_REPOS_ROOT as the fleet ledger root (help block, and the default when it is set). The package copy falls back to the profile state root when it is unset, so an installed copy can plan and perform a cutover; machine state, not a package path.'
     }
     [pscustomobject]@{
-        Path   = 'vendor/credential-rescue/scripts/Repair-Paseo.ps1'
-        Reason = 'Default -LogPath for the credential-change log (Tasks/Logs/credential-changes.jsonl). Machine state; the script itself is in-package.'
-    }
-    [pscustomobject]@{
-        Path   = 'vendor/credential-rescue/scripts/Restart-PaseoDaemon.ps1'
-        Reason = 'Deprecated shim: same credential-change log default. Machine state; the script itself is in-package.'
-    }
-    [pscustomobject]@{
         Path   = 'vendor/credential-rescue/scripts/Restore-AwsStore.ps1'
         Reason = 'Default restore-bundle directory and credential-change log. Machine state (where this box keeps its bundles); the script itself is in-package.'
-    }
-    [pscustomobject]@{
-        Path   = 'vendor/credential-rescue/scripts/Set-OpencodeGoFreshness.ps1'
-        Reason = 'Credential-change log directory. Machine state; the ledger itself is the seam the members name explicitly.'
     }
     [pscustomobject]@{
         Path   = 'vendor/credential-rescue/scripts/Test-GoKey.ps1'
@@ -476,10 +464,6 @@ $script:Residuals = @(
     [pscustomobject]@{
         Path   = 'vendor/agent-spawn-capacity/scripts/AgentCapacity.ps1'
         Reason = 'Expands %CL_REPOS% / %CL_COMMON_HOME% in the capacity registry and defaults the spawn log under the fleet Tasks/Logs. Machine layout, and the registry value the profile owns; the script itself is in-package.'
-    }
-    [pscustomobject]@{
-        Path   = 'vendor/credential-rescue/scripts/lib/CredLog.ps1'
-        Reason = 'Default credential-change log path (Tasks/Logs/credential-changes.jsonl, a machine rule). Machine state; the helper itself is in-package.'
     }
     [pscustomobject]@{
         Path   = 'vendor/iqa-merge/Invoke-HubProbe.ps1'
@@ -504,10 +488,6 @@ $script:Residuals = @(
     [pscustomobject]@{
         Path   = 'vendor/credential-rescue/skills/paseo-rescue/REFERENCE.md'
         Reason = 'Documentation: the Paseo reference names the fleet Skills root in an example command.'
-    }
-    [pscustomobject]@{
-        Path   = 'vendor/credential-rescue/Tests/Invoke-KeyCheck.Tests.ps1'
-        Reason = 'Test fixture: reads the machine credential-change log when CL_REPOS_ROOT is set, and skips that assertion when it is not. The suite pins the canonical script; it is vendored for completeness, not executed by a session.'
     }
     [pscustomobject]@{
         Path   = 'vendor/credential-rescue/Tests/Switch-OpencodeGoKey.Tests.ps1'
@@ -1348,6 +1328,13 @@ $document = [pscustomobject]@{
     canonicalRoot = 'Skills'
     trees         = @($script:VendoredTrees | ForEach-Object { [pscustomobject]@{ canonicalRoot = $_.Canonical; vendoredRoot = $_.Vendored } })
     vendored      = @($newRows | Sort-Object Vendored)
+    # The two decision lists belong in the ARTIFACT, not only in this script.
+    # MANIFEST.md tells a consumer the not-vendored and residual choices are
+    # recorded with a reason; a written manifest that carries only `vendored` makes
+    # that promise true of the tool and false of the file. The gate reads
+    # -ListManifest and never noticed the omission.
+    notVendored   = @($script:NotVendoredHelpers)
+    residuals     = @($script:Residuals)
 }
 
 $manifestDir = Split-Path -Parent $manifestPath

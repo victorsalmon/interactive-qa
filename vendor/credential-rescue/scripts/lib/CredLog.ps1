@@ -1,7 +1,7 @@
-﻿# Shared credential-change logger for Skills/credential-rescue.
+# Shared credential-change logger for Skills/credential-rescue.
 # Dot-source this file; do NOT duplicate the function per script.
 # Machine rule: every credential add/remove/move/modify appends one JSON line
-# to ${env:CL_REPOS_ROOT}\Tasks\Logs\credential-changes.jsonl — NAMES only, never values.
+# to ${env:USERPROFILE}\.machine\logs\credential-changes.jsonl — NAMES only, never values.
 
 function Write-CredLog {
     param(
@@ -10,7 +10,7 @@ function Write-CredLog {
         [string]$Detail,
         [string]$Actor = 'agent/credential-rescue',
         [string]$Reason = 'opencode-go key exhaustion cutover',
-        [string]$LogPath = "$($env:CL_REPOS_ROOT)\Tasks\Logs\credential-changes.jsonl"
+        [string]$LogPath = "$($env:USERPROFILE)\.machine\logs\credential-changes.jsonl"
     )
     try {
         $line = @{

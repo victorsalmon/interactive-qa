@@ -53,13 +53,13 @@ param(
     [switch]$DryRun,
     [string]$Actor = 'agent/credential-rescue',
     [string]$Reason = '',
-    [string]$LogPath = "$($env:CL_REPOS_ROOT)\Tasks\Logs\credential-changes.jsonl"
+    [string]$LogPath = "$($env:USERPROFILE)\.machine\logs\credential-changes.jsonl"
 )
 
 $ErrorActionPreference = 'Stop'
 $AwsHome = Join-Path $env:USERPROFILE '.aws'
 $ExpectedCredProfiles = @('dev-daily-fixed', 'currentsSetup')
-$ExpectedConfigProfiles = @('dev-daily-fixed', 'currentsSetup', 'salmon-sso')
+$ExpectedConfigProfiles = @('dev-daily-fixed', 'currentsSetup')
 
 # ---------------------------------------------------------------- logging ---
 function Write-CredLog {
@@ -234,14 +234,6 @@ region = ca-central-1
 output = json
 
 [profile currentsSetup]
-region = ca-central-1
-output = json
-
-[profile salmon-sso]
-sso_start_url = https://d-9d6743e555.awsapps.com/start
-sso_region = ca-central-1
-sso_account_id = 916292310362
-sso_role_name = dev-agent
 region = ca-central-1
 output = json
 '@

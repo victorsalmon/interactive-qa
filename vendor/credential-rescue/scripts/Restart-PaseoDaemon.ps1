@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     DEPRECATED shim — forwards to Repair-Paseo.ps1 (the single Paseo entry).
@@ -9,7 +9,7 @@ param(
     [string]$PaseoCli = '',
     [switch]$SkipCanary,
     [string]$Actor = 'agent/credential-rescue',
-    [string]$LogPath = "$($env:CL_REPOS_ROOT)\Tasks\Logs\credential-changes.jsonl"
+    [string]$LogPath = "$($env:USERPROFILE)\.machine\logs\credential-changes.jsonl"
 )
 
 Write-Warning 'Restart-PaseoDaemon.ps1 is deprecated; forwarding to Repair-Paseo.ps1. Update callers.'

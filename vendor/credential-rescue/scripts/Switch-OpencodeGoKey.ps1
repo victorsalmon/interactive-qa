@@ -28,7 +28,7 @@
     flag in AWS Secrets Manager (requires working ~/.aws).
 
     Secret VALUES are never printed. Every mutation appends one JSON line to
-    $env:CL_REPOS_ROOT\Tasks\Logs\credential-changes.jsonl (machine rule 1).
+    $env:USERPROFILE\.machine\logs\credential-changes.jsonl (machine rule 1).
 
     A cutover is all-or-nothing. The pre-switch state of every surface this
     script writes (seam activeKey, User OPENCODE_GO_KEY / OPENCODE_API_KEY,
@@ -203,15 +203,13 @@ param(
 $ErrorActionPreference = 'Stop'
 $FleetRoot = if ($env:CL_REPOS_ROOT) { $env:CL_REPOS_ROOT } else { $env:CSBK_REPOS_ROOT }
 if ([string]::IsNullOrWhiteSpace($FleetRoot)) {
-    # Installed-package run (no fleet checkout). The fleet Tools/ paths do not
-    # exist here, but the credential log is MACHINE state and must still be
-    # written: machine state is never allowed to become a fleet dependency.
+    # Installed-package run (no fleet checkout). The credential log already
+    # resolves to the machine state root below, so the only thing missing is the
+    # fleet Tools/ paths - and those are guarded where they are used, never
+    # silently joined onto an empty root.
     $FleetRoot = ''
 }
-if ([string]::IsNullOrWhiteSpace($LogPath)) {
-    $LogPath = if ($FleetRoot) { Join-Path $FleetRoot 'Tasks\Logs\credential-changes.jsonl' }
-               else { Join-Path $HOME '.machine\logs\credential-changes.jsonl' }
-}
+if ([string]::IsNullOrWhiteSpace($LogPath)) { $LogPath = Join-Path $env:USERPROFILE '.machine\logs\credential-changes.jsonl' }
 . (Join-Path $PSScriptRoot 'lib\CredLog.ps1')
 . (Join-Path $PSScriptRoot 'lib\PaseoCommon.ps1')
 

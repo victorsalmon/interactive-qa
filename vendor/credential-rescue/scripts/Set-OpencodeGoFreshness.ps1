@@ -71,7 +71,7 @@
     Free text of what was observed and how (probe, operator Console reading).
 
 .PARAMETER Log
-    Also append the update to Tasks/Logs/credential-changes.jsonl when that file's
+    Also append the update to ~/.machine/logs/credential-changes.jsonl when that file's
     directory exists. Default on; -NoLog disables.
 
 .EXAMPLE
@@ -321,7 +321,7 @@ if ($PSCmdlet.ShouldProcess($observationsPath, "record $keyName freshness (state
         ($row.resetsOn ?? '-'), ($row.observedAt ?? '-'), $observationsPath)
 
     if (-not $NoLog) {
-        $logDir = Join-Path $env:CL_REPOS_ROOT 'Tasks\Logs'
+        $logDir = Join-Path $env:USERPROFILE '.machine\logs'
         if (Test-Path -LiteralPath $logDir) {
             $entry = [ordered]@{
                 ts       = (Get-Date).ToString('s')

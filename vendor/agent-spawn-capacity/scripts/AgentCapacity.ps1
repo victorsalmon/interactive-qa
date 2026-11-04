@@ -265,7 +265,7 @@ function Get-Paths {
     $paths = Get-Prop $Registry 'paths' @{}
     $logDir = if ($LogDirOverride) { $LogDirOverride }
               elseif ($env:AGENT_CAPACITY_LOGDIR) { $env:AGENT_CAPACITY_LOGDIR }
-              else { Expand-FleetPath ([string](Get-Prop $paths 'logDir' "$($env:CL_REPOS_ROOT)\Tasks\Logs")) }
+              else { Expand-FleetPath ([string](Get-Prop $paths 'logDir' "$($env:USERPROFILE)\.machine\logs")) }
     $state = if ($StateOverride) { $StateOverride }
              elseif ($env:AGENT_CAPACITY_STATE) { $env:AGENT_CAPACITY_STATE }
              else { Expand-FleetPath ([string](Get-Prop $paths 'stateFile' '~/.machine/state/agent-capacity.json')) }

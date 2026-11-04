@@ -13,7 +13,7 @@ Salmon Run lanes read the opencode-go pool from the Machine env vars plus
 every lane surface. Paseo is a *different* consumer — see the `paseo-rescue` runbook.
 
 **Never print a secret value.** Key NAMES only. Every change logs one JSON line
-to `$env:CL_REPOS_ROOT\Tasks\Logs\credential-changes.jsonl` (the script does it).
+to `$env:USERPROFILE\.machine\logs\credential-changes.jsonl` (the script does it).
 
 ## Quick start
 

@@ -10,7 +10,7 @@
     recovery: the Hub has to be told to look at its own subagents.
 
     So this script reads the roster `Capture-KeyCheckRoster.ps1` wrote and makes
-    one decision per agent, appended to `Tasks/Logs/keycheck.jsonl` as
+    one decision per agent, appended to `~/.machine/logs/keycheck.jsonl` as
 
         { kind: "roster-resume", runId, agentId, decision, reason, at, variant }
 

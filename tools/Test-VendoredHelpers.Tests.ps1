@@ -138,7 +138,22 @@ Describe 'Test-VendoredHelpers gate' {
 
         It 'exits non-zero and calls the excuse stale' {
             $copy = New-PackageCopy -Name 'stale-residual'
-            Set-Content -LiteralPath (Join-Path $copy 'vendor/credential-rescue/scripts/Restart-PaseoDaemon.ps1') -Value '#Requires -Version 7' -Encoding utf8
+            $manifestPath = Join-Path $copy 'tools/vendored-helpers.manifest.json'
+            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+
+            # Derive the target from the manifest rather than naming one file: the
+            # residual list shrinks as the fleet retires its CL_REPOS_ROOT paths,
+            # and a fixture pinned to one of them silently stops exercising this.
+            # An older copy may predate the manifest carrying the list, so fall back
+            # to the declarations in the sync script itself.
+            $row = @($manifest.residuals) | Where-Object { [string]$_.Path -like '*.ps1' } | Select-Object -First 1
+            if (-not $row) {
+                $declared = Select-String -Path (Join-Path $copy 'tools/Sync-VendoredHelpers.ps1') -Pattern "Path\s+=\s+'([^']+\.ps1)'" | Select-Object -First 1
+                if ($declared) { $row = [pscustomobject]@{ Path = $declared.Matches[0].Groups[1].Value } }
+            }
+            $row | Should -Not -BeNullOrEmpty -Because 'the gate must declare at least one script residual for this case'
+
+            Set-Content -LiteralPath (Join-Path $copy ([string]$row.Path)) -Value '#Requires -Version 7' -Encoding utf8
 
             $result = Invoke-Gate -RootPath $copy
             $result.ExitCode | Should -Not -Be 0

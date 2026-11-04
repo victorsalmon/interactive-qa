@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T21:16:01.3654873-07:00",
+  "generatedAt": "2026-11-03T22:01:27.1949838-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -68,9 +68,9 @@
       "Name": "AgentCapacity.ps1",
       "Canonical": "agent-spawn-capacity/scripts/AgentCapacity.ps1",
       "Vendored": "vendor/agent-spawn-capacity/scripts/AgentCapacity.ps1",
-      "Sha256": "6DE94A001D22223C13C5253FEACD235CFC818D5C08E12E79E3ACF80DBEDF7C24",
-      "Sha256Lf": "FA6CED09F1ACFE79C79D1738F98E8CF3438A92AB407B1D2CE7E03A31DA0D2E78",
-      "Bytes": 170232,
+      "Sha256": "94CB26435DDD2795D8014A950272A5D4DADE2BF6D13ECE6981071A5B54B686AA",
+      "Sha256Lf": "9B5C4825B1A68132597D150B59D15D2072A63BCDDF2BAF9E6FA1D9C6CFE31F22",
+      "Bytes": 170233,
       "Tree": ""
     },
     {
@@ -287,9 +287,9 @@
       "Name": "CredLog.ps1",
       "Canonical": "credential-rescue/scripts/lib/CredLog.ps1",
       "Vendored": "vendor/credential-rescue/scripts/lib/CredLog.ps1",
-      "Sha256": "982179CCBB966FD359C7A7D34668A1844DC7622AF7305FFF5F45BA8911873EAC",
-      "Sha256Lf": "F39A0FD79E87130DE7F1FB31A55C95ADA276D9E955CBFC56259CE1BFA2162C91",
-      "Bytes": 1223,
+      "Sha256": "F80C832E233164FC677E25535CC031BCE610FF6539B206B47A8AE9F18D565184",
+      "Sha256Lf": "EE3FB67D82DBAC51C020C829DECE8C672A57829DF80B467F76245AAF7B644EFF",
+      "Bytes": 1222,
       "Tree": "credential-rescue"
     },
     {
@@ -357,9 +357,9 @@
       "Name": "Repair-Paseo.ps1",
       "Canonical": "credential-rescue/scripts/Repair-Paseo.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Repair-Paseo.ps1",
-      "Sha256": "C6BD1C4BC687DA50DBEFA4B82379965EAB20911730D3589BA5CF1BE54116DFD9",
-      "Sha256Lf": "19FF1DBB87A93DF095D928225C74E4FEB82FD08084D90ED0CBD36D79ADBDDF88",
-      "Bytes": 20636,
+      "Sha256": "23BC93B19766A4232BBAB57D286D825A8E3237EFE45A472848AC6EAFCA9B9CBF",
+      "Sha256Lf": "B8A09390027F2C7FABE03246BF477424E37219D463F6FA877DF55B7BC2340470",
+      "Bytes": 20634,
       "Tree": "credential-rescue"
     },
     {
@@ -377,9 +377,9 @@
       "Name": "Restart-PaseoDaemon.ps1",
       "Canonical": "credential-rescue/scripts/Restart-PaseoDaemon.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Restart-PaseoDaemon.ps1",
-      "Sha256": "DFABFEF0E2E7481F932E3743905F7966CA3D5A5EC65A5FBE57A4CEC55E8B32DC",
-      "Sha256Lf": "D2AB04EC2B85A3AD09914E26A319868D02BCB97287A16DEADFF3B62D921EEA87",
-      "Bytes": 782,
+      "Sha256": "06FCB93E6C027BD8E6CA4831967E8D204D7DE3A795E9F5162181EB246969E0B0",
+      "Sha256Lf": "5174AD925A84D757BBC6981A3D7F39FB4A99B7EDB7D63A70F40BFA67EA3C95EE",
+      "Bytes": 780,
       "Tree": "credential-rescue"
     },
     {
@@ -397,9 +397,9 @@
       "Name": "Restore-AwsStore.ps1",
       "Canonical": "credential-rescue/scripts/Restore-AwsStore.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Restore-AwsStore.ps1",
-      "Sha256": "49F1590B398289CC72B151BBAF749F0D245801F7AEDD74F7AC3ECDF1F04A625C",
-      "Sha256Lf": "EE98D610136129C2F103087BFC341D1D09BB023C26B38839EA43D3D2023BD660",
-      "Bytes": 22485,
+      "Sha256": "13B6796680034E08C08A275E6B4014ADB67672474817163713068DF8AC7281B4",
+      "Sha256Lf": "E59A0BF9BE8558EB1B4E2276922054803BDA0EE7C6643F68FB0B4C66245BA206",
+      "Bytes": 22269,
       "Tree": "credential-rescue"
     },
     {
@@ -407,9 +407,9 @@
       "Name": "Resume-KeyCheckRoster.ps1",
       "Canonical": "credential-rescue/scripts/Resume-KeyCheckRoster.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Resume-KeyCheckRoster.ps1",
-      "Sha256": "CACAA544AB614F2A4479DDBB2E0987C89091AD4B4B03CBD63360FA91B361202D",
-      "Sha256Lf": "6A4E7DDD7B1239F98F6DC20DCE21989E9AA2FA72E40D3E39226FB1562A6D3FF0",
-      "Bytes": 24555,
+      "Sha256": "75A6CD39F6944D196BBD56BDED7D2E5CBB9BB4286DCE0BC212C45A18C07A5484",
+      "Sha256Lf": "2ACA107333E435E1DDF416E377690191AD208192A8AA5E07CB550BF8BD1F3C8F",
+      "Bytes": 24560,
       "Tree": "credential-rescue"
     },
     {
@@ -417,9 +417,9 @@
       "Name": "Set-OpencodeGoFreshness.ps1",
       "Canonical": "credential-rescue/scripts/Set-OpencodeGoFreshness.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Set-OpencodeGoFreshness.ps1",
-      "Sha256": "3C12C1D6C2F027D9ED3B0826F0970B9CEAE5E89704791929F26CD7790639D89B",
-      "Sha256Lf": "9694FF07713B7FDE0A5FA27996482F42B17F17B99186744C426D77973C9122EC",
-      "Bytes": 15519,
+      "Sha256": "55A5BDFCDED0CD67962410A12339D93AACA60BE4DD83EC2B54A4978EA43A895F",
+      "Sha256Lf": "61802FBF6C80414C77BF6EA72C033A20BF7D11898F2A67D7874B19D6CCB7F6AF",
+      "Bytes": 15525,
       "Tree": "credential-rescue"
     },
     {
@@ -439,11 +439,11 @@
       "Vendored": "vendor/credential-rescue/scripts/Switch-OpencodeGoKey.ps1",
       "Patch": "state-root-log-fallback",
       "Why": "The canonical script throws when CL_REPOS_ROOT is unset, which made an installed copy unable to plan a cutover. The package copy falls back to the machine state root ($HOME/.salmon) for the credential-change log and the legacy Tools paths; a fleet run is unchanged.",
-      "Sha256": "82A87ED83274B150A33CEF60150E351F54E452448A97FC4B5B8EFAD95EA2FCEE",
-      "Sha256Lf": "E6125EFA8DE24AF4947207D07C6760280C8DF7533D0F701E77E4C8E0AD4A41DE",
-      "CanonicalSha256": "EC61B150C1E561C8A264D1E64244C22059319D31F9206201EEB3812E4202ACC5",
-      "CanonicalSha256Lf": "D5CECEBF73DB98F7C285B4CEC4B9D53A18EE04291D43BF69623B6F72CBF2304E",
-      "Bytes": 52026,
+      "Sha256": "E377ED53630F884E95874A84FD7BFCC064C2517A0E1A0FC318683968F6420D12",
+      "Sha256Lf": "E377ED53630F884E95874A84FD7BFCC064C2517A0E1A0FC318683968F6420D12",
+      "CanonicalSha256": "59207ECBA0BC6CA7BA5F944C6306788639E641217CBA36261C4479A7B98EF15B",
+      "CanonicalSha256Lf": "664D5CED070C3F71E4B8C6B2BEB661A336DDC930B0EF613037042BAA82F2658B",
+      "Bytes": 51000,
       "Tree": ""
     },
     {
@@ -521,9 +521,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/aws-store/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/aws-store/SKILL.md",
-      "Sha256": "C1F8EBAEB07ED532B64C48F3E7CA71B992A655CB97117B568A45485CEC3D06B9",
-      "Sha256Lf": "201428DD2766DC835BFA22ADCA7E2B4DFAC387B736198E15DA6811F13653BDEE",
-      "Bytes": 3830,
+      "Sha256": "4E60EADAC3A0D03FF86992B44D9303A815B4A8281E0D43771A303CA66BD667E9",
+      "Sha256Lf": "2063EE66E5E3C1D85B540304280B73A7116749C9A1D02D0A7329722221F7ECB3",
+      "Bytes": 3854,
       "Tree": "credential-rescue"
     },
     {
@@ -566,9 +566,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/salmon-run/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/salmon-run/SKILL.md",
-      "Sha256": "206F2D02CBCF0EB0E184B2A2AB4977FA26CE76CF9DB50D9516383BC813E019C5",
-      "Sha256Lf": "B6D171B1F9C7FE0EBCA5A3E29C89BBB8597F02A9B091AE4BF132DD10C9AFE8B9",
-      "Bytes": 7082,
+      "Sha256": "0C2F4D2C3008C0B2B96CBD6EF6029CDAA457BAC3DD6182C0F3E3A47679BD4B93",
+      "Sha256Lf": "F2492F62A8ADFA9116C1D756FDBAF6DAAC339936975170CA315E0AF9C91B4EEA",
+      "Bytes": 7083,
       "Tree": "credential-rescue"
     },
     {
@@ -651,9 +651,9 @@
       "Name": "Invoke-KeyCheck.Tests.ps1",
       "Canonical": "credential-rescue/Tests/Invoke-KeyCheck.Tests.ps1",
       "Vendored": "vendor/credential-rescue/Tests/Invoke-KeyCheck.Tests.ps1",
-      "Sha256": "6F56AE511CE9D2CAC3A4F1087EA4E871B8B6CC8C56E3633737F09FA3063182D0",
-      "Sha256Lf": "B0F84408E70BCFD44DB26B5481DC887FAF9E23CDE263CB809D542EBDE948EB42",
-      "Bytes": 167539,
+      "Sha256": "E73AF6F0B6A7D59E257CFE611810CEB4D4AF18C8E02A08EF73F105773AEDBF2E",
+      "Sha256Lf": "C720DD043A46AE9564BB6A9932A5058B5CE38B4FB9F4BDBD5E7FDDF4E1A0A824",
+      "Bytes": 167500,
       "Tree": "credential-rescue"
     },
     {
@@ -927,6 +927,247 @@
       "Sha256Lf": "A648AC911ADC1045F2FDC43F74B3591B161020A34B9E05C73D73FEAD621F47E9",
       "Bytes": 11886,
       "Tree": ""
+    }
+  ],
+  "notVendored": [
+    {
+      "Name": "merge-queue.mjs",
+      "Owner": "Skills/currents-bookkeeping/scripts",
+      "Reason": "The fleet merge-queue tool. This package ships its own queue (tools/Invoke-IqaQueue.ps1) with the IDENTICAL row format, so a session never needs a checkout of another product repo to park or drain work; the fleet tool is named only as the compatibility counterpart that reads and writes the same files."
+    },
+    {
+      "Name": "registry.mjs",
+      "Owner": "the repo under test (scripts/gate)",
+      "Reason": "A gate registry that lives in the repo being merged, discovered per repo. It is not a skill helper, so vendoring it would pin one product repo's gate ids into the package."
+    },
+    {
+      "Name": "merge-ledger.mjs",
+      "Owner": "the fleet merge ledger",
+      "Reason": "The cross-repo merge ledger, run by path from the fleet checkout that owns the ledger DB. A Hub on a machine without that checkout records the ledger follow-up as a bead instead and says so; a vendored copy with no ledger DB would be a dead tool."
+    },
+    {
+      "Name": "Test-SharedDepAgreement.mjs",
+      "Owner": "the shared-dependency gate",
+      "Reason": "Compares a pending branch against the FLEET tree (--root <fleet> --ref <trunk>), so it needs the fleet checkout to have anything to compare. Named by the Hub probe as a development-override step, not as part of the Hub-start contract."
+    },
+    {
+      "Name": "provider-lock.json",
+      "Owner": "the provider-lock tool",
+      "Reason": "Runtime state written by the tool, resolved from the profile state root ($env:USERPROFILE\\.salmon\\State\\credential-rescue\\provider-lock.json) with a read-only legacy fallback to the old in-tree copy. Vendoring it would drift on every -Mode Lock run and make the tool write into its own package."
+    },
+    {
+      "Name": "Invoke-SafeCommit.ps1",
+      "Owner": "Skills/git-operations",
+      "Reason": "Operate the checkout and trunk lock of the repo being worked, so they are resolved from the checkout they guard. The Hub-start contract needs the worktree lease only, and that one is vendored."
+    },
+    {
+      "Name": "Invoke-TrunkMergeLock.ps1",
+      "Owner": "Skills/git-operations",
+      "Reason": "Operate the checkout and trunk lock of the repo being worked, so they are resolved from the checkout they guard. The Hub-start contract needs the worktree lease only, and that one is vendored."
+    },
+    {
+      "Name": "Invoke-GitPullSafe.ps1",
+      "Owner": "Skills/git-operations",
+      "Reason": "Operate the checkout and trunk lock of the repo being worked, so they are resolved from the checkout they guard. The Hub-start contract needs the worktree lease only, and that one is vendored."
+    },
+    {
+      "Name": "Invoke-RepoClean.ps1",
+      "Owner": "Skills/repo-clean",
+      "Reason": "The periodic deep groom, run by name on a schedule; a Hub session probes with the vendored Invoke-HubProbe.ps1 and never runs a full groom inside a turn."
+    },
+    {
+      "Name": "Get-HubCadence.Tests.ps1",
+      "Owner": "Skills/iqa-merge/Tests",
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+    },
+    {
+      "Name": "HubRegistry.Tests.ps1",
+      "Owner": "Skills/iqa-merge/Tests",
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+    },
+    {
+      "Name": "Invoke-HubProbe.Tests.ps1",
+      "Owner": "Skills/iqa-merge/Tests",
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+    },
+    {
+      "Name": "Test-Landed.Tests.ps1",
+      "Owner": "Skills/iqa-merge/Tests",
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+    },
+    {
+      "Name": "Test-SingleHubRung.Tests.ps1",
+      "Owner": "Skills/iqa-merge/Tests",
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+    },
+    {
+      "Name": "Test-ScheduleDispatch.Tests.ps1",
+      "Owner": "Skills/iqa-merge/Tests",
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+    },
+    {
+      "Name": "Invoke-ScheduleRecordWrite.Tests.ps1",
+      "Owner": "Skills/iqa-merge/Tests",
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+    },
+    {
+      "Name": "AtomicRecordWrite.Tests.ps1",
+      "Owner": "Skills/iqa-merge/Tests",
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+    },
+    {
+      "Name": "Test-VendoredSync.ps1",
+      "Owner": "Skills/iqa-merge",
+      "Reason": "Merge-acceptance gate for the repo being merged: it reads that repo's trunk refs, diff and throwaway worktrees and runs this package's vendored Sync-VendoredHelpers.ps1 against them. A copy inside the package would have no trunk to measure, so the fleet checkout keeps it."
+    },
+    {
+      "Name": "iqa-hub.ps1",
+      "Owner": "Skills/iqa-mode/scripts",
+      "Reason": "Legacy iqa-mode Hub record helper, superseded by the vendored HubRegistry.ps1; named only in the Phase-0 inventory as history."
+    },
+    {
+      "Name": "Get-PaseoSelfAgentId.ps1",
+      "Owner": "Skills/paseo-child-agents",
+      "Reason": "Paseo transport helpers: they need a live Paseo surface and are named by the dispatch member as the executor adapter, which is a profile value rather than a package dependency."
+    },
+    {
+      "Name": "Send-PaseoMessage.ps1",
+      "Owner": "Skills/paseo-child-agents",
+      "Reason": "Paseo transport helpers: they need a live Paseo surface and are named by the dispatch member as the executor adapter, which is a profile value rather than a package dependency."
+    },
+    {
+      "Name": "Receive-PaseoMail.ps1",
+      "Owner": "Skills/paseo-child-agents",
+      "Reason": "Paseo transport helpers: they need a live Paseo surface and are named by the dispatch member as the executor adapter, which is a profile value rather than a package dependency."
+    },
+    {
+      "Name": "Invoke-BranchWorktreeHygiene.ps1",
+      "Owner": "Skills/branch-worktree-hygiene",
+      "Reason": "Hygiene sweep behind the Hub probe's hygiene part; it runs against the repo it grooms and needs that repo's refs, not a copy."
+    },
+    {
+      "Name": "Invoke-HarnessInstall.ps1",
+      "Owner": "Skills/install-harness",
+      "Reason": "Installs the cross-harness skill pointers on the machine - a deployment step, not a session helper a member calls mid-turn."
+    },
+    {
+      "Name": "Export-Iqa2Beads.ps1",
+      "Owner": "Skills/iqa-beads/scripts",
+      "Reason": "Legacy iqa2 beads export/init shape; graph writes go through bd, and no Hub-start path needs either script."
+    },
+    {
+      "Name": "Invoke-Iqa2BeadsInit.ps1",
+      "Owner": "Skills/iqa-beads/scripts",
+      "Reason": "Legacy iqa2 beads export/init shape; graph writes go through bd, and no Hub-start path needs either script."
+    },
+    {
+      "Name": "Get-PaseoWorkspaceRecordReport.ps1",
+      "Owner": "Skills/cl-paseo/scripts",
+      "Reason": "Reads this machine's Paseo workspace records. Named as the diagnostic a dispatch prints when a workspace record conflicts; it is machine state, not a package helper."
+    },
+    {
+      "Name": "Install-PaseoDeepSeekHarness.ps1",
+      "Owner": "Public/salmon-run/Tools",
+      "Reason": "Salmon Run installs the DeepSeek harness and syncs its own coding-keys file from Secret Manager; named in the key-cutover prose as the repair route for a BINARY(DSH) classification and the follow-up after an IAM-key rotation, which belongs to that repo.'s tooling."
+    },
+    {
+      "Name": "Sync-SalmonRunCodingKeys.ps1",
+      "Owner": "Public/salmon-run/Tools",
+      "Reason": "Salmon Run installs the DeepSeek harness and syncs its own coding-keys file from Secret Manager; named in the key-cutover prose as the repair route for a BINARY(DSH) classification and the follow-up after an IAM-key rotation, which belongs to that repo.'s tooling."
+    },
+    {
+      "Name": "restore.ps1",
+      "Owner": "(operator-held bundle asset)",
+      "Reason": "The ~/.aws restore bundle script: untracked from the tree by ca236ac6 and absent by design. REFERENCE.md says to take the copy from the operator and never to copy its contents into logs, chat, memory or commits - so vendoring it would be the disclosure the runbook forbids."
+    },
+    {
+      "Name": "Invoke-TrunkPrep.ps1",
+      "Owner": "Public/salmon-run/skills/operator-git-operations",
+      "Reason": "Trunk preparation that the Hub probe runs as one of its parts; owned by the orchestrator repo and resolved from the fleet root at run time."
+    },
+    {
+      "Name": "auto-deploy-dev.ps1",
+      "Owner": "currents-bookkeeping/scripts",
+      "Reason": "Repo-local post-merge deploy hook named by the currents-bookkeeping profile; it belongs to that product repo, not to any skill."
+    },
+    {
+      "Name": "Invoke-HubPreflight.ps1",
+      "Owner": "(historical - superseded)",
+      "Reason": "HISTORICAL, not a live command: the name appears only in the v7 changelog entry of members/iqa-hub/REFERENCE.md, where it was the Step 0 preflight before v8 renamed and folded it into Repo Clean (Invoke-RepoClean.ps1). The changelog is a record of what happened and is never rewritten, so the old name stays there as history; nothing prescribes running it."
+    }
+  ],
+  "residuals": [
+    {
+      "Path": "lib/Resolve-ClCommon.ps1",
+      "Reason": "The integration seam itself: this resolver exists to FIND the fleet cl-common checkout, so it must name the convention ($env:CL_REPOS_ROOT\\cl-common) plus the explicit $env:CL_COMMON_PATH override. It resolves nothing else and degrades to a named absence; removing the reference would remove the only way the package can locate the machine skills it references but must not bundle."
+    },
+    {
+      "Path": "vendor/credential-rescue/scripts/Invoke-CredentialRescueWatch.ps1",
+      "Reason": "Watch driver: resolves Switch-OpencodeGoKey.ps1 and the opencode CLI from CL_REPOS_ROOT instead of beside itself. A package run of the LOOP therefore needs that machine value; every Key command the members prescribe (Test-GoKey, ProviderLock, Repair-Paseo, the Key Check entry points) resolves in-package. Fix belongs in the canonical script ($PSScriptRoot sibling), then re-sync."
+    },
+    {
+      "Path": "vendor/credential-rescue/scripts/Switch-OpencodeGoKey.ps1",
+      "Reason": "Names CL_REPOS_ROOT as the fleet ledger root (help block, and the default when it is set). The package copy falls back to the profile state root when it is unset, so an installed copy can plan and perform a cutover; machine state, not a package path."
+    },
+    {
+      "Path": "vendor/credential-rescue/scripts/Restore-AwsStore.ps1",
+      "Reason": "Default restore-bundle directory and credential-change log. Machine state (where this box keeps its bundles); the script itself is in-package."
+    },
+    {
+      "Path": "vendor/credential-rescue/scripts/Test-GoKey.ps1",
+      "Reason": "Last-resort opencode CLI fallback when PATH and OPENCODE_CLI_PATH are empty. Machine tool location, not a skill dependency; the seam it reads resolves beside the script."
+    },
+    {
+      "Path": "vendor/credential-rescue/scripts/Test-PaseoMuseSparkCanary.ps1",
+      "Reason": "Same opencode CLI fallback as Test-GoKey.ps1."
+    },
+    {
+      "Path": "vendor/credential-rescue/scripts/Invoke-ProviderLock.ps1",
+      "Reason": "Help-block examples only (documentation of the canonical invocation). No resolution depends on it."
+    },
+    {
+      "Path": "vendor/dispatch/scripts/Test-OpencodeProvider.ps1",
+      "Reason": "Prefers the fleet seam path when CL_REPOS_ROOT is set (the tracked seam is mutated in the main checkout, and a lane worktree carries a stale copy). A machine fact the profile supplies; the script's own fallback resolves ../../credential-rescue inside vendor/, so an isolated copy still resolves in-package."
+    },
+    {
+      "Path": "vendor/agent-spawn-capacity/scripts/AgentCapacity.ps1",
+      "Reason": "Expands %CL_REPOS% / %CL_COMMON_HOME% in the capacity registry and defaults the spawn log under the fleet Tasks/Logs. Machine layout, and the registry value the profile owns; the script itself is in-package."
+    },
+    {
+      "Path": "vendor/iqa-merge/Invoke-HubProbe.ps1",
+      "Reason": "Composes commands for OTHER skills helpers from the fleet root by design (documented in core/ADAPTERS.md -> ## Vendored helpers). Its part statuses come from repo-local git state; only a printed command depends on the fleet root."
+    },
+    {
+      "Path": "vendor/credential-rescue/REFERENCE.md",
+      "Reason": "Documentation: the long-form runbook spells commands with the fleet Skills root. No resolution depends on it, and the copy is byte-identical so the canonical prose stays the owner."
+    },
+    {
+      "Path": "vendor/credential-rescue/skills/salmon-run/SKILL.md",
+      "Reason": "Documentation: the salmon-run runbook spells its commands with the fleet Skills root."
+    },
+    {
+      "Path": "vendor/credential-rescue/skills/aws-store/SKILL.md",
+      "Reason": "Documentation: the aws-store runbook names the fleet restore-bundle directory."
+    },
+    {
+      "Path": "vendor/credential-rescue/skills/watch/REFERENCE.md",
+      "Reason": "Documentation: the watch reference names the fleet Skills root in an example command."
+    },
+    {
+      "Path": "vendor/credential-rescue/skills/paseo-rescue/REFERENCE.md",
+      "Reason": "Documentation: the Paseo reference names the fleet Skills root in an example command."
+    },
+    {
+      "Path": "vendor/credential-rescue/Tests/Switch-OpencodeGoKey.Tests.ps1",
+      "Reason": "Test fixture: sets CL_REPOS_ROOT in the child environment it launches, which is the machine contract the switch requires."
+    },
+    {
+      "Path": "vendor/git-operations/Invoke-WorktreeLease.ps1",
+      "Reason": "Help-block examples only (the canonical invocation is spelled with a fleet-root path). The checkout lease itself is machine state; this single copy is the one both a Hub session and Resume-KeyCheckRoster / Invoke-CutoverRecovery resolve."
+    },
+    {
+      "Path": "references/vendored/qa-procedure.md",
+      "Reason": "Documentation: the snapshot spells the fleet root in one example command (`$env:CL_REPOS_ROOT\\upscale-havens`, the repo under test), not in a resolution path."
     }
   ]
 }

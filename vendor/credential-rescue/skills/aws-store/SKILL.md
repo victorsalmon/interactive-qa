@@ -61,8 +61,9 @@ deletion a file-copy restore instead of a scrape.
 | `cli/cache/`, `sso/cache/` | regenerates | no |
 | `backups/` | deleted with the dir — do NOT rely on it | — |
 
-Profiles: `dev-daily-fixed` (default, read-only agents), `currentsSetup`,
-`salmon-sso` (Identity Center, `aws sso login --profile salmon-sso --use-device-code`).
+Profiles: `dev-daily-fixed` (Paseo + Upscale Havens, read-only agents) and
+`currentsSetup` (currents-bookkeeping, write-capable). Both are long-lived IAM
+keys; there is no SSO profile.
 
 ## Same-cleanup class
 
