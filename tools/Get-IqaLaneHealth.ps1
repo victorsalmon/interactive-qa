@@ -112,13 +112,28 @@ function Get-PaseoAgents {
       $one = & $paseo inspect --json $a.id 2>&1 | Out-String
       if ($LASTEXITCODE -eq 0) {
         $o = $one | ConvertFrom-Json
-        if ($o.UpdatedAt) { $a | Add-Member -NotePropertyName UpdatedAt -NotePropertyValue $o.UpdatedAt -Force }
+        if ($o.UpdatedAt) { $a | Add-Member -NotePropertyName UpdatedAt -NotePropertyValue (ConvertFrom-PaseoTime $o.UpdatedAt) -Force }
         if ($o.Status) { $a | Add-Member -NotePropertyName Status -NotePropertyValue $o.Status -Force }
         if ($o.Model) { $a | Add-Member -NotePropertyName Model -NotePropertyValue $o.Model -Force }
       }
     } catch { }
   }
   return ,$agents
+}
+
+function ConvertFrom-PaseoTime {
+  param($Value)
+  if ($null -eq $Value) { return $null }
+  try {
+    $d = if ($Value -is [datetime]) { $Value } else { [datetime]$Value }
+  } catch { return $null }
+  # Paseo serialises UTC instants with no zone designator. Reading them as local makes a
+  # 2-minute-old agent look 45 minutes old (or hours), which is how a healthy lane gets
+  # classified ZOMBIE. Unspecified therefore means UTC, and only Unspecified is coerced.
+  if ($d.Kind -eq [System.DateTimeKind]::Unspecified) {
+    return [datetime]::SpecifyKind($d, [System.DateTimeKind]::Utc).ToLocalTime()
+  }
+  return $d.ToLocalTime()
 }
 
 function Get-RefAgeMinutes {
@@ -314,11 +329,9 @@ function Invoke-Main {
     $agentStatus = if ($any) { [string]$any.status } else { '' }
     $silence = $null
     if ($any -and $any.PSObject.Properties.Name -contains 'UpdatedAt' -and $any.UpdatedAt) {
-      try { $silence = Get-RefAgeMinutes -Moment ([datetime]$any.UpdatedAt) -Now $Now } catch { $silence = $null }
+      try { $silence = Get-RefAgeMinutes -Moment (ConvertFrom-PaseoTime $any.UpdatedAt) -Now $Now } catch { $silence = $null }
     }
-    if ($null -eq $silence -and $facts.LastCommit -ne [datetime]::MinValue -and $agentStatus -eq 'running') {
-      $silence = Get-RefAgeMinutes -Moment $facts.LastCommit -Now $Now
-    }
+    # No daemon timestamp = silence is UNKNOWN, never inferred from a commit time.
 
     $briefAge = if ($facts.HasBrief) { Get-RefAgeMinutes -Moment $facts.BriefTime -Now $Now } else { $null }
 

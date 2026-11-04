@@ -120,3 +120,18 @@ Describe 'Get-IqaLaneHealth git facts' {
     @($parsed.Lanes)[0].Verdict | Should -Be 'HALF-DONE'   # it has commits + a dirty file, so it is work, not junk
   }
 }
+
+Describe 'Paseo timestamps' {
+
+  It 'reads a zone-less Paseo instant as UTC, not as local' {
+    $seen = [datetime]::SpecifyKind([datetime]'2026-11-04T13:12:59', [System.DateTimeKind]::Unspecified)
+    (ConvertFrom-PaseoTime $seen).ToUniversalTime() | Should -Be $seen
+  }
+
+  It 'does not infer silence from a commit time when the daemon gave none' {
+    # running, no daemon timestamp, zero progress, brief inside grace -> must stay ACTIVE
+    Get-LaneVerdict -Ahead 0 -Dirty 0 -AgentStatus 'running' -SilenceMinutes $null -BriefAgeMinutes 33 `
+      -HasBrief $true -HasReport $false -DuplicateBranch $false -GraceMinutes 45 -StallMinutes 20 |
+      Should -Be 'ACTIVE'
+  }
+}
