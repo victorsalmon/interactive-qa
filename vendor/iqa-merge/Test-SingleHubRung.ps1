@@ -31,10 +31,16 @@
                        arguments, `cwd =` inside the prompt, the schedule's
                        target cwd, or the `hub-watch-<repo>[-backstop]` name.
 
-    Two ACTIVE rungs that share ANY key are a REFUSE. Only `status = active`
-    counts: a paused row is tolerated and named in the output, because a pause
-    is reversible and resuming it creates the second active rung again.
-    `completed`/`expired` rows are history and are ignored.
+    Two LIVE rungs that share ANY key are a REFUSE. A rung is LIVE only while it
+    can still fire: `status = active` AND not spent (`maxRuns` reached - the
+    daemon's `runs` history has that many entries). A spent one-shot lane
+    dispatch is not a writer any more, so counting it made one live rung plus one
+    finished lane look like a duplicate (bead cl-common-5wy).
+
+    A row that cannot fire is tolerated and named in the output, never counted:
+    `paused` (a pause is reversible, so resuming it does create the second live
+    rung again), `completed`/`expired` (history), and `active` with `maxRuns`
+    reached (spent between the last fire and the daemon settling it).
 
     Exit codes
       0  PASS               at most one active rung per repo/session
@@ -284,6 +290,57 @@ function Get-RungIdentity {
     }
 }
 
+function Get-RunCount {
+    <#
+    .SYNOPSIS
+        How many times has this row fired, from the daemon's `runs` history?
+
+    .DESCRIPTION
+        `runs` is an array of run records, but JSON parsing collapses a
+        single-element array to the bare object and an absent history to null -
+        and a ONE-SHOT lane dispatch is exactly the one-element case. Counting
+        only real arrays would therefore read every spent one-shot as unspent,
+        and counting a bare object as unspent would do the same. A number is
+        accepted too, so a caller-supplied summary is honoured.
+    #>
+    param([AllowNull()][object]$Value)
+
+    if ($null -eq $Value) { return 0 }
+    if ($Value -is [System.Array]) { return $Value.Count }
+    if ($Value -is [System.Collections.ICollection]) { return $Value.Count }
+
+    $parsed = 0
+    $text = [string]$Value
+    if ($text -match '^\s*\d+\s*$' -and [int]::TryParse($text.Trim(), [ref]$parsed)) { return $parsed }
+
+    return 1
+}
+
+function Test-RungSpent {
+    <#
+    .SYNOPSIS
+        Has this row already used up its allowance, so it can never fire again?
+
+    .DESCRIPTION
+        The daemon keeps the run history in `runs` and the allowance in
+        `maxRuns`. `maxRuns` absent, null or 0 means no limit. A row whose
+        history has reached the allowance is spent: a one-shot lane dispatch
+        stays `active` at least until the daemon settles it, and it is not a
+        competing rung while spent (bead cl-common-5wy).
+    #>
+    param([AllowNull()][object]$Row)
+
+    $maxRuns = Get-Property -Object $Row -Path 'maxRuns'
+    if ($null -eq $maxRuns) { return $false }
+
+    $limit = 0
+    if (-not [int]::TryParse(([string]$maxRuns).Trim(), [ref]$limit)) { return $false }
+    if ($limit -le 0) { return $false }
+
+    $runs = Get-Property -Object $Row -Path 'runs'
+    return ((Get-RunCount -Value $runs) -ge $limit)
+}
+
 function Get-RungRecord {
     <#
     .SYNOPSIS
@@ -293,15 +350,24 @@ function Get-RungRecord {
 
     $identity = Get-RungIdentity -Row $Row
     $status = ([string](Get-Property -Object $Row -Path 'status')).Trim().ToLowerInvariant()
+    $spent = Test-RungSpent -Row $Row
+    $live = ($status -eq 'active') -and (-not $spent)
+
+    # What the reader is told: `active` only when it can still fire, so a spent
+    # row is never reported in a way that reads as a writer.
+    $disposition = if ($live) { 'active' } elseif ($status -eq 'active') { 'active (spent: maxRuns reached)' } else { $status }
 
     [pscustomobject]@{
-        Id       = [string](Get-Property -Object $Row -Path 'id')
-        Name     = [string](Get-Property -Object $Row -Path 'name')
-        Cron     = [string](Get-Property -Object $Row -Path 'cadence.expression')
-        Status   = $status
-        Sessions = @($identity.Sessions)
-        Repos    = @($identity.Repos)
-        Keys     = @($identity.Keys)
+        Id          = [string](Get-Property -Object $Row -Path 'id')
+        Name        = [string](Get-Property -Object $Row -Path 'name')
+        Cron        = [string](Get-Property -Object $Row -Path 'cadence.expression')
+        Status      = $status
+        Spent       = $spent
+        Live        = $live
+        Disposition = $disposition
+        Sessions    = @($identity.Sessions)
+        Repos       = @($identity.Repos)
+        Keys        = @($identity.Keys)
     }
 }
 
@@ -360,7 +426,7 @@ foreach ($rung in $allRungs) {
     $thisKey = 'repo:' + $targetRepo
     if ($repoKeys -contains $thisKey) { $inScope.Add($rung); continue }
     if ($repoKeys.Count -gt 0) { continue }
-    if ($rung.Status -eq 'active') { $unplaceable.Add($rung) }
+    if ($rung.Live) { $unplaceable.Add($rung) }
 }
 
 if ($unplaceable.Count -gt 0) {
@@ -373,8 +439,8 @@ if ($unplaceable.Count -gt 0) {
     exit 2
 }
 
-$active = @($inScope | Where-Object { $_.Status -eq 'active' })
-$tolerated = @($inScope | Where-Object { $_.Status -ne 'active' } | Sort-Object Name, Id)
+$active = @($inScope | Where-Object { $_.Live })
+$tolerated = @($inScope | Where-Object { -not $_.Live } | Sort-Object Name, Id)
 
 # Duplicate groups: one group per shared key with more than one active rung.
 $duplicates = [System.Collections.Generic.List[object]]::new()
@@ -393,7 +459,7 @@ foreach ($rung in $active) {
 }
 
 $toleratedText = if ($tolerated.Count -gt 0) {
-    ($tolerated | ForEach-Object { "{0} (status={1})" -f (Format-Rung -Rung $_), $_.Status }) -join '; '
+    ($tolerated | ForEach-Object { "{0} (status={1})" -f (Format-Rung -Rung $_), $_.Disposition }) -join '; '
 }
 else { 'none' }
 
@@ -403,7 +469,7 @@ if ($duplicates.Count -gt 0) {
     $groups = foreach ($group in $duplicates) {
         "{0} -> {1}" -f $group.Key, (($group.Rungs | ForEach-Object { Format-Rung -Rung $_ }) -join ' vs ')
     }
-    $message = ("REFUSE - {0} duplicate ACTIVE MERGE-TICK rung group(s) for {1} ({2} active rung(s)). Exactly one active rung per repo is allowed, because two ticks are two writers on one trunk and one can sweep a branch/worktree out from under the other's merge worker (measured 2026-11-03, bead cl-common-3tv). Duplicate: {3}. Tolerated non-active rung(s): {4}." -f `
+    $message = ("REFUSE - {0} duplicate ACTIVE MERGE-TICK rung group(s) for {1} ({2} active rung(s)). Exactly one active rung per repo is allowed, because two ticks are two writers on one trunk and one can sweep a branch/worktree out from under the other's merge worker (measured 2026-11-03, bead cl-common-3tv). Duplicate: {3}. Tolerated non-live rung(s): {4}." -f `
             $duplicates.Count, $scopeText, $active.Count, ($groups -join ' | '), $toleratedText)
     if ($Json) {
         [ordered]@{
@@ -413,7 +479,7 @@ if ($duplicates.Count -gt 0) {
             reason        = $message
             active        = @($active | ForEach-Object { [ordered]@{ id = $_.Id; name = $_.Name; cron = $_.Cron; status = $_.Status; keys = $_.Keys } })
             duplicates    = @($duplicates | ForEach-Object { [ordered]@{ key = $_.Key; ids = @($_.Rungs | ForEach-Object { $_.Id }); crons = @($_.Rungs | ForEach-Object { $_.Cron }) } })
-            tolerated     = @($tolerated | ForEach-Object { [ordered]@{ id = $_.Id; name = $_.Name; cron = $_.Cron; status = $_.Status } })
+            tolerated     = @($tolerated | ForEach-Object { [ordered]@{ id = $_.Id; name = $_.Name; cron = $_.Cron; status = $_.Status; spent = $_.Spent; disposition = $_.Disposition } })
         } | ConvertTo-Json -Depth 8
     }
     else { Write-Output ("Test-SingleHubRung: {0}" -f $message) }
@@ -421,9 +487,9 @@ if ($duplicates.Count -gt 0) {
 }
 
 if ($active.Count -eq 0) {
-    $message = ("NO-RUNG - no ACTIVE MERGE-TICK rung for {0}. A Hub must have exactly one (create it in the same turn it advertises). Tolerated non-active rung(s): {1}." -f $scopeText, $toleratedText)
+    $message = ("NO-RUNG - no ACTIVE MERGE-TICK rung for {0}. A Hub must have exactly one (create it in the same turn it advertises). Tolerated non-live rung(s): {1}." -f $scopeText, $toleratedText)
     if ($Json) {
-        [ordered]@{ schemaVersion = 1; verdict = 'NO-RUNG'; repo = $targetRepo; reason = $message; active = @(); tolerated = @($tolerated | ForEach-Object { [ordered]@{ id = $_.Id; name = $_.Name; cron = $_.Cron; status = $_.Status } }) } | ConvertTo-Json -Depth 6
+        [ordered]@{ schemaVersion = 1; verdict = 'NO-RUNG'; repo = $targetRepo; reason = $message; active = @(); tolerated = @($tolerated | ForEach-Object { [ordered]@{ id = $_.Id; name = $_.Name; cron = $_.Cron; status = $_.Status; spent = $_.Spent; disposition = $_.Disposition } }) } | ConvertTo-Json -Depth 6
     }
     else { Write-Output ("Test-SingleHubRung: {0}" -f $message) }
     exit 3
@@ -431,7 +497,7 @@ if ($active.Count -eq 0) {
 
 if ($targetRepo) {
     $winner = $active[0]
-    $message = ("PASS - exactly one ACTIVE MERGE-TICK rung for {0}: {1}. Tolerated non-active rung(s): {2}. A paused rung is tolerated only while it stays paused; resuming it creates a second active rung and this guard will refuse." -f `
+    $message = ("PASS - exactly one ACTIVE MERGE-TICK rung for {0}: {1}. Tolerated non-live rung(s): {2}. A paused rung is tolerated only while it stays paused; resuming it creates a second active rung and this guard will refuse." -f `
             $scopeText, (Format-Rung -Rung $winner), $toleratedText)
 }
 else {
@@ -445,7 +511,7 @@ else {
         }
     }
     $summary = @($byRepo.Keys | ForEach-Object { "{0} -> {1}" -f $_, ((@($byRepo[$_] | ForEach-Object { $_.Id }) | Select-Object -Unique) -join ',') }) -join '; '
-    $message = ("PASS - one ACTIVE MERGE-TICK rung per repo ({0}): {1}. Tolerated non-active rung(s): {2}." -f `
+    $message = ("PASS - one ACTIVE MERGE-TICK rung per repo ({0}): {1}. Tolerated non-live rung(s): {2}." -f `
             @($byRepo.Keys).Count, $summary, $toleratedText)
 }
 
@@ -457,7 +523,7 @@ if ($Json) {
         reason        = $message
         active        = @($active | ForEach-Object { [ordered]@{ id = $_.Id; name = $_.Name; cron = $_.Cron; status = $_.Status; keys = $_.Keys } })
         duplicates    = @()
-        tolerated     = @($tolerated | ForEach-Object { [ordered]@{ id = $_.Id; name = $_.Name; cron = $_.Cron; status = $_.Status } })
+        tolerated     = @($tolerated | ForEach-Object { [ordered]@{ id = $_.Id; name = $_.Name; cron = $_.Cron; status = $_.Status; spent = $_.Spent; disposition = $_.Disposition } })
     } | ConvertTo-Json -Depth 6
 }
 else { Write-Output ("Test-SingleHubRung: {0}" -f $message) }
