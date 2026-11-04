@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T23:48:37.3584679-07:00",
+  "generatedAt": "2026-11-04T00:15:43.0911216-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -16,9 +16,9 @@
       "Vendored": "lib/Resolve-ClCommon.ps1",
       "Owner": "this package",
       "Why": "Package-owned resolver for the cl-common checkout. The package must not bundle cl-common, and must not guess its absence either.",
-      "Sha256": "B73B4634A0E322B5518A4A767AF3C18024E799A79E9EE924C66BD51D8CC85C5B",
-      "Sha256Lf": "B73B4634A0E322B5518A4A767AF3C18024E799A79E9EE924C66BD51D8CC85C5B",
-      "Bytes": 2632,
+      "Sha256": "3207DE27176210D2435C98431583C58847BD75B6928D9601F9EEA12CC8658CCD",
+      "Sha256Lf": "3207DE27176210D2435C98431583C58847BD75B6928D9601F9EEA12CC8658CCD",
+      "Bytes": 3269,
       "Tree": ""
     },
     {

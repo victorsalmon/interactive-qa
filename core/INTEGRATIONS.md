@@ -39,7 +39,7 @@ else {
 }
 ```
 
-Resolution order: `CL_COMMON_PATH` → `CL_REPOS_ROOT\cl-common` → absent.
+Resolution order: `CL_COMMON_HOME` -> `CL_COMMON_PATH` (legacy alias) -> `CL_REPOS_ROOT\cl-common` -> absent. `CL_COMMON_HOME` is the name the machine sets when cl-common is installed; the plugin never bundles cl-common.
 
 ## The contract
 
