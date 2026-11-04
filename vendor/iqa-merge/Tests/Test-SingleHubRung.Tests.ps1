@@ -109,7 +109,8 @@ Describe 'Test-SingleHubRung: a spent one-shot is not a competing rung (cl-commo
         $result.Json.verdict | Should -Be 'PASS'
         @($result.Json.active.id) | Should -Be @('aaaaaaa1')
         @($result.Json.tolerated.id) | Should -Contain 'bbbbbbb2'
-        $result.Text | Should -Not -Match 'duplicate'
+        @($result.Json.duplicates).Count | Should -Be 0
+        $result.Json.reason | Should -Match '^PASS - exactly one'
     }
 
     It 'still REFUSEs and names both ids when two rungs are genuinely active' {

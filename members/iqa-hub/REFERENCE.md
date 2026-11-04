@@ -1356,13 +1356,15 @@ only the MERGE-TICK rung class: schedule names starting `hub-watch`, or prompts
 carrying a `MERGE-TICK` / `HUB BACKSTOP` marker. A rung is identified by every
 GUID in its prompt (`session:<guid>`) and by its repo evidence (`hub-<x>`
 tokens, `Repo root:`/`-RepoPath`/`-Repo`/`cwd =` in the prompt, the target
-`cwd`, or the `hub-watch-<repo>[-backstop]` name). Two ACTIVE rungs sharing any
-key are a refusal.
+`cwd`, or the `hub-watch-<repo>[-backstop]` name). Only a **live** rung counts:
+`status = active` and not spent (`maxRuns` reached, per the daemon's `runs`
+history). Two live rungs sharing any key are a refusal; a spent one-shot lane
+dispatch is a lane, never a rung (bead `cl-common-5wy`).
 
 | Exit | Verdict | Meaning |
 | :--- | :--- | :--- |
-| 0 | `PASS` | at most one active rung; paused/completed rungs are named as tolerated |
-| 1 | `REFUSE` | two or more active rungs share a repo or hub session; both ids and crons are printed |
+| 0 | `PASS` | at most one active rung; paused, completed and spent rungs are named as tolerated |
+| 1 | `REFUSE` | two or more live rungs share a repo or hub session; both ids and crons are printed |
 | 2 | `CANNOT-EVALUATE` | unreadable schedule source, or an active rung with no identity at all - never a pass |
 | 3 | `NO-RUNG` | no active rung for this repo; create exactly one in the turn you advertise |
 
@@ -1375,7 +1377,11 @@ it has read the refusal.
 paused.** A paused backstop still counts as wake-up coverage for a resume or a
 handover, and resuming it re-creates the second active rung; the guard names it
 in every PASS so the tolerance is visible rather than assumed. A `completed`
-rung is history and is ignored.
+rung is history and is ignored. A spent `active` row (its `runs` history has
+reached `maxRuns`) is tolerated the same way: it cannot fire again, so it is
+named in `tolerated` with `disposition = active (spent: maxRuns reached)` and
+never counted as the repo's rung. When the only rung-class rows left are spent,
+the verdict is `NO-RUNG` - the Hub must arm one.
 
 **What a Hub does when the guard refuses:**
 
