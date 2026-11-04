@@ -77,7 +77,30 @@ credential add/remove/move/modify appends one JSON line to
 you edit by hand, append the line yourself. `~/.*/` credential folders are
 intentional state — never deleted or "remediated" here.
 
-### Triage — pick ONE runbook
+### Terminal verdict - a cutover is finished when it says so
+
+Every cutover ends with exactly one line, printed last and emitted by
+`Exit-Cutover` in `vendor/credential-rescue/scripts/Invoke-KeyCheckCutover.ps1`,
+so no exit path can be added later that forgets to state one:
+
+```
+cutover <target>: COMPLETE (runId <id>) - applied and verified on every surface; no restart pending
+cutover <target>: INCOMPLETE (runId <id>) - applied but not verified (reason=...); a resume completes or reverts it
+cutover <target>: FAILED (runId <id>) - nothing applied (reason=...)
+```
+
+Do not close a cutover by decoding `applied=True verified=True` from the outcome
+JSON. That is a record of two variables, not a statement that the machine
+finished moving, and it reads identically for a run that is still missing a
+restart. The verdict line is the proof; the JSON and `last-cutover.json` are the
+audit trail, and the per-run `<runId>-cutover.json` is the one that carries the
+booleans.
+
+**Enforced by:** `vendor/credential-rescue/Tests/Invoke-KeyCheckCutover.Tests.ps1`
+asserts the COMPLETE line on the happy path and the FAILED line on the
+switch-failure path (12 tests).
+
+### Triage - pick ONE runbook
 
 | Symptom | Runbook |
 | :--- | :--- |
