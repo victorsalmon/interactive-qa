@@ -159,7 +159,9 @@
           "OPENCODE_GO2_KEY",
           "OPENCODE_GO3_KEY",
           "OPENCODE_GO4_KEY",
-          "OPENCODE_GO5_KEY"
+          "OPENCODE_GO5_KEY",
+          "OPENCODE_GO6_KEY",
+          "OPENCODE_GO7_KEY"
         ],
         "activeEnvUser": [
           "OPENCODE_GO_KEY",
@@ -260,7 +262,7 @@
           "role": "free",
           "label": "DeepSeek V4.1 Flash Free (OpenCode Zen)",
           "cli": "opencode",
-          "provider": "opencode/deepseek-v4.1-flash-free",
+          "provider": "opencode/opencode/deepseek-v4.1-flash-free",
           "thinking": "low",
           "efforts": { "recon": "low", "plan": "low", "review": "low", "fix": "low", "code": "low", "refactor": "low", "simple": "low", "merge": "low" },
           "mode": "build",

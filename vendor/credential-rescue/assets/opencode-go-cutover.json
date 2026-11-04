@@ -17,10 +17,11 @@
     "OPENCODE_GO3_KEY": 3,
     "OPENCODE_GO4_KEY": 3,
     "OPENCODE_GO5_KEY": 3,
-    "OPENCODE_GO6_KEY": 3
+    "OPENCODE_GO6_KEY": 3,
+    "OPENCODE_GO7_KEY": 3
   },
   "providerMaxConcurrent": {
-    "opencode-go": 4
+    "opencode-go": 8
   },
   "paseo": {
     "providerId": "opencode",

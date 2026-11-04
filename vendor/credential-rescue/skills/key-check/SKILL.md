@@ -6,4 +6,4 @@ triggers:
   - model
 ---
 
-Canonical content lives at `interactive-qa/members/key-watch/SKILL.md`.
+Read and follow `$env:CL_REPOS_ROOT\cl-common\vendor\interactive-qa\members\key-watch\SKILL.md`.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-04T00:15:43.0911216-07:00",
+  "generatedAt": "2026-11-04T01:21:09.4908821-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -58,9 +58,9 @@
       "Name": "agent-capacity.json",
       "Canonical": "agent-spawn-capacity/assets/agent-capacity.json",
       "Vendored": "vendor/agent-spawn-capacity/assets/agent-capacity.json",
-      "Sha256": "692FBF57903A8576123144BB461EA5260858806D21BB61B384EA811CA9B7ECBC",
-      "Sha256Lf": "27B8126EF0D4F7EFCE6BC42E3055A0F00F6707341B7BCBF283AD65681D474F55",
-      "Bytes": 21626,
+      "Sha256": "86D45A7DBE1BCC6D96D3EB5EB42DDD2FCECFC782D3D8B76D6D2F6513AA0508F7",
+      "Sha256Lf": "568BCBC5DC91483833A9BA22C073E28B576653B825F122DA685FE83AE1BD3A4A",
+      "Bytes": 21697,
       "Tree": ""
     },
     {
@@ -138,9 +138,9 @@
       "Name": "opencode-go-cutover.json",
       "Canonical": "credential-rescue/assets/opencode-go-cutover.json",
       "Vendored": "vendor/credential-rescue/assets/opencode-go-cutover.json",
-      "Sha256": "8612E57F70E536EDD38F5898F669A2544740B890F21C8963B95C73F5314BB5E1",
-      "Sha256Lf": "F8881053F9F5595B88F2354A507A9CDA39FF2B69C072B4E48BE2A38E9C6BE14A",
-      "Bytes": 9030,
+      "Sha256": "F469193838DC5DD74D97007F2F04B5FEABA891765DB09305919C10C73A9B78B7",
+      "Sha256Lf": "492831CEBA14000AE2CDF118328ABFDC76451570E3DD32B6DBAC22D180A87689",
+      "Bytes": 9060,
       "Tree": "credential-rescue"
     },
     {
@@ -501,9 +501,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/SKILL.md",
       "Vendored": "vendor/credential-rescue/SKILL.md",
-      "Sha256": "781E9AD717D1F1DB6D5D4FAAD24DCF90D06F631F8D347FCD7ED6EEE7F02F14AC",
-      "Sha256Lf": "DA9C9535013BA3F6670FBA313698BCF43D7DD5A5F42EA413B8243D8671D4174E",
-      "Bytes": 552,
+      "Sha256": "39A8BB0CACE955AC0BC055ABC986F830C3D0D72F2ED49E716B9F1A6CCF022B11",
+      "Sha256Lf": "C979934BBA180EDAD513E6EA9FB34BAD61DAF08897D2D6C612E5CC80FD3A6531",
+      "Bytes": 577,
       "Tree": "credential-rescue"
     },
     {
@@ -531,9 +531,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/key-check/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/key-check/SKILL.md",
-      "Sha256": "009E611D032A2012836B3B30B6ED48A0C6E8AC7CC238EBCD797784738383ABEC",
-      "Sha256Lf": "22058EEEFF261C69DF0FFCD980C46562F35649B975DC87E1BC514B354629DCD2",
-      "Bytes": 538,
+      "Sha256": "677B3869D9EF07C7178509EC2F7D709A43C11ABCB010F3016C2104C5D3287970",
+      "Sha256Lf": "852D11379AE96298A50AA74E8E0BF8F24E87E98E975C708802827FC9B0F2D8C3",
+      "Bytes": 563,
       "Tree": "credential-rescue"
     },
     {
@@ -556,9 +556,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/paseo-rescue/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/paseo-rescue/SKILL.md",
-      "Sha256": "E96FB1569969744A4602B4DFD4118F73F70DE7BC227334C4F1395D226E358529",
-      "Sha256Lf": "0D285B8EDB746D4890354663C16E59DE179F6ED84FB718429CD60078F2029406",
-      "Bytes": 515,
+      "Sha256": "DD4200167FAC71AB70D2355C2CD3F2ED33A4D1830ACCCEC5990A9007553D1CDA",
+      "Sha256Lf": "5FF00022262A2F13322C969E50C6FBE2BF1954534EFEC354621D5959146CF968",
+      "Bytes": 540,
       "Tree": "credential-rescue"
     },
     {
@@ -591,9 +591,9 @@
       "Name": "SKILL.md",
       "Canonical": "credential-rescue/skills/watch/SKILL.md",
       "Vendored": "vendor/credential-rescue/skills/watch/SKILL.md",
-      "Sha256": "30D33B7B12D750C52ECCB80172FC1190F4630C0A5AEBD253A8A09CB6F36378C5",
-      "Sha256Lf": "B60D1D01895FE51FB3AA71E56CCD830BBB966661E5384276790BF49C38F6B4AF",
-      "Bytes": 576,
+      "Sha256": "4ABA588F97CD03A2BC89B698E4C6EDD3B140070A7FAB693158987AD0A0B1C62B",
+      "Sha256Lf": "69689507EDD3069B7B7BA8356F07A8DBC2BCF374E02A13F1F3EB3A46CE691C85",
+      "Bytes": 599,
       "Tree": "credential-rescue"
     },
     {
