@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-04T01:21:09.4908821-07:00",
+  "generatedAt": "2026-11-04T01:45:57.5849109-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -821,9 +821,9 @@
       "Vendored": "vendor/iqa-merge/Get-HubCadence.ps1",
       "Owner": "this package",
       "Why": "Hub cadence derivation; the fleet source was retired at Phase 5 and the iqa-hub member cites this copy.",
-      "Sha256": "8939E07708DC7D8A7489063166780B011176A7358E9D898215517476B7CDC963",
-      "Sha256Lf": "519A3F25E4BFF3C633505A97459C9B5E5BD4AD061E1BEF4E97C8E9203CBE55D2",
-      "Bytes": 53648,
+      "Sha256": "CB4BBB7ADE4B7FBAA10131EFED19478487A029139AC3E7217E75EFC18AB32855",
+      "Sha256Lf": "1C2BCFC0D8BF69437290D5A398085CBB563A9B41F2300C21C04EEBD8B0EDC574",
+      "Bytes": 61044,
       "Tree": ""
     },
     {
@@ -896,6 +896,18 @@
       "Sha256": "645D7823F4F56B3ED48D97C2728A8F94F0B4AD43558AA9D47FABA3909DF73DB7",
       "Sha256Lf": "581FD2D75376B591595747446B0DBDC75CF540EE989E2853557D1813D97A4255",
       "Bytes": 19695,
+      "Tree": ""
+    },
+    {
+      "Kind": "owned",
+      "Name": "Get-HubCadence.Tests.ps1",
+      "Canonical": "",
+      "Vendored": "vendor/iqa-merge/Tests/Get-HubCadence.Tests.ps1",
+      "Owner": "this package",
+      "Why": "Pins the cadence gate (cl-common-cuz: a rung that exists is never re-created); this package is the owner because the fleet Skills/iqa-merge/Tests that used to hold it was retired at Phase 5.",
+      "Sha256": "A0B9ECD94F34DF08AA216ED3BF0ADBEF91C29AACB477A336DF10972F76D4328C",
+      "Sha256Lf": "A0B9ECD94F34DF08AA216ED3BF0ADBEF91C29AACB477A336DF10972F76D4328C",
+      "Bytes": 7963,
       "Tree": ""
     },
     {
@@ -976,44 +988,39 @@
       "Reason": "The periodic deep groom, run by name on a schedule; a Hub session probes with the vendored Invoke-HubProbe.ps1 and never runs a full groom inside a turn."
     },
     {
-      "Name": "Get-HubCadence.Tests.ps1",
-      "Owner": "Skills/iqa-merge/Tests",
-      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
-    },
-    {
       "Name": "HubRegistry.Tests.ps1",
       "Owner": "Skills/iqa-merge/Tests",
-      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof. Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because the cadence gate is now owned here and the no-CREATE rule needs a shipped pin."
     },
     {
       "Name": "Invoke-HubProbe.Tests.ps1",
       "Owner": "Skills/iqa-merge/Tests",
-      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof. Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because the cadence gate is now owned here and the no-CREATE rule needs a shipped pin."
     },
     {
       "Name": "Test-Landed.Tests.ps1",
       "Owner": "Skills/iqa-merge/Tests",
-      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof. Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because the cadence gate is now owned here and the no-CREATE rule needs a shipped pin."
     },
     {
       "Name": "Test-SingleHubRung.Tests.ps1",
       "Owner": "Skills/iqa-merge/Tests",
-      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof. Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because the cadence gate is now owned here and the no-CREATE rule needs a shipped pin."
     },
     {
       "Name": "Test-ScheduleDispatch.Tests.ps1",
       "Owner": "Skills/iqa-merge/Tests",
-      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof. Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because the cadence gate is now owned here and the no-CREATE rule needs a shipped pin."
     },
     {
       "Name": "Invoke-ScheduleRecordWrite.Tests.ps1",
       "Owner": "Skills/iqa-merge/Tests",
-      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof. Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because the cadence gate is now owned here and the no-CREATE rule needs a shipped pin."
     },
     {
       "Name": "AtomicRecordWrite.Tests.ps1",
       "Owner": "Skills/iqa-merge/Tests",
-      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof."
+      "Reason": "Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are byte-identical and drift is caught by this package's own Sync-VendoredHelpers.ps1 -Check, so a second pinning suite inside the package would duplicate ownership without adding proof. Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because the cadence gate is now owned here and the no-CREATE rule needs a shipped pin."
     },
     {
       "Name": "Test-VendoredSync.ps1",

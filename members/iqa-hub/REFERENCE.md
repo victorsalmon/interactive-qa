@@ -1129,17 +1129,35 @@ had no check-back and no self-wake).
   pwsh -NoProfile -File <Skills>/iqa-merge/Get-HubCadence.ps1 -State <prompt|dispatched|healthy|blocked|stand-down> `
        [-SincePromptMinutes <n>] [-QuietRounds <n>] [-NextFireAt <raw nextRunAt, Z or offset intact>] [-ExpiresAt <holds-expiry>] `
        [-RunHistoryPath <schedule-runs.json>] [-HeldCron <armed expression>] [-AcceptEffectiveCadence] [-RequireEffectiveCadence] `
-       [-Name hub-watch-<repo>]
+       [-FiredByHeartbeat] [-RungExists] [-Name hub-watch-<repo>]
   ```
 
   It returns the required gear, the cron, and one action — **CREATE**
-  (no rung known), **RECREATE** (the held rung fires later than the gear, is
+  (no rung evidence at all), **RECREATE** (the held rung fires later than the gear, is
   overdue, or expires before it can cover two fires), **HOLD** (inside the
-  gear), **LAPSE** (stand-down) — plus the `RungLine` to print. Act on it in
+  gear), **LAPSE** (stand-down), or **CANNOT-EVALUATE** (a rung exists but its
+  armed gear is unknown: non-zero, no cadence, no creation) — plus the `RungLine` to print. Act on it in
   the same turn: on CREATE/RECREATE delete the tracked heartbeat and create
   the successor with the returned cron (expiry ≥ two fires), then print the
   line. Print the line on HOLD too; that is how a silent hour is
   distinguishable from a dead timer.
+
+  **A rung that exists is never re-created (cl-common-cuz).** A heartbeat fire
+  carries no `-NextFireAt` — heartbeat rungs are not in the schedule store the
+  caller reads — and the gate used to read that absence as "no rung": two
+  consecutive fires (67a17dd8, 99d6cfc0, 2026-11-04) each printed
+  `CREATE: no rung is known for this turn; create at 1 min` while
+  `Test-SingleHubRung.ps1` passed on schedule `b3fdf56a` in the same minute.
+  Obeying that line arms a SECOND active rung. So, on a tick that its own
+  heartbeat started, pass **`-FiredByHeartbeat`**; pass **`-RungExists`** when
+  the liveness check proved exactly one ACTIVE rung; `-HeldCron` alone also
+  counts as a described rung. Existence is judged separately from phase:
+  with `-HeldCron` the armed gear is compared against the satisfiable gear
+  (HOLD, or RECREATE of that ONE rung at the satisfiable cron), and with no
+  armed cron at all the verdict is `CANNOT-EVALUATE` — reason named, `cron
+  unknown` on the line, exit 2, and **no** creation instruction. `CREATE` is
+  reserved for genuine absence. Pinned by
+  `vendor/iqa-merge/Tests/Get-HubCadence.Tests.ps1`.
 
   **A gear is NOMINAL until the run history proves it.** Each fire spawns an
   agent that outlives the interval, and the daemon drops the overlapping fires
@@ -1228,7 +1246,7 @@ had no check-back and no self-wake).
   same evidence when the caller already parsed the cron; a cron that cannot be
   placed at a minute interval is refused by name rather than guessed.
 
-- **Two diagnostics that manufacture their own verdict.** (a) A process filter
+- **Three diagnostics that manufacture their own verdict.** (a) A process filter
   that names the script you are looking for (`Invoke-KeyCheck.ps1`) matches
   *its own command line*, so a single watch read as three churning processes
   and was reported as an external spawner. Prove a process count with a filter
@@ -1239,7 +1257,11 @@ had no check-back and no self-wake).
   rung (2026-11-03). Read `nextRunAt` from the schedule record
   (`paseo_list_schedules`) before evaluating; never estimate it, and never
   retype it without its `Z`/offset — an offset-less instant is now refused by
-  name instead of being read as UTC.
+  name instead of being read as UTC. (c) The same purity read "no
+  `-NextFireAt`" as "no rung" and told a heartbeat fire to CREATE a second rung
+  beside itself (cl-common-cuz, 2026-11-04). Say how you know a rung exists —
+  `-FiredByHeartbeat` on your own tick, `-RungExists` from a liveness check,
+  `-HeldCron` from the record — and the gate can no longer invent one.
 - **Gear ladder, in one place** (the helper encodes exactly this):
 
   | Observed state | Gear |
@@ -1424,8 +1446,13 @@ its own retirement decision, but this helper will not raise it for you.
 - Cadence gate: every turn ends with a `Get-HubCadence.ps1` call and its
   printed `Rung:` line; a prompt reply never leaves a rung longer than 1
   minute, and a rung firing later than the current gear is recreated in the
-  same turn rather than trusted. `Tests/Get-HubCadence.Tests.ps1` pins the
-  ladder, the prompt floor, and the CREATE/RECREATE/HOLD/LAPSE decisions.
+  same turn rather than trusted. The gate never answers CREATE while a rung
+  exists: a heartbeat-started tick passes `-FiredByHeartbeat` (plus `-HeldCron`
+  when the record is readable) and an existence proof passes `-RungExists`.
+  `vendor/iqa-merge/Tests/Get-HubCadence.Tests.ps1` pins the ladder, the prompt
+  floor, the CREATE/RECREATE/HOLD/LAPSE decisions, and the
+  no-CREATE-when-a-rung-exists / CANNOT-EVALUATE-without-creation cases
+  (cl-common-cuz).
 - Drain durability: every worker dispatch leaves a one-shot check-back
   pending; a tick that finds landed-but-open work closes out instead of
   re-landing; claims never expire silently; rival assemblies adopt or
@@ -2035,3 +2062,18 @@ happened or re-run the proof.
   `maxRuns`-exhausted `completed` record is recreated, never updated in place, and
   names the daemon-side half (atomic internal retry; a run that produced no agent
   should not consume budget) as Paseo's, out of the Hub's reach.
+- v18 (2026-11-04): **a rung that exists is never re-created** (bead
+  `cl-common-cuz`). Two consecutive heartbeat fires (67a17dd8, 99d6cfc0) printed
+  `CREATE: no rung is known for this turn; create at 1 min` at the same moment
+  `Test-SingleHubRung.ps1` passed on schedule `b3fdf56a`: heartbeat rungs live
+  outside the schedule store the caller reads, so "no `-NextFireAt`" was read as
+  "no rung" and obeying the line armed a second active rung. `Get-HubCadence.ps1`
+  now takes rung EXISTENCE from the caller (`-FiredByHeartbeat` for the tick
+  itself, `-RungExists` from the liveness check, `-HeldCron` as a described
+  rung) separately from rung PHASE: an existing rung is judged (HOLD, or
+  RECREATE of that one rung at the satisfiable cron) and, when the armed gear is
+  unknown, returns `CANNOT-EVALUATE` - reason named, `cron unknown`, exit 2, no
+  creation instruction, no guessed cadence. `CREATE` is reserved for genuine
+  absence. Pinned by `vendor/iqa-merge/Tests/Get-HubCadence.Tests.ps1` (9 tests:
+  heartbeat rung => no CREATE, real absence => CREATE with a reason,
+  cannot-evaluate => no creation instruction).

@@ -15,13 +15,43 @@
     turn just observed it returns the required gear, the cron to create, and
     one action:
 
-      CREATE    no rung is known for this turn (no -NextFireAt supplied)
+      CREATE    no rung is known for this turn (no rung evidence supplied at all)
       RECREATE  the held rung fires later than the required gear, is late by a
                 full cron interval or more, is armed at a cron that cannot meet
                 the satisfiable gear, or expires too soon to cover two fires
       HOLD      the held rung fires inside the required gear (or sits at the
                 satisfiable gear) and covers two fires - leave it alone
       LAPSE     stand-down: zero actionable work, no rung is created
+
+    A RUNG THE CALLER CAN SEE IS NEVER RE-CREATED (cl-common-cuz). The old gate
+    read "no -NextFireAt" as "no rung", so a turn that was ITSELF a heartbeat
+    fire - a heartbeat rung is not in the schedule store the caller can read -
+    printed `CREATE: no rung is known for this turn; create at 1 min` while
+    exactly one ACTIVE MERGE-TICK rung was live for the repo (measured
+    2026-11-04 on two consecutive fires, 67a17dd8 and 99d6cfc0, with
+    `Test-SingleHubRung.ps1` passing on schedule b3fdf56a at the same moment).
+    Obeying that line arms a SECOND active rung. The firing tick is the rung.
+
+    The gate therefore takes rung EXISTENCE from the caller, separately from the
+    rung PHASE (-NextFireAt):
+
+      -FiredByHeartbeat  this turn was started by the repo's heartbeat, so the
+                         rung exists by construction;
+      -RungExists        the caller proved one live rung exists (e.g.
+                         `Test-SingleHubRung.ps1` reports one ACTIVE rung);
+      -HeldCron /
+      -HeldIntervalMinutes
+                         the caller named the armed cron of a tracked rung - a
+                         described rung is a rung, not an absence.
+
+    When a rung exists but its next fire was not supplied, the verdict is never
+    CREATE: the armed gear is compared with the satisfiable gear (HOLD, or
+    RECREATE at the satisfiable cron for a rung armed too coarsely - delete+create
+    the ONE rung). When existence is known but the armed gear is not, the verdict
+    is CANNOT-EVALUATE with a reason, a `cron unknown` line and NO creation
+    instruction - a guessed cadence is never printed (exit 2). CREATE is reserved
+    for the genuine absence: no -NextFireAt, no -HeldCron, no -RungExists, no
+    -FiredByHeartbeat.
 
     EVERY RECREATE IS CLEARABLE (cl-common-leb). A RECREATE names the gear that
     can actually satisfy the next evaluation, and a rung already armed at that
@@ -244,6 +274,20 @@
     The same armed interval as a number, for a caller that already parsed the
     cron. Must be greater than zero. Mutually exclusive with -HeldCron.
 
+.PARAMETER FiredByHeartbeat
+    This turn was started by the repo's heartbeat schedule, so a rung demonstrably
+    exists for this repo even though a heartbeat fire carries no `-NextFireAt`
+    (heartbeat rungs are not in the schedule store the caller reads). Such a turn
+    is never told to CREATE a second rung: with `-HeldCron`/`-HeldIntervalMinutes`
+    the armed gear is judged (HOLD/RECREATE); without it the verdict is a named
+    CANNOT-EVALUATE and no cadence is guessed.
+
+.PARAMETER RungExists
+    The caller proved one live rung exists for this repo (for example
+    `Test-SingleHubRung.ps1` reported one ACTIVE rung). Same effect as
+    -FiredByHeartbeat: a rung that exists is never re-created. Combine with
+    -HeldCron to get a gear verdict instead of CANNOT-EVALUATE.
+
 .PARAMETER AcceptEffectiveCadence
     Accept the measured effective cadence as the assurance. Without a
     -HeldCron, a measured cadence wider than the state gear makes the nominal
@@ -316,6 +360,10 @@ param(
 
     [AllowNull()]
     [Nullable[double]]$HeldIntervalMinutes = $null,
+
+    [switch]$FiredByHeartbeat,
+
+    [switch]$RungExists,
 
     [switch]$AcceptEffectiveCadence,
 
@@ -677,6 +725,19 @@ elseif ($null -ne $HeldIntervalMinutes) {
 
 $required = Get-RequiredMinutes -State $State -SincePromptMinutes $SincePromptMinutes -ResetWindowMinutes $ResetWindowMinutes -QuietRounds $QuietRounds
 
+# Rung EXISTENCE and rung PHASE are separate pieces of evidence (cl-common-cuz).
+# A caller can know a rung exists (this turn is that rung firing, a liveness probe
+# proved one ACTIVE rung, or the caller named the armed cron) without knowing its
+# next fire - a heartbeat fire carries no `-NextFireAt`, because heartbeat rungs do
+# not live in the schedule store the caller reads. Reading "no next fire" as "no
+# rung" printed CREATE beside a live rung and manufactured a duplicate.
+$rungEvidence = if ($null -ne $heldFire) { 'held-fire' }
+elseif ($FiredByHeartbeat) { 'heartbeat-fire' }
+elseif ($null -ne $heldInterval) { 'held-cron' }
+elseif ($RungExists) { 'rung-exists' }
+else { 'none' }
+$rungKnown = ($rungEvidence -ne 'none')
+
 # --- run history: one owner, and an unreadable history is a named non-verdict --
 $historyInputs = @(
     $PSBoundParameters.ContainsKey('RunHistory')
@@ -819,15 +880,68 @@ $inFlightAt = $null
 $inFlightMinutes = $null
 $overdue = 0
 $nominalGap = $null
+$phaseUnknown = $false
 
 if ($null -eq $required) {
     $action = 'LAPSE'
     $reason = 'stand-down: zero actionable work, no rung is created'
     $effectiveNextFire = $null
 }
+elseif ($null -eq $heldFire -and $rungKnown) {
+    # The rung EXISTS but its phase was not supplied (cl-common-cuz). Never CREATE
+    # here: the duplicate this closes was a heartbeat fire being told to create a
+    # second rung beside itself. Judge the armed gear when it is known, otherwise
+    # say cannot-evaluate rather than guessing a cadence.
+    $phaseUnknown = $true
+    $effectiveNextFire = $null
+    $evidenceText = switch ($rungEvidence) {
+        'heartbeat-fire' { 'this turn is the heartbeat firing, so a rung exists for this repo' }
+        'held-cron'      { 'the caller supplied the armed cron, so a rung exists for this repo' }
+        'rung-exists'    { 'the caller proved one ACTIVE rung exists for this repo' }
+        default          { 'a rung exists for this repo' }
+    }
+
+    if ($null -eq $heldInterval) {
+        $action = 'CANNOT-EVALUATE'
+        $reason = ("{0}, but neither -NextFireAt nor -HeldCron was supplied, so its armed gear cannot be evaluated; " +
+            'no rung is created and no cadence is guessed - pass -HeldCron (and -NextFireAt when the record has nextRunAt) ' +
+            'for a gear verdict') -f $evidenceText
+    }
+    else {
+        $action = 'HOLD'
+        $reason = ("{0} at {1}; its next fire was not supplied, so the phase is unknown while the rung itself is proven - " +
+            'leave the rung alone, no rung is created') -f $evidenceText, $heldGearText
+
+        if ($heldInterval -gt ($satisfiableMinutes + $ToleranceMinutes) -and -not $AcceptEffectiveCadence) {
+            # Armed coarser than the gear needs: replace the ONE rung, never add one.
+            $action = 'RECREATE'
+            $reason = ("{0}, but it is armed at {1} min ({2}), coarser than the satisfiable gear {3} min ({4}); " +
+                'recreate that one rung at {3} min ({4}) - delete+create, never create a second') -f `
+                $evidenceText, $heldInterval, $heldGearText, $satisfiableMinutes, $satisfiableCron
+        }
+        elseif ($effectiveEvaluated -and $effectiveExceedsGear -and
+            $heldInterval -lt ($satisfiableMinutes - $ToleranceMinutes) -and -not $AcceptEffectiveCadence) {
+            # Armed finer than the daemon delivers: state the delivered gear instead.
+            $action = 'RECREATE'
+            $reason = ("{0}, but it is armed at {1} min ({2}), finer than the daemon delivers ({3} min, median of {4} gap(s)); " +
+                'recreate that one rung at {3} min ({5}) - delete+create, never create a second') -f `
+                $evidenceText, $heldInterval, $heldGearText, $satisfiableMinutes, $effectiveCadence.GapCount, $satisfiableCron
+        }
+
+        if ($action -eq 'HOLD' -and $null -ne $heldExpiry) {
+            $cover = ($heldExpiry - $now).TotalMinutes
+            if ($cover -lt (2 * $required)) {
+                $action = 'RECREATE'
+                $reason = "expiry in $([math]::Round($cover, 1)) min cannot cover two $required min fires; recreate the one rung at $satisfiableMinutes min ($satisfiableCron)"
+            }
+        }
+
+        if ($action -eq 'RECREATE') { $effectiveNextFire = $now.AddMinutes($satisfiableMinutes) }
+    }
+}
 elseif ($null -eq $heldFire) {
     $action = 'CREATE'
-    $reason = "no rung is known for this turn; create at $required min"
+    $reason = 'no rung is known for this turn (no -NextFireAt, -HeldCron, -RungExists or -FiredByHeartbeat supplied); create one at ' + $required + ' min'
     $effectiveNextFire = $now.AddMinutes($required)
 }
 else {
@@ -990,13 +1104,17 @@ if ($RequireEffectiveCadence -and -not $effectiveEvaluated -and $null -ne $requi
 }
 
 $cron = if ($null -eq $required) { $null } else { Get-CronForMinutes -Minutes $required }
-$nextText = if ($null -eq $effectiveNextFire) { 'none' } else { $effectiveNextFire.ToString('yyyy-MM-dd HH:mm zzz') }
+$nextText = if ($null -ne $effectiveNextFire) { $effectiveNextFire.ToString('yyyy-MM-dd HH:mm zzz') }
+elseif ($phaseUnknown) { 'unknown' }
+else { 'none' }
 
 # The cron printed on the Rung line is the rung the next evaluation will judge:
 # the armed cron while holding, the satisfiable cron while recreating. Printing
 # the state gear there read as "next 16:37 (*/2)" on a rung actually armed at
-# */4 (measured 2026-11-03) and hid the gear the action names.
-$displayCron = if ($action -eq 'HOLD' -and $null -ne $heldGearText) { $heldGearText }
+# */4 (measured 2026-11-03) and hid the gear the action names. A rung whose armed
+# gear is unknown says so, instead of printing the state gear as if it were armed.
+$displayCron = if ($action -eq 'CANNOT-EVALUATE') { 'cron unknown' }
+elseif ($action -eq 'HOLD' -and $null -ne $heldGearText) { $heldGearText }
 elseif ($action -eq 'RECREATE' -and $null -ne $satisfiableCron) { $satisfiableCron }
 else { $cron }
 
@@ -1028,6 +1146,10 @@ $result = [ordered]@{
     Cron                    = $cron
     Action                  = $action
     Reason                  = $reason
+    RungKnown               = $rungKnown
+    RungEvidence            = $rungEvidence
+    PhaseUnknown            = $phaseUnknown
+    CreationInstruction     = ($action -eq 'CREATE')
     Deferred                = $deferred
     DeferredReason          = $deferredReason
     InFlightRunAt           = if ($null -ne $inFlightAt) { $inFlightAt.ToString('o') } else { $null }
@@ -1066,4 +1188,8 @@ else {
     Write-Output ("Cadence: state={0} action={1} required={2}min cron={3} effective={4}" -f $State, $action, $required, $cron, $effectiveText)
 }
 
+# A CANNOT-EVALUATE is a named non-verdict, so it is non-zero (invariant 10: an
+# absent input is never a pass). A rung that exists but whose gear is unknown
+# must not read as success to a caller checking the exit code.
+if ($action -eq 'CANNOT-EVALUATE') { exit 2 }
 exit 0

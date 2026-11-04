@@ -232,6 +232,7 @@ $script:OwnedFiles = @(
     [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Test-Landed.ps1';                Why = 'Landing proof; the fleet source was retired at Phase 5 and the merge close-out rule cites this copy.' }
     [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Test-ScheduleDispatch.ps1';      Why = 'Schedule dispatch check; the fleet source was retired at Phase 5 and the one-rung rule cites this copy.' }
     [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Test-SingleHubRung.ps1';         Why = 'One-rung-per-repo guard; the fleet source was retired at Phase 5 and the iqa-hub member cites this copy.' }
+    [pscustomobject]@{ Vendored = 'vendor/iqa-merge/Tests/Get-HubCadence.Tests.ps1'; Why = 'Pins the cadence gate (cl-common-cuz: a rung that exists is never re-created); this package is the owner because the fleet Skills/iqa-merge/Tests that used to hold it was retired at Phase 5.' }
     [pscustomobject]@{ Vendored = 'vendor/dispatch/scripts/run-iqa-worker.ps1';      Why = 'Detached worker dispatch; the fleet source (iqa-mode) was retired at Phase 5 and the dispatch member cites this copy.' }
     [pscustomobject]@{ Vendored = 'vendor/dispatch/scripts/Test-OpencodeProvider.ps1'; Why = 'Provider reachability pre-check for a dispatch; the fleet source (iqa-mode) was retired at Phase 5.' }
     [pscustomobject]@{ Vendored = 'vendor/dispatch/assets/no-approvals.json';        Why = 'Worker config that denies approval prompts; the fleet source (iqa-mode) was retired at Phase 5.' }
@@ -351,12 +352,14 @@ $script:NotVendoredHelpers = @(
         'Invoke-HubProbe.ps1 and never runs a full groom inside a turn.')
 
     New-NotVendoredRow -Owner 'Skills/iqa-merge/Tests' -Names @(
-        'Get-HubCadence.Tests.ps1', 'HubRegistry.Tests.ps1', 'Invoke-HubProbe.Tests.ps1', 'Test-Landed.Tests.ps1',
+        'HubRegistry.Tests.ps1', 'Invoke-HubProbe.Tests.ps1', 'Test-Landed.Tests.ps1',
         'Test-SingleHubRung.Tests.ps1', 'Test-ScheduleDispatch.Tests.ps1', 'Invoke-ScheduleRecordWrite.Tests.ps1',
         'AtomicRecordWrite.Tests.ps1'
     ) -Reason ('Pin the canonical helpers against a bare-remote and registry fixture. The vendored copies are ' +
         'byte-identical and drift is caught by this package''s own Sync-VendoredHelpers.ps1 -Check, so a ' +
-        'second pinning suite inside the package would duplicate ownership without adding proof.')
+        'second pinning suite inside the package would duplicate ownership without adding proof. ' +
+        'Get-HubCadence.Tests.ps1 is the exception: it is an owned in-package row (cl-common-cuz) because ' +
+        'the cadence gate is now owned here and the no-CREATE rule needs a shipped pin.')
 
     New-NotVendoredRow -Owner 'Skills/iqa-merge' -Names @(
         'Test-VendoredSync.ps1'
