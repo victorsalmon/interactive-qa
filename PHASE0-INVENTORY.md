@@ -1,4 +1,4 @@
-# Phase 0 — counted inventory (epic `cl-common-yas`, Interactive-QA-Agent plugin)
+# Phase 0 — counted inventory (epic `cl-common-yas`, interactive-qa-Agent plugin)
 
 Read-only census taken 2026-11-03 on branch `docs/iqa-phase0` at the `cl-common`
 worktree. Nothing in the existing tree was edited, moved or renamed; the only
@@ -149,7 +149,7 @@ folder and its own pointer. Top three referencing paths listed.
 
 ## 5. Proposed member map
 
-Basis: the epic title (`Interactive-QA-Agent`), the existing `IQA` plugin
+Basis: the epic title (`interactive-qa-Agent`), the existing `IQA` plugin
 manifest (`saas-modules/Plugins/IQA/.devin-plugin/plugin.json`, whose `skills`
 already renames/publishes only 5 of these), and the pointer/duplication facts
 above. No epic design document was findable in-tree (searched
