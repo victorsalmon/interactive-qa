@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T23:22:42.3332300-07:00",
+  "generatedAt": "2026-11-03T23:25:43.5427661-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -58,9 +58,9 @@
       "Name": "agent-capacity.json",
       "Canonical": "agent-spawn-capacity/assets/agent-capacity.json",
       "Vendored": "vendor/agent-spawn-capacity/assets/agent-capacity.json",
-      "Sha256": "389351ADF520EE8CDC4799E187BFA9EC3A702F295565A8E186FABD916CACE098",
-      "Sha256Lf": "680C2106E91C6DE1D8E6B4CF439750C9C24393906C001E844EB74E75A20D3B68",
-      "Bytes": 21627,
+      "Sha256": "692FBF57903A8576123144BB461EA5260858806D21BB61B384EA811CA9B7ECBC",
+      "Sha256Lf": "27B8126EF0D4F7EFCE6BC42E3055A0F00F6707341B7BCBF283AD65681D474F55",
+      "Bytes": 21626,
       "Tree": ""
     },
     {
@@ -138,8 +138,8 @@
       "Name": "opencode-go-cutover.json",
       "Canonical": "credential-rescue/assets/opencode-go-cutover.json",
       "Vendored": "vendor/credential-rescue/assets/opencode-go-cutover.json",
-      "Sha256": "7EDBAAEECF956AC2A741DA4D2F9D87479DA1AECD1DA2313F93E8457A548507E5",
-      "Sha256Lf": "067E6BBBABCF9068760AC9FD49C20EA07859176CD398DC61BE80B425588E59F1",
+      "Sha256": "56C8FAC9FAA8793BEA05FE4B87625A382CDDDC91DCCB674AD30E0040A1BF3ED3",
+      "Sha256Lf": "A0B37864600169DE4201E727D6F4C09420863AC3401E4624148E33DCCCB9E958",
       "Bytes": 9032,
       "Tree": "credential-rescue"
     },

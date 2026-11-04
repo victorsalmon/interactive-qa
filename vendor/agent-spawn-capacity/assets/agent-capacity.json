@@ -136,7 +136,7 @@
     "opencode-go": {
       "enabled": true,
       "priority": 1,
-      "cap": 10,
+      "cap": 6,
       "capScope": "pool",
       "harness": "opencode",
       "bridgeEnv": "OPENCODE_GO_KEY",

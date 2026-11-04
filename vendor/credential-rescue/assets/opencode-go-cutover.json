@@ -12,12 +12,12 @@
     "OPENCODE_GO7_KEY"
   ],
   "keyMaxConcurrent": {
-    "OPENCODE_GO1_KEY": 2,
-    "OPENCODE_GO2_KEY": 4,
-    "OPENCODE_GO3_KEY": 4,
-    "OPENCODE_GO4_KEY": 4,
-    "OPENCODE_GO5_KEY": 4,
-    "OPENCODE_GO6_KEY": 4
+    "OPENCODE_GO1_KEY": 3,
+    "OPENCODE_GO2_KEY": 3,
+    "OPENCODE_GO3_KEY": 3,
+    "OPENCODE_GO4_KEY": 3,
+    "OPENCODE_GO5_KEY": 3,
+    "OPENCODE_GO6_KEY": 3
   },
   "providerMaxConcurrent": {
     "opencode-go": 4
