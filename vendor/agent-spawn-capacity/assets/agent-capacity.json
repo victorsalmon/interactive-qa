@@ -161,14 +161,15 @@
           "OPENCODE_GO4_KEY",
           "OPENCODE_GO5_KEY",
           "OPENCODE_GO6_KEY",
-          "OPENCODE_GO7_KEY"
+          "OPENCODE_GO7_KEY",
+          "OPENCODE_GO8_KEY"
         ],
         "activeEnvUser": [
           "OPENCODE_GO_KEY",
           "OPENCODE_API_KEY"
         ],
         "authFile": "%XDG_DATA_HOME%\\opencode\\auth.json",
-        "secretsManager": "ClockLobster/Salmon-Run (OPENCODE_GO<n>_KEY + OPENCODE_GO<n>_ON)",
+        "secretsManager": "ClockLobster/Salmon-Run (OPENCODE_GO<n>_KEY only; the <n>_ON flags were removed 2026-11-04 - account state is polled directly)",
         "resolutionNote": "opencode-go resolves its key ONLY from OPENCODE_GO_KEY / OPENCODE_API_KEY env vars; the auth.json entry is not consulted by spawned opencode processes. The Paseo daemon freezes env, so a repointed key reaches new workers only after a daemon restart."
       },
       "routes": [
