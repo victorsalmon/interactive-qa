@@ -180,7 +180,7 @@ function Stop-Usage {
 }
 
 function Resolve-CheckoutRoot {
-    param([string]$Explicit)
+    param([string]$Explicit, [string]$RepoSlug)
 
     if ($Explicit) {
         if (-not (Test-Path -LiteralPath $Explicit -PathType Container)) {
@@ -191,19 +191,50 @@ function Resolve-CheckoutRoot {
 
     $probe = (Get-Location).Path
     $commonDir = & git -C $probe rev-parse --git-common-dir 2>$null
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($commonDir)) {
+    $probeIsRepo = ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($commonDir))
+
+    if ($probeIsRepo) {
+        # A linked worktree reports the MAIN checkout's `.git` here. That is the
+        # point: a lane parks into the repo it belongs to, not into its scratch tree.
+        $commonDir = $commonDir.Trim()
+        if (-not [System.IO.Path]::IsPathRooted($commonDir)) {
+            $commonDir = Join-Path $probe $commonDir
+        }
+        $commonDir = (Resolve-Path -LiteralPath $commonDir).Path
+        $repoRootPath = if ((Split-Path -Leaf $commonDir) -eq '.git') { Split-Path -Parent $commonDir } else { $probe }
+
+        # Storage is repo-scoped, so resolution must be repo-scoped too. Falling back to
+        # the cwd checkout is what split one repo's queue across two state roots: the Hub
+        # in repo A queued for repo B and the worker in repo B never saw the row.
+        if ([string]::IsNullOrWhiteSpace($RepoSlug) -or
+            (Split-Path -Leaf $repoRootPath).ToLowerInvariant() -eq $RepoSlug.ToLowerInvariant()) {
+            return $repoRootPath
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($RepoSlug)) {
         return $probe
     }
 
-    # A linked worktree reports the MAIN checkout's `.git` here. That is the
-    # point: a lane parks into the repo it belongs to, not into its scratch tree.
-    $commonDir = $commonDir.Trim()
-    if (-not [System.IO.Path]::IsPathRooted($commonDir)) {
-        $commonDir = Join-Path $probe $commonDir
+    $roots = @()
+    if ($env:CL_REPOS_ROOT) {
+        $roots += $env:CL_REPOS_ROOT
+        $roots += (Join-Path $env:CL_REPOS_ROOT 'Public')
     }
-    $commonDir = (Resolve-Path -LiteralPath $commonDir).Path
-    if ((Split-Path -Leaf $commonDir) -eq '.git') { return (Split-Path -Parent $commonDir) }
-    return $probe
+    $candidates = @()
+    foreach ($r in $roots) {
+        $c = Join-Path $r $RepoSlug
+        if ((Test-Path -LiteralPath $c -PathType Container) -and (Test-Path -LiteralPath (Join-Path $c '.git'))) {
+            $candidates += (Resolve-Path -LiteralPath $c).Path
+        }
+    }
+    $candidates = @($candidates | Select-Object -Unique)
+
+    if ($candidates.Count -eq 1) { return $candidates[0] }
+    if ($candidates.Count -gt 1) {
+        Stop-Usage "Repo '$RepoSlug' resolves to more than one checkout ($($candidates -join ', ')); pass -RepoRoot to choose one."
+    }
+    Stop-Usage "Cannot resolve a checkout for Repo '$RepoSlug' from '$probe'. Pass -RepoRoot <path> so the row lands in that repo's queue, not the current directory's."
 }
 
 function Resolve-QueueDirectory {
@@ -312,7 +343,7 @@ function Write-Row {
 }
 
 # ---------------------------------------------------------------------------
-$repoRootPath = Resolve-CheckoutRoot -Explicit $RepoRoot
+$repoRootPath = Resolve-CheckoutRoot -Explicit $RepoRoot -RepoSlug $Repo
 
 if ($Mode -eq 'Prune' -or $Mode -eq 'Status') {
     # Status can summarise the whole queue directory; the other modes need a repo.
