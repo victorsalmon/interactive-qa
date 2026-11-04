@@ -1,0 +1,434 @@
+{
+  "$comment": "Canonical spawn-capacity + executor-defaults registry. Owned by Skills/agent-spawn-capacity. Caps are per KEY SET (pool), not per model: two routes on one wallet share one cap. Work roles (recon/review/fix/code/refactor/simple/merge) choose the route and the effort. Edit here to change caps, routes, efforts, priorities, or the error-state policy - never hardcode them in a dispatcher.",
+  "version": 3,
+  "updated": "2026-11-03",
+  "operator": "RDP",
+  "paths": {
+    "logDir": "%CL_REPOS%\\Tasks\\Logs",
+    "spawnLog": "agent-spawns.jsonl",
+    "errorLog": "agent-spawn-errors.jsonl",
+    "stateFile": "~/.salmon/State/agent-capacity.json"
+  },
+  "defaults": {
+    "reservationTtlMinutes": 30,
+    "idleGraceMinutes": 10,
+    "liveFreshnessMinutes": 15,
+    "liveFreshnessNote": "Occupancy counts only genuinely live agents (status running or initializing). Where the source records a heartbeat (heartbeatAt/lastEventAt/lastActivityAt/lastSeenAt/updatedAt) it must be inside this window, and a recorded local pid must still exist. Idle, closed, errored and archived records never hold a slot (defect 2026-11-03: historic sessions adopted as running).",
+    "defaultWorkRole": "code",
+    "reportDefaultSince": "24h",
+    "lastNightStartsAt": "18:00",
+    "freeWatch": {
+      "graceMinutes": 1,
+      "intervalSeconds": 60,
+      "escalateAfterSilentRounds": 2,
+      "note": "Free-tier keys fail fast (observed 2026-10-16: 4/4 Gemini keys spent in ~2 min on 429s). A worker holding a free-tier key is polled every minute until its key fails or its done file lands; two silent 1-min rounds escalate to Release (provider-error) + re-dispatch on the next pool by priority. Free keys must never block paid work."
+    }
+  },
+  "workRoleGuidance": {
+    "recon": "Read-only investigation, scoping, planning, evidence gathering. Highest effort: a wrong recon poisons every lane after it.",
+    "review": "Read-only diff review against acceptance criteria. Highest effort: primarily input tokens, needs the full context.",
+    "fix": "Repair a known defect, usually with a committed red reproduction.",
+    "code": "Implement or extend behaviour.",
+    "refactor": "Restructure without changing behaviour.",
+    "simple": "Small, well-scoped task (single file or two, no design judgment). Runs at medium effort on the primary route: full reasoning is waste heat here.",
+    "merge": "Land a built branch on its integration trunk FROM the repo's trunk checkout. The only work role that writes at the repo root by design (cl-common-hql): a merge worker's job is the trunk itself, so it is admitted without -AllowTrunkWrite and without an exemption record."
+  },
+  "pools": {
+    "gemini": {
+      "enabled": false,
+      "disabledReason": "Operator decision 2026-10-29: inconsistent results; do not use Gemini for lane/subagent work.",
+      "priority": 3,
+      "cap": 1,
+      "capScope": "pool",
+      "harness": "gemini",
+      "matchPrefixes": [
+        "gemini/"
+      ],
+      "bridgeEnv": "GEMINI_API_KEY",
+      "keys": [
+        { "name": "GEMINI_API3_KEY", "scope": "Machine", "tier": "free" },
+        { "name": "GEMINI_API4_KEY", "scope": "Machine", "tier": "free" },
+        { "name": "GEMINI_API5_KEY", "scope": "Machine", "tier": "free" },
+        { "name": "GEMINI_API2_KEY", "scope": "Machine", "tier": "paid", "quotaResetDays": 7, "note": "$7 subscription backstop - burned LAST; a paid exhaustion stands 7 days, not until midnight" }
+      ],
+      "description": "Third pool tried (free fallback behind opencode-zen). Each KEY carries its own budget (free tier: 15 requests/minute, 1500 requests/day, RPD reset at midnight Pacific); the cap stays at 1 agent, so one key is in play at a time and the others stay fresh. Key selection walks keys[] in ARRAY ORDER, so order IS burn order: free keys first, the paid backstop last. Exhaustion is tracked PER KEY - the executor leaves circulation only when all four are spent, and a spent key is simply skipped. The Gemini CLI reads only GEMINI_API_KEY, so the gate hands back the key's env-var NAME and the dispatcher bridges that one value into the agent's own GEMINI_API_KEY (never a global override, so agents never share a key and a future cap > 1 stays safe).",
+      "dailyQuota": {
+        "enabled": true,
+        "resetAt": "next-calendar-day",
+        "errorCodes": [
+          "DAILY_QUOTA",
+          "QUOTA_DAILY",
+          "RPD_EXCEEDED"
+        ],
+        "messagePatterns": [
+          "requests per day",
+          "per day",
+          "daily limit",
+          "daily quota",
+          "quota exceeded",
+          "quota_exceeded",
+          "exceeded your current quota",
+          "RESOURCE_EXHAUSTED"
+        ],
+        "note": "A per-day exhaustion is not a health problem: it must NOT be canaried, and it must NOT be cleared before the calendar day rolls over. It is scoped to the KEY that hit it; the executor goes out only once every key in keys[] is spent. The in-flight work is re-dispatched to the next pool by priority."
+      },
+      "failurePolicy": {
+        "windowMinutes": 15,
+        "failureWindowsToTrip": 2,
+        "cooldownMinutes": 60,
+        "extendOnFailedCanary": false
+      },
+      "keySources": {
+      "envMachine": [
+        "GEMINI_API3_KEY",
+        "GEMINI_API4_KEY",
+        "GEMINI_API5_KEY",
+        "GEMINI_API2_KEY"
+      ],
+        "bridgeEnv": "GEMINI_API_KEY (per-agent: the dispatcher reads the selected key and passes it as this variable for that one agent)",
+        "settings": "~/.gemini/settings.json (security.auth.selectedType = gemini-api-key)",
+        "cliPackage": "npx -y @google/gemini-cli@0.52.0 --acp",
+        "resolutionNote": "Machine-scope GEMINI_API_KEY is the live credential; never print it. Free-tier limits: 15 requests/minute, 1500 requests/day."
+      },
+      "routes": [
+        {
+          "role": "primary",
+          "label": "Gemini 3.8 Flash (Hub Mode)",
+          "cli": "gemini",
+          "provider": "gemini/gemini-3.8-flash",
+          "thinking": "medium",
+          "mode": "yolo",
+          "note": "Hub mode orchestrator running on Medium thinking."
+        },
+        {
+          "role": "recon",
+          "label": "Gemini 4 Argon (Planning / Architecture)",
+          "cli": "gemini",
+          "provider": "gemini/gemini-4-argon",
+          "thinking": "high",
+          "mode": "yolo",
+          "note": "Frontier reasoning model for recon, architecture, and feature planning. Quota-heavy: prefer the swarm route for verification/gate work."
+        },
+        {
+          "role": "swarm",
+          "label": "Gemini 3.8 Flash Low (quota-light)",
+          "cli": "gemini",
+          "provider": "gemini/gemini-3.8-flash",
+          "thinking": "low",
+          "mode": "yolo",
+          "note": "Quota-light route for verification, gate runs, and sweeps: flash model at low thinking stretches each key's budget. Dispatch with work role 'lite'."
+        }
+      ],
+      "workRoles": {
+        "recon": { "route": "recon", "thinking": "high" },
+        "plan": { "route": "recon", "thinking": "high" },
+        "orchestrate": { "route": "primary", "thinking": "medium" },
+        "lite": { "route": "swarm" },
+        "review": { "route": "primary" },
+        "grill": { "route": "primary" },
+        "fix": { "route": "primary" },
+        "code": { "route": "primary" },
+        "refactor": { "route": "primary" },
+        "simple": { "route": "primary" },
+        "merge": { "route": "primary" }
+      }
+    },
+    "opencode-go": {
+      "enabled": true,
+      "priority": 1,
+      "cap": 10,
+      "capScope": "pool",
+      "harness": "opencode",
+      "matchPrefixes": [
+        "opencode/opencode-go/",
+        "opencode-go/",
+        "deepseek-harness/"
+      ],
+      "description": "One shared wallet behind OPENCODE_GO1..5. Both routes below bill the same key set, so the cap covers primary AND alternate together. This is the FIRST pool tried (operator order 2026-10-22: opencode-go first, free pools after).",
+      "canary": "%CL_COMMON_HOME%\\Skills\\iqa-mode\\scripts\\Test-OpencodeProvider.ps1",
+      "failurePolicy": {
+        "windowMinutes": 15,
+        "failureWindowsToTrip": 2,
+        "cooldownMinutes": 60,
+        "extendOnFailedCanary": true
+      },
+      "keySources": {
+        "poolEnvMachine": [
+          "OPENCODE_GO1_KEY",
+          "OPENCODE_GO2_KEY",
+          "OPENCODE_GO3_KEY",
+          "OPENCODE_GO4_KEY",
+          "OPENCODE_GO5_KEY"
+        ],
+        "activeEnvUser": [
+          "OPENCODE_GO_KEY",
+          "OPENCODE_API_KEY"
+        ],
+        "authFile": "%XDG_DATA_HOME%\\opencode\\auth.json",
+        "secretsManager": "ClockLobster/Salmon-Run (OPENCODE_GO<n>_KEY + OPENCODE_GO<n>_ON)",
+        "resolutionNote": "opencode-go resolves its key ONLY from OPENCODE_GO_KEY / OPENCODE_API_KEY env vars; the auth.json entry is not consulted by spawned opencode processes. The Paseo daemon freezes env, so a repointed key reaches new workers only after a daemon restart."
+      },
+      "routes": [
+        {
+          "role": "primary",
+          "label": "DeepSeek V4.1 Flash (OpenCode harness)",
+          "cli": "opencode",
+          "provider": "opencode/opencode-go/deepseek-v4.1-flash",
+          "thinking": "low",
+          "efforts": { "recon": "high", "plan": "low", "review": "high", "grill": "high", "fix": "low", "code": "low", "refactor": "low", "simple": "low", "merge": "low" },
+          "mode": "build",
+          "note": "Fleet default worker model (operator order 2026-10-25). Effort follows reasoning depth: recon and review run HIGH (operator 2026-11-01 - judging what exists and what is wrong is where a cheap pass costs most), fix/code/refactor run LOW by default and escalate only for complex logic, edge-case handling, or multi-step invariants; never max. Mechanical volume is not a reason to upgrade. OpenCode harness keeps the same opencode-go wallet with less wrapper complexity than DSH."
+        },
+        {
+          "role": "alternate",
+          "label": "DeepSeek V4.1 Flash (DeepSeek Harness failover)",
+          "cli": "dsh",
+          "provider": "deepseek-harness/deepseek-v4.1-flash",
+          "thinking": "low",
+          "efforts": { "recon": "high", "plan": "low", "review": "high", "grill": "high", "fix": "low", "code": "low", "refactor": "low", "simple": "low", "merge": "low" },
+          "mode": "default",
+          "note": "Failover only. Same model and opencode-go wallet; DSH adds a harness/profile layer, so OpenCode is the preferred subagent route. Same role split: recon/review high, fix/code/refactor low unless a named reason says otherwise. `provider` is ONE plain 'provider/model' string that `paseo run --provider` accepts verbatim: DSH's ACP catalog renders its single model as the JSON tuple [\"deepseek-official\",\"deepseek-v4.1-flash\"] - never copy that tuple in, Paseo resolves the bare model id to the ACP entry. DSH exposes no session modes, so a delegate must not pass --mode build on this route (verified 2026-11-02: --mode build fails with \"Invalid mode 'build' for provider 'deepseek-harness'\"); the route declares mode 'default' for that reason."
+        },
+        {
+          "role": "flash",
+          "label": "DeepSeek V4.1 Flash (explicit opencode-go alias)",
+          "cli": "opencode",
+          "provider": "opencode-go/deepseek-v4.1-flash",
+          "thinking": "low",
+          "efforts": { "recon": "high", "plan": "low", "review": "high", "grill": "high", "fix": "low", "code": "low", "refactor": "low", "simple": "low", "merge": "low" },
+          "mode": "build",
+          "note": "Explicit alias for the paid opencode-go lane (same model as primary). Kept for callers that pass the shorter provider id. Same role split: recon/review high, fix/code/refactor low."
+        }
+      ],
+      "workRoles": {
+        "recon": { "route": "primary" },
+        "plan": { "route": "primary" },
+        "review": { "route": "primary" },
+        "grill": { "route": "primary" },
+        "fix": { "route": "primary" },
+        "code": { "route": "primary" },
+        "refactor": { "route": "primary" },
+        "simple": { "route": "primary" },
+        "merge": { "route": "primary" }
+      }
+    },
+    "opencode-zen": {
+      "enabled": true,
+      "priority": 2,
+      "cap": 2,
+      "capScope": "pool",
+      "harness": "opencode",
+      "matchPrefixes": [
+        "opencode/deepseek-"
+      ],
+      "description": "Operation CheepSeek free lane (Skills/cheepseek): DeepSeek V4.1 Flash on OpenCode Zen at zero cost, 200K input / 128K output BILLING guardrails (native 1M/384K - never use on this lane). Enabled and auto-walk eligible as the first free fallback after opencode-go; CheepSeek work selects it explicitly with -Pool opencode-zen. Operator order 2026-10-22 puts opencode-go first and the free pools after it.",
+      "canary": "%CL_COMMON_HOME%\\Skills\\iqa-mode\\scripts\\Test-OpencodeProvider.ps1",
+      "failurePolicy": {
+        "windowMinutes": 15,
+        "failureWindowsToTrip": 2,
+        "cooldownMinutes": 60,
+        "extendOnFailedCanary": false
+      },
+      "dailyQuota": {
+        "enabled": true,
+        "resetAt": "next-calendar-day",
+        "errorCodes": [
+          "DAILY_QUOTA",
+          "QUOTA_DAILY",
+          "FreeUsageLimitError",
+          "FREE_USAGE_LIMIT"
+        ],
+        "messagePatterns": [
+          "requests per day",
+          "per day",
+          "daily limit",
+          "daily quota",
+          "quota exceeded",
+          "free usage",
+          "FreeUsageLimitError",
+          "Rate limited on OpenCode Zen"
+        ],
+        "note": "Free-lane 429s are frequent (observed: FreeUsageLimitError, including persistent multi-day blocks). A spent marker is per this pool; the brief is re-dispatched onward by priority. If blocks persist past midnight, the error log - not a Clear -Force - is the record the operator reviews."
+      },
+      "keySources": {
+        "authFile": "%XDG_DATA_HOME%\\opencode\\auth.json (Zen entitlement)",
+        "resolutionNote": "Zen free models resolve through the default opencode auth, not the OPENCODE_GO<n>_KEY set. No per-key pool: one shared Zen entitlement, hence cap 2. Never print credentials; verify the exact provider id via `paseo provider models opencode --json` before first dispatch."
+      },
+      "routes": [
+        {
+          "role": "free",
+          "label": "DeepSeek V4.1 Flash Free (OpenCode Zen)",
+          "cli": "opencode",
+          "provider": "opencode/deepseek-v4.1-flash-free",
+          "thinking": "low",
+          "efforts": { "recon": "low", "plan": "low", "review": "low", "fix": "low", "code": "low", "refactor": "low", "simple": "low", "merge": "low" },
+          "mode": "build",
+          "tier": "free",
+          "note": "CheepSeek default lane: zero cost ONLY inside 200K input / 128K output guardrails. Free-tier supervision applies (1-min watch until the key fails or the done file lands). Oversize work belongs on the opencode-go flash route."
+        }
+      ],
+      "workRoles": {
+        "recon": { "route": "free" },
+        "plan": { "route": "free" },
+        "review": { "route": "free" },
+        "fix": { "route": "free" },
+        "code": { "route": "free" },
+        "refactor": { "route": "free" },
+        "simple": { "route": "free" },
+        "merge": { "route": "free" }
+      }
+    },
+    "codex": {
+      "enabled": false,
+      "priority": 5,
+      "cap": 12,
+      "capScope": "pool",
+      "harness": "codex",
+      "matchPrefixes": [
+        "codex/"
+      ],
+      "description": "Disabled for automatic routing. Use only when the user explicitly requests Codex; pass -Pool codex -OptInCodex to Acquire. Quota is ACCOUNT-WIDE: one exhausted key kills every Codex worker at once.",
+      "roleCaps": {
+        "fix": 8,
+        "recon": 4
+      },
+      "failurePolicy": {
+        "windowMinutes": 15,
+        "failureWindowsToTrip": 2,
+        "cooldownMinutes": 60,
+        "extendOnFailedCanary": false
+      },
+      "keySources": {
+        "authFile": "~/.codex/auth.json",
+        "resolutionNote": "Account-wide credential in auth.json; there is no per-key pool. A usage-limit failure is account-wide, not per-worker."
+      },
+      "routes": [
+        {
+          "role": "fix",
+          "label": "GPT-6 Luna (Fix / Code / Refactor)",
+          "cli": "codex",
+          "provider": "codex/gpt-6-luna",
+          "modelLabel": "GPT-6 Luna",
+          "thinking": "high",
+          "efforts": { "review": "high", "fix": "high", "code": "high", "refactor": "high", "merge": "high" },
+          "mode": "full-access",
+          "note": "Opt-in only: never selected by -Pool auto while the Codex pool is disabled. Requires an explicit user request and -OptInCodex. Paseo supports this Codex model via --provider codex/gpt-6-luna."
+        },
+        {
+          "role": "recon",
+          "label": "Sol 6.1 (Recon)",
+          "cli": "codex",
+          "provider": "codex/gpt-6.1-sol",
+          "modelLabel": "GPT-6.1 Sol",
+          "thinking": "medium",
+          "efforts": { "recon": "medium" },
+          "mode": "full-access",
+          "note": "Opt-in only: never selected by -Pool auto while the Codex pool is disabled. Requires an explicit user request and -OptInCodex. Paseo supports this Codex model via --provider codex/gpt-6.1-sol."
+        }
+      ],
+      "workRoles": {
+        "recon": { "route": "recon" },
+        "review": { "route": "fix" },
+        "fix": { "route": "fix" },
+        "code": { "route": "fix" },
+        "refactor": { "route": "fix" },
+        "simple": { "route": "fix" },
+        "merge": { "route": "fix" }
+      }
+    },
+    "devin": {
+      "enabled": false,
+      "priority": 6,
+      "cap": 2,
+      "capScope": "pool",
+      "harness": "devin",
+      "matchPrefixes": [
+        "devin/"
+      ],
+      "description": "Operator-disabled 2026-10-02. When enabled with a working key, concurrency is 2 and never more.",
+      "failurePolicy": {
+        "windowMinutes": 15,
+        "failureWindowsToTrip": 2,
+        "cooldownMinutes": 60,
+        "extendOnFailedCanary": false
+      },
+      "keySources": {
+        "credentialsFile": "%APPDATA%\\devin\\credentials.toml",
+        "resolutionNote": "Devin authenticates from its own CLI store; there is no env-var key seam. Never read or print the file."
+      },
+      "routes": [
+        {
+          "role": "primary",
+          "label": "Devin (verify model id)",
+          "cli": "devin",
+          "provider": "devin/<verify-at-dispatch>",
+          "thinking": null,
+          "mode": "bypass",
+          "note": "Configured profiles go stale - resolve the real model id from `paseo provider models devin --json` before every wave. devin acp does NOT receive PASEO_AGENT_ID/PASEO_AGENT_CWD, so dispatches register unparented."
+        }
+      ],
+      "workRoles": {
+        "recon": { "route": "primary" },
+        "review": { "route": "primary" },
+        "grill": { "route": "primary" },
+        "fix": { "route": "primary" },
+        "code": { "route": "primary" },
+        "refactor": { "route": "primary" },
+        "simple": { "route": "primary" },
+        "merge": { "route": "primary" }
+      }
+    },
+    "openrouter": {
+      "enabled": true,
+      "priority": 4,
+      "cap": 2,
+      "capScope": "pool",
+      "harness": "openrouter",
+      "matchPrefixes": [
+        "openrouter/"
+      ],
+      "bridgeEnv": "OPENROUTER_API_KEY",
+      "keys": [
+        { "name": "OPENROUTER_AGENT_KEY", "scope": "Machine" }
+      ],
+      "description": "OpenRouter pool backed by OPENROUTER_AGENT_KEY (capped at $5/day guardrail). Validated on ZDR-compliant DeepSeek models at $0.14 in / $0.28 out per million tokens.",
+      "failurePolicy": {
+        "windowMinutes": 15,
+        "failureWindowsToTrip": 2,
+        "cooldownMinutes": 60,
+        "extendOnFailedCanary": false
+      },
+      "routes": [
+        {
+          "role": "primary",
+          "label": "DeepSeek V4 Flash (OpenRouter)",
+          "cli": "openrouter",
+          "provider": "openrouter/deepseek/deepseek-chat",
+          "thinking": null,
+          "mode": "default",
+          "note": "Validated working with ZDR guardrail. Ultra-low cost ($0.14 in / $0.28 out). Covered by $5/day budget."
+        },
+        {
+          "role": "free",
+          "label": "DeepSeek Chat Free (OpenRouter)",
+          "cli": "openrouter",
+          "provider": "openrouter/deepseek/deepseek-chat:free",
+          "thinking": null,
+          "mode": "default",
+          "tier": "free",
+          "note": "Free endpoint (free-tier supervision: 1-min watch until the key fails or the done file lands). Note: If workspace guardrail enforces Zero Data Retention (ZDR), free models may be excluded by OpenRouter."
+        }
+      ],
+      "workRoles": {
+        "recon": { "route": "primary" },
+        "review": { "route": "primary" },
+        "grill": { "route": "primary" },
+        "fix": { "route": "primary" },
+        "code": { "route": "primary" },
+        "refactor": { "route": "primary" },
+        "simple": { "route": "primary" },
+        "merge": { "route": "primary" }
+      }
+    }
+  }
+}

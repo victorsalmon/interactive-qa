@@ -1,0 +1,886 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-03T18:46:34.8283620-07:00",
+  "canonicalRoot": "Skills",
+  "trees": [
+    {
+      "canonicalRoot": "credential-rescue",
+      "vendoredRoot": "vendor/credential-rescue"
+    }
+  ],
+  "vendored": [
+    {
+      "Kind": "snapshot",
+      "Name": "iqa-common-contracts.md",
+      "Canonical": "",
+      "Vendored": "references/vendored/iqa-common-contracts.md",
+      "Sha256": "9048171F793E0726CCF47FD074A87355986C7F8F71D69A6866FCD73C4CE63A44",
+      "Sha256Lf": "B2301C504B34B8FA88CF7AB0DD1F04AF56FB6C00D72083A08338249E8D0237C1",
+      "Bytes": 3145,
+      "Tree": ""
+    },
+    {
+      "Kind": "snapshot",
+      "Name": "qa-procedure.md",
+      "Canonical": "",
+      "Vendored": "references/vendored/qa-procedure.md",
+      "Sha256": "A701665D99BF1D087AAECA3EED10087A60B620D9537E6179A30126535CAA9E20",
+      "Sha256Lf": "7BF8BCE3B0C27A86BAA133084F16A23F83FE9D35595C9EFA64E49F0CC2DE50A6",
+      "Bytes": 20050,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "agent-capacity.json",
+      "Canonical": "agent-spawn-capacity/assets/agent-capacity.json",
+      "Vendored": "vendor/agent-spawn-capacity/assets/agent-capacity.json",
+      "Sha256": "4544467A610B2CF4C92622AFEAA5FD623C8E10BA55D0424C7E02CD6768DF5798",
+      "Sha256Lf": "85049CD8E07692CABB14701B7AE0A1859ABC710C9177A515AA4302961731E763",
+      "Bytes": 21587,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "AgentCapacity.ps1",
+      "Canonical": "agent-spawn-capacity/scripts/AgentCapacity.ps1",
+      "Vendored": "vendor/agent-spawn-capacity/scripts/AgentCapacity.ps1",
+      "Sha256": "C206F75A16062CCA391C7764E6929B72A9179A43DCE01C95FCF76A2E0D351E0F",
+      "Sha256Lf": "10ED2A79755EF0A02998AE9EB6DE3B6163F23532FA88E966BC5B85792C1F93C8",
+      "Bytes": 170234,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "AgentCapacity.Registry.ps1",
+      "Canonical": "agent-spawn-capacity/scripts/AgentCapacity.Registry.ps1",
+      "Vendored": "vendor/agent-spawn-capacity/scripts/AgentCapacity.Registry.ps1",
+      "Sha256": "A8C30B663EB69E6F570601CBF8EEB1DDFADFE6A08369AF191E9163C23DFC376E",
+      "Sha256Lf": "90F5B1F8AED3178F60EBAEB652A515609DD16194853AC217B7062F45BA92EAF1",
+      "Bytes": 3043,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "SecretFingerprint.ps1",
+      "Canonical": "aws/scripts/SecretFingerprint.ps1",
+      "Vendored": "vendor/aws/scripts/SecretFingerprint.ps1",
+      "Sha256": "A792266004D11326882012DBD3BC780087A62FC77E077303626CD6BC269127C3",
+      "Sha256Lf": "8051594BAE785500EF2C444123B0F29E6708C2971E9FC3E0093059F47A4CC680",
+      "Bytes": 5509,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "plugin.json",
+      "Canonical": "credential-rescue/.claude-plugin/plugin.json",
+      "Vendored": "vendor/credential-rescue/.claude-plugin/plugin.json",
+      "Sha256": "4928D6863F038F019CE848D4D53519340B39F05FC3FAD44517699161E39FD9DC",
+      "Sha256Lf": "4928D6863F038F019CE848D4D53519340B39F05FC3FAD44517699161E39FD9DC",
+      "Bytes": 813,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "plugin.json",
+      "Canonical": "credential-rescue/.codex-plugin/plugin.json",
+      "Vendored": "vendor/credential-rescue/.codex-plugin/plugin.json",
+      "Sha256": "FA7C8662B3591F39D7946A98ED87D68D0FE078EC624D774FE8287B82D0C44F47",
+      "Sha256Lf": "FA7C8662B3591F39D7946A98ED87D68D0FE078EC624D774FE8287B82D0C44F47",
+      "Bytes": 1599,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "plugin.json",
+      "Canonical": "credential-rescue/.devin-plugin/plugin.json",
+      "Vendored": "vendor/credential-rescue/.devin-plugin/plugin.json",
+      "Sha256": "9A86A020306430CD1B5BA050C3C7989221104F10C4D8A0A01C603548E02BC33A",
+      "Sha256Lf": "9A86A020306430CD1B5BA050C3C7989221104F10C4D8A0A01C603548E02BC33A",
+      "Bytes": 712,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "plugin.json",
+      "Canonical": "credential-rescue/.zcode-plugin/plugin.json",
+      "Vendored": "vendor/credential-rescue/.zcode-plugin/plugin.json",
+      "Sha256": "4928D6863F038F019CE848D4D53519340B39F05FC3FAD44517699161E39FD9DC",
+      "Sha256Lf": "4928D6863F038F019CE848D4D53519340B39F05FC3FAD44517699161E39FD9DC",
+      "Bytes": 813,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "opencode-go-cutover.json",
+      "Canonical": "credential-rescue/assets/opencode-go-cutover.json",
+      "Vendored": "vendor/credential-rescue/assets/opencode-go-cutover.json",
+      "Sha256": "5851090CB4B7102D24FB2953483E30D52192AA1C57E425EE650C11ED55FC4A00",
+      "Sha256Lf": "1D5B94B2015CA43DC96DA29CF06921A261746011FED1FD55E8C56822AF674043",
+      "Bytes": 9030,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "archived",
+      "Name": "opencode-go-seam-projection-2026-10-16.md",
+      "Canonical": "",
+      "ArchivedFrom": "credential-rescue/assets/opencode-go-seam-projection-2026-10-16.md",
+      "Archived": "_archive/iqa-superseded-2026-11-03/credential-rescue/assets/opencode-go-seam-projection-2026-10-16.md",
+      "Vendored": "vendor/credential-rescue/assets/opencode-go-seam-projection-2026-10-16.md",
+      "Sha256": "2A1997E7489B2EE424D33A98D2E0CC6ADA4D894FD7DBB021480FD7EE8884AE90",
+      "Sha256Lf": "7EBFD37F0A56BB70A36E8B3A8A52C9960786E08E52955BF5C2D1881D6F070935",
+      "Bytes": 2422,
+      "Tree": "",
+      "ArchivedAt": "2026-11-03",
+      "Phase": "cl-common-fel",
+      "Why": "A dated seam-projection record, now owned by this package copy."
+    },
+    {
+      "Kind": "archived",
+      "Name": "paseo-muse-spark-resolution-2026-10-15.md",
+      "Canonical": "",
+      "ArchivedFrom": "credential-rescue/assets/paseo-muse-spark-resolution-2026-10-15.md",
+      "Archived": "_archive/iqa-superseded-2026-11-03/credential-rescue/assets/paseo-muse-spark-resolution-2026-10-15.md",
+      "Vendored": "vendor/credential-rescue/assets/paseo-muse-spark-resolution-2026-10-15.md",
+      "Sha256": "D874C823D46FF0B4F33D55E7780BB0F99AFA8C9E419D6D25769DF3454D48CE3D",
+      "Sha256Lf": "AEBF88E5E59AA8B4F8392AE48838F8975122078DD088611319A73D7DF0E55BCE",
+      "Bytes": 2279,
+      "Tree": "",
+      "ArchivedAt": "2026-11-03",
+      "Phase": "cl-common-fel",
+      "Why": "A dated model-resolution record, now owned by this package copy."
+    },
+    {
+      "Kind": "archived",
+      "Name": "REFERENCE.md",
+      "Canonical": "",
+      "ArchivedFrom": "credential-rescue/REFERENCE.md",
+      "Archived": "_archive/iqa-superseded-2026-11-03/credential-rescue/REFERENCE.md",
+      "Vendored": "vendor/credential-rescue/REFERENCE.md",
+      "Sha256": "27046DBA6A628A99EE67AE8AB8B7D126EF3208B9A21229A29782E4821A476407",
+      "Sha256Lf": "6DC9ECA0B140E69DBB33177BCDF025B8E70CBB173CB83C55A1D87F1E291F4F67",
+      "Bytes": 62572,
+      "Tree": "",
+      "ArchivedAt": "2026-11-03",
+      "Phase": "cl-common-fel",
+      "Why": "The long-form Key runbook, now owned by this package copy; the live skill resolves the vendored body."
+    },
+    {
+      "Kind": "copy",
+      "Name": "Capture-KeyCheckRoster.ps1",
+      "Canonical": "credential-rescue/scripts/Capture-KeyCheckRoster.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Capture-KeyCheckRoster.ps1",
+      "Sha256": "E21EAB33206FF5614E270608E1D9F6F12A240F8F93FB4401C25931EAE06D611E",
+      "Sha256Lf": "A88BB6398843CB75B90A9CBFF86A22647F0054AB2E3FC1CC376E0E7410282CBB",
+      "Bytes": 13329,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Get-GoKeyUsage.ps1",
+      "Canonical": "credential-rescue/scripts/Get-GoKeyUsage.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Get-GoKeyUsage.ps1",
+      "Sha256": "47397ABFD38C583028D9EDE655CB82291C67D1DFB77091203BF36A92E21A30C0",
+      "Sha256Lf": "ACCB427136A9600B84948E548E3EE76D5A8A0C3F9C917663389284A5D49D5297",
+      "Bytes": 7278,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Get-OpencodeGoFreshness.ps1",
+      "Canonical": "credential-rescue/scripts/Get-OpencodeGoFreshness.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Get-OpencodeGoFreshness.ps1",
+      "Sha256": "204C21AB4F1E1FB190C05DDB7B0C35FD63ED1FD83CCE2A2A083339AE1D8A7839",
+      "Sha256Lf": "D80B4D66726CF916D8585572E454A0953F636DD5DF70550266397917D34BB4E7",
+      "Bytes": 16353,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-CredentialRescueWatch.ps1",
+      "Canonical": "credential-rescue/scripts/Invoke-CredentialRescueWatch.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Invoke-CredentialRescueWatch.ps1",
+      "Sha256": "1676C9BFD1BC0CE6AE1A1BB14DEDD85FD4997018C2BC077CA748DAF89B1F8CB1",
+      "Sha256Lf": "F22F4A08960A9C0EDC3EDB25C6B672D1B9AA88603E3F6FD894C4663BBEEE197D",
+      "Bytes": 8632,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-CutoverRecovery.ps1",
+      "Canonical": "credential-rescue/scripts/Invoke-CutoverRecovery.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Invoke-CutoverRecovery.ps1",
+      "Sha256": "2E4E5FC71A03810B5215FC139DB7D515A405EACF1C0D267A60D674513F395999",
+      "Sha256Lf": "23FC8FB1BD9B65BDC081844743568B2961A742954412C785CA09E83A6B9A5EA8",
+      "Bytes": 29841,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-KeyCheck.ps1",
+      "Canonical": "credential-rescue/scripts/Invoke-KeyCheck.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Invoke-KeyCheck.ps1",
+      "Sha256": "9F020B99576E70D301539A19C1682B377C22DFFE6863060D3143AD3B34A0621C",
+      "Sha256Lf": "8939A2F99F4B7F4F39D9484B845635BCDB5EEAC3A4F26E2D672668E33514F9B2",
+      "Bytes": 102460,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-KeyCheckCutover.ps1",
+      "Canonical": "credential-rescue/scripts/Invoke-KeyCheckCutover.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Invoke-KeyCheckCutover.ps1",
+      "Sha256": "B13D94D7BB8773B777FBF8399303583C0B56182F3899512D996F776DDB923B5C",
+      "Sha256Lf": "DEC88BBDB2F1033EC91E9228F7FA68EE114926E4D475CE99E77827B61BC5EC10",
+      "Bytes": 38584,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-KeyCheckWitness.ps1",
+      "Canonical": "credential-rescue/scripts/Invoke-KeyCheckWitness.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Invoke-KeyCheckWitness.ps1",
+      "Sha256": "3A37F7B74243D7343F7DC6056A8C7B68FBAFE9239BD59F47B18C603B5029DBAC",
+      "Sha256Lf": "B35B182A069A8225243BF6EB07F7C8974992B90635F3363CB9CE3228D8B28069",
+      "Bytes": 13052,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "patched",
+      "Name": "Invoke-ProviderLock.ps1",
+      "Canonical": "credential-rescue/scripts/Invoke-ProviderLock.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Invoke-ProviderLock.ps1",
+      "Patch": "lock-path-outside-package",
+      "Why": "The lock is machine state written on this machine, so the package copy resolves it from the profile state root ($env:USERPROFILE/.salmon/State/credential-rescue/provider-lock.json) with a read-only legacy fallback to the old in-tree asset, and -Mode Lock writes the state root. The canonical script keeps its in-tree default until the fleet tool is retired.",
+      "Sha256": "E783200281CE21E078BB1317E2DB1FFC95090948FF837998B181831B7301C142",
+      "Sha256Lf": "EC077B36891E43D181633B854795CB2155C6FEA01CB9F92E40EBAC706E8527DD",
+      "CanonicalSha256": "A64EECD7135B6071B2D7EA98698947A813B7790766401E3BBFC275B00D81315A",
+      "CanonicalSha256Lf": "8FC724414B463A17D6F6F1277882BF391109DAFF7958DEB58C3F8F732014964D",
+      "Bytes": 20754,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "CredLog.ps1",
+      "Canonical": "credential-rescue/scripts/lib/CredLog.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/lib/CredLog.ps1",
+      "Sha256": "982179CCBB966FD359C7A7D34668A1844DC7622AF7305FFF5F45BA8911873EAC",
+      "Sha256Lf": "F39A0FD79E87130DE7F1FB31A55C95ADA276D9E955CBFC56259CE1BFA2162C91",
+      "Bytes": 1223,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "CutoverRecovery.ps1",
+      "Canonical": "credential-rescue/scripts/lib/CutoverRecovery.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/lib/CutoverRecovery.ps1",
+      "Sha256": "502EF036A796985636577FDCD5B1497FE25B5D4EE1D01F03CCA4AC94DD592A5D",
+      "Sha256Lf": "75C4115B776408FF30D2770C1DDAB1A689EB19EB0DD5F50626A29C6F118ADAC2",
+      "Bytes": 11336,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "CutoverSeam.ps1",
+      "Canonical": "credential-rescue/scripts/lib/CutoverSeam.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/lib/CutoverSeam.ps1",
+      "Sha256": "24DFD13C2D43C33B9ADA3B09B948001E154327CCA3359F65BD875FBF51728157",
+      "Sha256Lf": "F38E02EBA8FD0D6968E9D9DFA35065AA9F9AFA7A7CBF6CD2B4D08B435AA67E74",
+      "Bytes": 6829,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "KeyCheck.Decision.ps1",
+      "Canonical": "credential-rescue/scripts/lib/KeyCheck.Decision.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/lib/KeyCheck.Decision.ps1",
+      "Sha256": "263B342A41ABB6CB587DF3E3B56D02A0639E65C982F1761039632D86C8A98111",
+      "Sha256Lf": "F6F5E2D6926FD06CBFACE3DA83AB295623B6D5E2FF129BC72880D5D73673A313",
+      "Bytes": 72264,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "KeyCheck.State.ps1",
+      "Canonical": "credential-rescue/scripts/lib/KeyCheck.State.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/lib/KeyCheck.State.ps1",
+      "Sha256": "0F47050C9E20D9019D2BECA888E191D4D51B267C6A88A7B5537A765644AE07E3",
+      "Sha256Lf": "818F0E564F666DD5300D6BBA30DCFB5FD81E8D0C1426D3E39D70772CB432F17F",
+      "Bytes": 40487,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "LedgerDate.ps1",
+      "Canonical": "credential-rescue/scripts/lib/LedgerDate.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/lib/LedgerDate.ps1",
+      "Sha256": "708E109ADAF76F94F577DFC44973834C66C6C182441323DF2C7143EA62F656E1",
+      "Sha256Lf": "0F5729FE966B195C6490BCBE5429E60B749ABA3058C47F5E01273761AED036A8",
+      "Bytes": 6927,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "PaseoCommon.ps1",
+      "Canonical": "credential-rescue/scripts/lib/PaseoCommon.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/lib/PaseoCommon.ps1",
+      "Sha256": "9DB69FFE013013241CBC88502AEB8D99AAC6913FD63F6592C8554EC49F833111",
+      "Sha256Lf": "554938BB25D89CAC53C1819B9D328EAF7C49B0F450DE6445A2F6979D6524D7E5",
+      "Bytes": 8235,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Repair-Paseo.ps1",
+      "Canonical": "credential-rescue/scripts/Repair-Paseo.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Repair-Paseo.ps1",
+      "Sha256": "C6BD1C4BC687DA50DBEFA4B82379965EAB20911730D3589BA5CF1BE54116DFD9",
+      "Sha256Lf": "19FF1DBB87A93DF095D928225C74E4FEB82FD08084D90ED0CBD36D79ADBDDF88",
+      "Bytes": 20636,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Restart-Paseo.ps1",
+      "Canonical": "credential-rescue/scripts/Restart-Paseo.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Restart-Paseo.ps1",
+      "Sha256": "3D50FD8545389E347799E0F7F132A2D6031FEBC778998625FD6840BEF8E3FE04",
+      "Sha256Lf": "3D50FD8545389E347799E0F7F132A2D6031FEBC778998625FD6840BEF8E3FE04",
+      "Bytes": 1018,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Restart-PaseoDaemon.ps1",
+      "Canonical": "credential-rescue/scripts/Restart-PaseoDaemon.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Restart-PaseoDaemon.ps1",
+      "Sha256": "DFABFEF0E2E7481F932E3743905F7966CA3D5A5EC65A5FBE57A4CEC55E8B32DC",
+      "Sha256Lf": "D2AB04EC2B85A3AD09914E26A319868D02BCB97287A16DEADFF3B62D921EEA87",
+      "Bytes": 782,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Restart-PaseoOpencodeHelpers.ps1",
+      "Canonical": "credential-rescue/scripts/Restart-PaseoOpencodeHelpers.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Restart-PaseoOpencodeHelpers.ps1",
+      "Sha256": "2243423730939CF6B70B700FC0C5B5E0191F1AC941B059A41ECA56D9DD027018",
+      "Sha256Lf": "49B4963829053224280FD917513E7FA797CA4568A87465659E30264EF01DB31C",
+      "Bytes": 542,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Restore-AwsStore.ps1",
+      "Canonical": "credential-rescue/scripts/Restore-AwsStore.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Restore-AwsStore.ps1",
+      "Sha256": "FDBAE7402703316A39B4FBF63777B8C342C6A8AF9CCF45CF60D6454ABF05AE56",
+      "Sha256Lf": "35E974E76C7B1B26DD4C768F4575D40D64AAA05759660DFC98D4FD65EEE5BB2A",
+      "Bytes": 22488,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Resume-KeyCheckRoster.ps1",
+      "Canonical": "credential-rescue/scripts/Resume-KeyCheckRoster.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Resume-KeyCheckRoster.ps1",
+      "Sha256": "25EF971D2AAC66B2291704E04C906FD4FAAA39FBB3474B4154833829E07201E9",
+      "Sha256Lf": "593C1208ECFAADA7A14E22745E58F00F01F4368062C01664C07F3DB001DF3478",
+      "Bytes": 24563,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Set-OpencodeGoFreshness.ps1",
+      "Canonical": "credential-rescue/scripts/Set-OpencodeGoFreshness.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Set-OpencodeGoFreshness.ps1",
+      "Sha256": "74BDE214D862A21F400616A4482146E138D1AE1E854D5B948F4CAAE966A422F3",
+      "Sha256Lf": "EA25E7B981A76D9738AE17497596F106849B67DB44658F7E77C50C91DE155B9C",
+      "Bytes": 15517,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Stamp-InterruptedGates.ps1",
+      "Canonical": "credential-rescue/scripts/Stamp-InterruptedGates.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Stamp-InterruptedGates.ps1",
+      "Sha256": "913759A48FAFD0AEBBBEE963818ECBFFD19F3EC65B3D601EB3955344ED3116CD",
+      "Sha256Lf": "E34E994745451E921A2634D34FCEC66A309EC5C71DCD250DB7649290D97FA31F",
+      "Bytes": 5706,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "patched",
+      "Name": "Switch-OpencodeGoKey.ps1",
+      "Canonical": "credential-rescue/scripts/Switch-OpencodeGoKey.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Switch-OpencodeGoKey.ps1",
+      "Patch": "state-root-log-fallback",
+      "Why": "The canonical script throws when CL_REPOS_ROOT is unset, which made an installed copy unable to plan a cutover. The package copy falls back to the machine state root ($HOME/.salmon) for the credential-change log and the legacy Tools paths; a fleet run is unchanged.",
+      "Sha256": "45D56C608CDFBD0F7AE3205E773CA0C24309B332805B2BF925B48854B64446C9",
+      "Sha256Lf": "79BFDE11A16968CA7E5F1A6B7D2CB614A3FBFA34D41DD228BB00BFA3B107CFDE",
+      "CanonicalSha256": "D395F2B759C5FA8F0E44C43BFF53F97F4B8F044C9D0A56A7FB864DE6C269F3DB",
+      "CanonicalSha256Lf": "5BAFB6B11358032E1A5789B35FC217072811E559B82D0B99C406C39994962BB4",
+      "Bytes": 51733,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-CutoverInProgress.ps1",
+      "Canonical": "credential-rescue/scripts/Test-CutoverInProgress.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Test-CutoverInProgress.ps1",
+      "Sha256": "DE3A457BBC3CFBC915F00EA40446A0A68482C76539BA4021AEABBA06A9A4782D",
+      "Sha256Lf": "21BF9AEAC1707FF1C24F82F47B49166E6734D99E2E31D9218CEFD0A7508ACDB6",
+      "Bytes": 4868,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-GoKey.ps1",
+      "Canonical": "credential-rescue/scripts/Test-GoKey.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Test-GoKey.ps1",
+      "Sha256": "57429576B5D5E46FC570C7FF0E997903203CC5755E5DF54AE8FA278CE4427835",
+      "Sha256Lf": "3A5EFA761176653FBBE853A036372FFB3033873A2AB4AB7BFAFED18CD001E522",
+      "Bytes": 11162,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-KeyCheckDetachment.ps1",
+      "Canonical": "credential-rescue/scripts/Test-KeyCheckDetachment.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Test-KeyCheckDetachment.ps1",
+      "Sha256": "B474DF6731ED025ADE8BD67D5545C264BEB95ADC16E864EB47ACB701535F12CB",
+      "Sha256Lf": "FB688AC687E60CDB5124B5A36494FFBEA78C81D846736BE7B918F20133E4B143",
+      "Bytes": 9131,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-KeyCheckLiveness.ps1",
+      "Canonical": "credential-rescue/scripts/Test-KeyCheckLiveness.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Test-KeyCheckLiveness.ps1",
+      "Sha256": "D7224ECC6205FAF390F682998C3E060247F6C89F03C4ED65862DB88D8FB34F2E",
+      "Sha256Lf": "992A8167EF4F3C7EADCA82296D587F785193DDF70A9844C320DACDC196030713",
+      "Bytes": 10963,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-PaseoMuseSparkCanary.ps1",
+      "Canonical": "credential-rescue/scripts/Test-PaseoMuseSparkCanary.ps1",
+      "Vendored": "vendor/credential-rescue/scripts/Test-PaseoMuseSparkCanary.ps1",
+      "Sha256": "5D9D6DC7C84AE3C919C7AAE31E6F57C876ADE41CC3E89C9D27E80A7C67B862D2",
+      "Sha256Lf": "D870C55E73A18D18C3116FA24D56F93B556B2FE0B85655EB157906AFF5D63D0F",
+      "Bytes": 6507,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "SKILL.md",
+      "Canonical": "credential-rescue/SKILL.md",
+      "Vendored": "vendor/credential-rescue/SKILL.md",
+      "Sha256": "FB649224EAED4BB256187E9D61EACB63BBA0E804B2B174790A35EC239DD6D6D0",
+      "Sha256Lf": "F43AC586A9D3912AA334DE322C77414A22DBDF8522FED1877AB2652007A9B5F3",
+      "Bytes": 558,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "skills-index.json",
+      "Canonical": "credential-rescue/skills-index.json",
+      "Vendored": "vendor/credential-rescue/skills-index.json",
+      "Sha256": "5101D19AB3627FEB0FB2628889D1EE52698DC450707461E0537DBBD160CDA1A2",
+      "Sha256Lf": "18D8274C368D4FA69AE7F2209D15DE82F2BF71205B375E0D8671F9E03B95CDDE",
+      "Bytes": 2971,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "SKILL.md",
+      "Canonical": "credential-rescue/skills/aws-store/SKILL.md",
+      "Vendored": "vendor/credential-rescue/skills/aws-store/SKILL.md",
+      "Sha256": "593A9B33713745E53515F730EE106ADC06E5D289D455D174423DDF8B6884FF37",
+      "Sha256Lf": "C4DFBB92961E685D9320E976101AEDF27ADEB211F8561B6FD24607E43B9EE2A7",
+      "Bytes": 3835,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "SKILL.md",
+      "Canonical": "credential-rescue/skills/key-check/SKILL.md",
+      "Vendored": "vendor/credential-rescue/skills/key-check/SKILL.md",
+      "Sha256": "1C2B25BB3AC19ABB1135585081C6A97FBA940412806EF6D456531D9A0F4D1B46",
+      "Sha256Lf": "8A64CEDC85F1E2CBEF32E254211C09AE1E5DAF13986DA23B20769D2BBA56DC2C",
+      "Bytes": 544,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "archived",
+      "Name": "REFERENCE.md",
+      "Canonical": "",
+      "ArchivedFrom": "credential-rescue/skills/paseo-rescue/REFERENCE.md",
+      "Archived": "_archive/iqa-superseded-2026-11-03/credential-rescue/skills/paseo-rescue/REFERENCE.md",
+      "Vendored": "vendor/credential-rescue/skills/paseo-rescue/REFERENCE.md",
+      "Sha256": "8DB96A9DBB26E87AC2ADFABEA52D9A5C1734A92713C4B6D3DD4EE6859F8FD942",
+      "Sha256Lf": "066AFA9E3802975A824D447845608F33885A2FE56E05FFC7EA76325DCBBEF15D",
+      "Bytes": 4139,
+      "Tree": "",
+      "ArchivedAt": "2026-11-03",
+      "Phase": "cl-common-fel",
+      "Why": "The paseo-rescue reference body, now owned by this package copy."
+    },
+    {
+      "Kind": "copy",
+      "Name": "SKILL.md",
+      "Canonical": "credential-rescue/skills/paseo-rescue/SKILL.md",
+      "Vendored": "vendor/credential-rescue/skills/paseo-rescue/SKILL.md",
+      "Sha256": "FC88EF78D334222E1C11C18D0AC1A698632CAFA689A0037DC426CCF364284D33",
+      "Sha256Lf": "409B75D078F9CC79D604D0D3D0BAABFF09EAD1B8E26E97EED6095014D3351093",
+      "Bytes": 521,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "SKILL.md",
+      "Canonical": "credential-rescue/skills/salmon-run/SKILL.md",
+      "Vendored": "vendor/credential-rescue/skills/salmon-run/SKILL.md",
+      "Sha256": "9A1AAE1AC888281F56F071E7DA90F8C4823A0E7BCF081032198E6D2994FA8E03",
+      "Sha256Lf": "547F03B2576FB0A2C6755EE7F305AF94AA0103C073D38F036298EC6D8DFD3028",
+      "Bytes": 7091,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "archived",
+      "Name": "REFERENCE.md",
+      "Canonical": "",
+      "ArchivedFrom": "credential-rescue/skills/watch/REFERENCE.md",
+      "Archived": "_archive/iqa-superseded-2026-11-03/credential-rescue/skills/watch/REFERENCE.md",
+      "Vendored": "vendor/credential-rescue/skills/watch/REFERENCE.md",
+      "Sha256": "48127D7C813E0C550A5DB25750A0C0BFD8BFB2B4AC8DCC44B265331B9C058894",
+      "Sha256Lf": "F420EBEF0A221D3D59C1C92DCC6DB05B1043126DF233A22F663DB0172CEAC39B",
+      "Bytes": 16160,
+      "Tree": "",
+      "ArchivedAt": "2026-11-03",
+      "Phase": "cl-common-fel",
+      "Why": "The key-watch reference body, now owned by this package copy; the key-watch member cites the vendored path."
+    },
+    {
+      "Kind": "copy",
+      "Name": "SKILL.md",
+      "Canonical": "credential-rescue/skills/watch/SKILL.md",
+      "Vendored": "vendor/credential-rescue/skills/watch/SKILL.md",
+      "Sha256": "3AF22BB3F740F526E6CA2776EF3A70675EA9596B7771E5F539E823830FBB9099",
+      "Sha256Lf": "B4558C5C72D07AA642C63C075D5A683C513331301C73D3EE40C9E3EEFDD594C9",
+      "Bytes": 582,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Capture-KeyCheckRoster.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/Capture-KeyCheckRoster.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/Capture-KeyCheckRoster.Tests.ps1",
+      "Sha256": "34E8AECAA668AD2FF9C7EC17E17A236A2F93A1476101FEC78DED1BC4D08D41F1",
+      "Sha256Lf": "E24FDF4C495DF8A6AA16C14DAC71E3F1388EF737577E660E27913CC5BE6E1ED8",
+      "Bytes": 10381,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "CutoverMarker.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/CutoverMarker.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/CutoverMarker.Tests.ps1",
+      "Sha256": "8F05B934975501EF364A3C71407EA1BB6FBE8E5DBC7F8D1AF80D73498305F8DC",
+      "Sha256Lf": "DA1B22D38BF00D695B2C30625E99644C2EF9EC260989DF1114BE809FFF0338CA",
+      "Bytes": 9467,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "CutoverRecovery.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/CutoverRecovery.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/CutoverRecovery.Tests.ps1",
+      "Sha256": "D46A220448DF1D1DB621413907519B77F0076A79BA33373CA712280E9F69D10E",
+      "Sha256Lf": "6D4D933E98692C5B147747572C55401FD444B8C460A6219D5A07276C4FCE7E60",
+      "Bytes": 22744,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "CutoverResumeRetry.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/CutoverResumeRetry.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/CutoverResumeRetry.Tests.ps1",
+      "Sha256": "0CEBD300E980F07461C10B5822FB5AF92A78FF6D04F3913CB3E35D6804CFC66E",
+      "Sha256Lf": "C5148FDFDE619A556C42C8336D424A51A81A5FACF2EF4DAA7D605C159D2C294E",
+      "Bytes": 7506,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "RosterTestKit.ps1",
+      "Canonical": "credential-rescue/Tests/fixtures/RosterTestKit.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/fixtures/RosterTestKit.ps1",
+      "Sha256": "E68BBEEBB07822E4B245449089A274568A33980FBB49D2B41E97A9847DC54CAB",
+      "Sha256Lf": "ECFE5A7CABE273A82A28AA30FC82AF89228911D2E270480510CA38C656F4127D",
+      "Bytes": 6693,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-KeyCheck.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/Invoke-KeyCheck.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/Invoke-KeyCheck.Tests.ps1",
+      "Sha256": "6F56AE511CE9D2CAC3A4F1087EA4E871B8B6CC8C56E3633737F09FA3063182D0",
+      "Sha256Lf": "B0F84408E70BCFD44DB26B5481DC887FAF9E23CDE263CB809D542EBDE948EB42",
+      "Bytes": 167539,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-KeyCheckCutover.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/Invoke-KeyCheckCutover.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/Invoke-KeyCheckCutover.Tests.ps1",
+      "Sha256": "36E45F80A28CEF212441C49265520D424E9702E29E4FE985F82AC1891483DAEB",
+      "Sha256Lf": "B00E4EC0963B4395A033E99F93298B097EC7BC8F89D0D0C5BF1206D97C33879E",
+      "Bytes": 16944,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-KeyCheckWitness.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/Invoke-KeyCheckWitness.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/Invoke-KeyCheckWitness.Tests.ps1",
+      "Sha256": "D820AFC6D12ACD33DE2E07A647329F37E91716634D72A9C704463C192308B265",
+      "Sha256Lf": "3FFBBF20E9B26AA0EF18EB885855775590187AC914778C6B2992294034EFC548",
+      "Bytes": 7944,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "KeyCheckDryRunIsolation.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/KeyCheckDryRunIsolation.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/KeyCheckDryRunIsolation.Tests.ps1",
+      "Sha256": "3DAA885D80F1C0B900B4F29DAC52CAD7176EBCB9CDD947DB1F890724A58F27C8",
+      "Sha256Lf": "7DA59F814E86120E43C99B537D5102793C7C9C2A208081A7D315C8372B2F3BDC",
+      "Bytes": 13730,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "KeyCheckRosterWiring.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/KeyCheckRosterWiring.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/KeyCheckRosterWiring.Tests.ps1",
+      "Sha256": "6B1B4F9F401CA2AFD1D15D4088284872D367DE1139F7AA64E82B32CFAADA0391",
+      "Sha256Lf": "040652C30AD169C3074FE179AC0C1A931B46DBBF1CBD19AE0D54DA14EB633F5F",
+      "Bytes": 17574,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "LedgerDateIso.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/LedgerDateIso.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/LedgerDateIso.Tests.ps1",
+      "Sha256": "E9031FC8D3E4BC83A4C2C44D07A4CC5CD5B6B6A3FD9C0399A187DD73CA38BE64",
+      "Sha256Lf": "58FF3F16AA4D723695B5F6A513EF684665A1087AFFA9DAE24C48217732E52B1F",
+      "Bytes": 15530,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "ProviderLock.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/ProviderLock.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/ProviderLock.Tests.ps1",
+      "Sha256": "169713F4B2C3DF642D5B095A78060BC584F38E55BD21852B42AAD8E88DFB3083",
+      "Sha256Lf": "34AF62F40F28F04440168799AF3E15B5F7A5FE680819FA3F9619D406C2A09148",
+      "Bytes": 9998,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Resume-KeyCheckRoster.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/Resume-KeyCheckRoster.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/Resume-KeyCheckRoster.Tests.ps1",
+      "Sha256": "20E9F5DFCCF13C00F6AC68E7F005DAAE8ECC266D1704824D1D4478CF7F9AB403",
+      "Sha256Lf": "20176E95270C0F481B3047281A443D0D3110034EC85D290001FC591D2F45E5D6",
+      "Bytes": 18635,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "SeamSplit.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/SeamSplit.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/SeamSplit.Tests.ps1",
+      "Sha256": "86008310D1D7991629CA748D3586FAA7FDB5B68159F555663ED891C3176FC120",
+      "Sha256Lf": "3835DBC8389F7D0E3D19378FA4D898F9AD847D101DA310AB424275439D57077B",
+      "Bytes": 11680,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Switch-OpencodeGoKey.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/Switch-OpencodeGoKey.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/Switch-OpencodeGoKey.Tests.ps1",
+      "Sha256": "9DA30B837F834E8644150AFE0576FA0F00BC5A78B6788FE92DA7C6C897FF86D1",
+      "Sha256Lf": "7AEBCA3E267C5656F15A990C2154BA510E5C46534B0B61D1A6A1EA851E04BE86",
+      "Bytes": 14621,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-GoKey.Tests.ps1",
+      "Canonical": "credential-rescue/Tests/Test-GoKey.Tests.ps1",
+      "Vendored": "vendor/credential-rescue/Tests/Test-GoKey.Tests.ps1",
+      "Sha256": "BEAF79249AB554E6C6300D21A58C3F33DF1B7FF099FECE321976B738C78990B2",
+      "Sha256Lf": "BE442D4BF3303C9EDF332F845E58607477FDF72B506B9B5B8C6E5E3A1C8BFA9B",
+      "Bytes": 5846,
+      "Tree": "credential-rescue"
+    },
+    {
+      "Kind": "copy",
+      "Name": "no-approvals.json",
+      "Canonical": "iqa-mode/assets/no-approvals.json",
+      "Vendored": "vendor/dispatch/assets/no-approvals.json",
+      "Sha256": "7F49B977193771C53342212ACFD4E0AEA9A15C27B8587C9B1D1A41D58D9692A2",
+      "Sha256Lf": "C20823E71D81769B018C7908A049EF572E4187BE208DDB2FA4578A63534FB5FE",
+      "Bytes": 303,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "run-iqa-worker.ps1",
+      "Canonical": "iqa-mode/scripts/run-iqa-worker.ps1",
+      "Vendored": "vendor/dispatch/scripts/run-iqa-worker.ps1",
+      "Sha256": "BBF9F8C55B50F9154DF8B2DE675A745A6C42BB04779573B0A51585AF32DB1DB3",
+      "Sha256Lf": "FDB9CD708EEDF9B30D2951A1B207FF598015436BBF07B529F0429F9AFAE88452",
+      "Bytes": 60255,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-OpencodeProvider.ps1",
+      "Canonical": "iqa-mode/scripts/Test-OpencodeProvider.ps1",
+      "Vendored": "vendor/dispatch/scripts/Test-OpencodeProvider.ps1",
+      "Sha256": "F7AC7138F7C8F036EAA2081A0C7051A8DB4284EE9AB123CC871EC56161A25C1E",
+      "Sha256Lf": "1DBA574F57D515B1DDB94A4A3F9E3EA4B80E592945C3C8E9AAC8BFB318667894",
+      "Bytes": 13376,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-WorktreeLease.ps1",
+      "Canonical": "git-operations/Invoke-WorktreeLease.ps1",
+      "Vendored": "vendor/git-operations/Invoke-WorktreeLease.ps1",
+      "Sha256": "A210F61C6C43C1DDE2351E3C13F9269867C6D6C87709614F1D269D39AB91A03D",
+      "Sha256Lf": "2130987042DB47371ABE98B2B329773F76A5BFE0442F5A9BB37CBF655A8F3F51",
+      "Bytes": 16104,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "AtomicRecordWrite.ps1",
+      "Canonical": "iqa-merge/AtomicRecordWrite.ps1",
+      "Vendored": "vendor/iqa-merge/AtomicRecordWrite.ps1",
+      "Sha256": "DD9E0CFA0D3F98BC303122ED56A49480122DD07BFA0CF1FDB731024BC217A371",
+      "Sha256Lf": "2BB6FCC03716A5E36CD951DBA096DC658FC7F7F3C2B526C5D2F8A5B76373CC54",
+      "Bytes": 13067,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "Get-HubCadence.ps1",
+      "Canonical": "iqa-merge/Get-HubCadence.ps1",
+      "Vendored": "vendor/iqa-merge/Get-HubCadence.ps1",
+      "Sha256": "8939E07708DC7D8A7489063166780B011176A7358E9D898215517476B7CDC963",
+      "Sha256Lf": "519A3F25E4BFF3C633505A97459C9B5E5BD4AD061E1BEF4E97C8E9203CBE55D2",
+      "Bytes": 53648,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "HubRegistry.ps1",
+      "Canonical": "iqa-merge/HubRegistry.ps1",
+      "Vendored": "vendor/iqa-merge/HubRegistry.ps1",
+      "Sha256": "387FC615FD81125B6809FFC1A3C41A126F9F6DBF428BA273C8F8D276DE406AD6",
+      "Sha256Lf": "E9915B6AE3133BB687AA254C73FAE66A008470C7BC747CBE3B485ACE4BB2AEBD",
+      "Bytes": 60948,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-HubProbe.ps1",
+      "Canonical": "iqa-merge/Invoke-HubProbe.ps1",
+      "Vendored": "vendor/iqa-merge/Invoke-HubProbe.ps1",
+      "Sha256": "8B135F8470CC4E7D45497075533D10A8A4C301ED3E2A6AEF8EE186283BA443A9",
+      "Sha256Lf": "B27659DECAAB2FD383324F3CC2FF16A4D772EB5E2CE2501863A7274ABE8E49E6",
+      "Bytes": 25789,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "Invoke-ScheduleRecordWrite.ps1",
+      "Canonical": "iqa-merge/Invoke-ScheduleRecordWrite.ps1",
+      "Vendored": "vendor/iqa-merge/Invoke-ScheduleRecordWrite.ps1",
+      "Sha256": "790BBBEB0DCC7FDAF566095F3C911097E6A961640E07C70317778679E358F3CF",
+      "Sha256Lf": "CA48D40D0BB6A2071E20B53E73C957935C9C68CFA81AC8DA81A701C5F7964860",
+      "Bytes": 20974,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-Landed.ps1",
+      "Canonical": "iqa-merge/Test-Landed.ps1",
+      "Vendored": "vendor/iqa-merge/Test-Landed.ps1",
+      "Sha256": "55DE023AB045E66852FC6B487518B78463B3A2EA709AC0CD058D73A59522BA56",
+      "Sha256Lf": "C412549C0F67E4AF4B602F68C69A95569749812AC34B23E169EC3255C616F858",
+      "Bytes": 5386,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-ScheduleDispatch.ps1",
+      "Canonical": "iqa-merge/Test-ScheduleDispatch.ps1",
+      "Vendored": "vendor/iqa-merge/Test-ScheduleDispatch.ps1",
+      "Sha256": "BC01951185FF0D4E58ED034F322C286EE1C58187873F571127627504BC9C2EB2",
+      "Sha256Lf": "5A7F34F50D0FEC780494E4C840F73FA813C1BA46CC1F6F79F481EA29D1D3FF40",
+      "Bytes": 22560,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "Test-SingleHubRung.ps1",
+      "Canonical": "iqa-merge/Test-SingleHubRung.ps1",
+      "Vendored": "vendor/iqa-merge/Test-SingleHubRung.ps1",
+      "Sha256": "645D7823F4F56B3ED48D97C2728A8F94F0B4AD43558AA9D47FABA3909DF73DB7",
+      "Sha256Lf": "581FD2D75376B591595747446B0DBDC75CF540EE989E2853557D1813D97A4255",
+      "Bytes": 19695,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "iqa-done.schema.json",
+      "Canonical": "paseo-child-agents/iqa-done.schema.json",
+      "Vendored": "vendor/paseo-child-agents/iqa-done.schema.json",
+      "Sha256": "0BF42CDBC28B81D4E20C3823C60C10DBF9C7FE42BDCC2A560F04E00B50854E07",
+      "Sha256Lf": "EDEEEBE83FEDEC429841664BEDE71391FC2783CFA77BD251321B66F1035A6338",
+      "Bytes": 2928,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "lane-watch.mjs",
+      "Canonical": "paseo-child-agents/lane-watch.mjs",
+      "Vendored": "vendor/paseo-child-agents/lane-watch.mjs",
+      "Sha256": "7C9B56F10E56980D0015D4A255D1C369F2A9BD700160C8CBF900EF8C23691705",
+      "Sha256Lf": "C25E30853C833BEE7A1C4DFE0307974B64E85793108B10B2E39E0C75E320A1F3",
+      "Bytes": 15402,
+      "Tree": ""
+    },
+    {
+      "Kind": "copy",
+      "Name": "validate-done.mjs",
+      "Canonical": "paseo-child-agents/validate-done.mjs",
+      "Vendored": "vendor/paseo-child-agents/validate-done.mjs",
+      "Sha256": "5F0B7609B8CE340A47729C5FAC51082570B062A8E90C0330290A9EF286A0CAB2",
+      "Sha256Lf": "A648AC911ADC1045F2FDC43F74B3591B161020A34B9E05C73D73FEAD621F47E9",
+      "Bytes": 11886,
+      "Tree": ""
+    }
+  ]
+}

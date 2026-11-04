@@ -1,0 +1,21 @@
+{
+  "name": "credential-rescue",
+  "version": "1.0.0",
+  "description": "Credentials Rescue — the fleet plugin for machine-level credential repair. Two tracks off one seam: salmon-run (Salmon-track key cutover for lanes), paseo-rescue (single-entry Repair-Paseo: classify, pin, worker/app restart, verify), plus aws-store restore and the unattended watch (cutover + Paseo repair on EXHAUSTED only). Pick the runbook that matches the symptom and load only that one.",
+  "author": {
+    "name": "Clock Lobster"
+  },
+  "license": "MIT",
+  "keywords": [
+    "credential",
+    "opencode-go",
+    "key",
+    "cutover",
+    "quota",
+    "paseo",
+    "salmon-run",
+    "aws",
+    "restore"
+  ],
+  "skills": "skills"
+}

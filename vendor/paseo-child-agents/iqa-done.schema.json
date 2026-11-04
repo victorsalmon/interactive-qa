@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IQA lane done file",
+  "description": "Structured lane-completion report a detached Paseo worker writes before pinging its parent. JSON shape is mandatory; the human-readable final message rides alongside it (dual format — see the paseo-child-agents skill, Rule 3). Field values are statuses, SHAs, paths, and numbers only — never credential values, tokens, emails, or passwords.",
+  "type": "object",
+  "required": ["version", "status", "agentShortId", "branch", "shas", "evidencePaths", "gates"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1",
+      "description": "Schema version. Bump the const and the validator together; readers reject unknown versions."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Finished", "Blocked"],
+      "description": "Finished = work complete and pushed. Blocked = stopped early; blocker names the owner and what is needed."
+    },
+    "agentShortId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short id of the reporting worker (matches the watchdog/lane-watch inventory and the done-file name)."
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Branch carrying the lane's commits. Must exist on origin (checked by validate-done.mjs)."
+    },
+    "shas": {
+      "type": "array",
+      "description": "Lane commit SHAs (full or abbreviated, hex). Finished lanes list at least one; Blocked lanes may list none.",
+      "items": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" }
+    },
+    "reportPath": {
+      "type": "string",
+      "description": "Path to the lane's full report file (e.g. <worktree>/.iqa-report.md). Optional but expected on Finished."
+    },
+    "evidencePaths": {
+      "type": "array",
+      "description": "Paths proving the work (report file, test output, screenshots). Each must exist (checked by validate-done.mjs).",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "gates": {
+      "type": "object",
+      "description": "Gate name to result (e.g. {\"node-check\": \"pass 2/2\", \"tests\": \"142/142\"}). Finished lanes record every gate the brief required.",
+      "additionalProperties": { "type": ["string", "number", "boolean"] }
+    },
+    "verdict": {
+      "type": "string",
+      "description": "Review-lane verdict where applicable (conventional values: ACCEPT, REWORK, ACCEPT_WITH_NOTES). Omitted by non-review lanes."
+    },
+    "blocker": {
+      "type": "string",
+      "description": "Required when status is Blocked: owner plus what is needed to unblock. Omitted when Finished."
+    },
+    "summary": {
+      "type": "string",
+      "description": "One-line human-readable result — the same text as the companion .txt final message."
+    }
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "package": "interactive-qa-agent",
+  "version": "1.0.0",
+  "ship": [
+    "SKILL.md",
+    "README.md",
+    "MANIFEST.md",
+    "LICENSE",
+    "core/",
+    "members/",
+    "profiles/",
+    "references/",
+    "tools/",
+    "vendor/"
+  ],
+  "exclude": [
+    {
+      "path": "gate/",
+      "reason": "Dated per-lane gate evidence: run transcripts, machine paths and the defects of a past lane. It is history for the repository that built the package, not content for an installed one - publishing it would ship internal paths and stale proof. Retained in the repository, excluded from the publish artifact."
+    },
+    {
+      "path": "PHASE0-INVENTORY.md",
+      "reason": "The Phase-0 census of the fleet tree (counts, derivation commands, migration inventory). Provenance for the migration; it describes a tree an installer does not have, so it is excluded from the publish artifact."
+    }
+  ],
+  "pathAllowlist": [
+    {
+      "path": "vendor/credential-rescue/REFERENCE.md",
+      "class": "vendored-documentation",
+      "reason": "Byte-identical vendored runbook (archived row). The absolute paths are this box's machine facts (the XDG data dir, the provider log) that the prose explains; the canonical owner owns the text and the package must not fork it."
+    },
+    {
+      "path": "vendor/credential-rescue/scripts/Invoke-ProviderLock.ps1",
+      "class": "vendored-documentation",
+      "reason": "Help-block example of a file-source target (a generic illustration, not a resolution path). The tool itself resolves the lock at the profile state root."
+    },
+    {
+      "path": "vendor/credential-rescue/scripts/lib/PaseoCommon.ps1",
+      "class": "machine-default-with-override",
+      "reason": "Documented fallback for the Paseo CLI install location on Windows; every caller can override it, and a missing file is handled as absent."
+    },
+    {
+      "path": "vendor/credential-rescue/scripts/Repair-Paseo.ps1",
+      "class": "machine-default-with-override",
+      "reason": "The -PaseoExe parameter default is the Paseo install location; it is a parameter, so a deployment overrides it and the package does not depend on that path."
+    },
+    {
+      "path": "vendor/credential-rescue/scripts/Restart-Paseo.ps1",
+      "class": "machine-default-with-override",
+      "reason": "Deprecated shim with the same -PaseoExe default as Repair-Paseo.ps1."
+    },
+    {
+      "path": "vendor/credential-rescue/scripts/Stamp-InterruptedGates.ps1",
+      "class": "vendored-documentation",
+      "reason": "Help-block example showing the -Root argument; the tool takes the repository root as a parameter."
+    },
+    {
+      "path": "vendor/credential-rescue/scripts/Switch-OpencodeGoKey.ps1",
+      "class": "vendored-documentation",
+      "reason": "Documentation of the live XDG data directory on this box; the script resolves XDG_DATA_HOME at run time and the literal appears only in comments."
+    },
+    {
+      "path": "vendor/credential-rescue/skills/paseo-rescue/REFERENCE.md",
+      "class": "vendored-documentation",
+      "reason": "Example commands for the Paseo CLI at its install location; a deployment substitutes its own path."
+    },
+    {
+      "path": "vendor/credential-rescue/skills/watch/REFERENCE.md",
+      "class": "vendored-documentation",
+      "reason": "The watch runbook names this box's provider log as an example of where to spot-check a quota error; the member reads the profile's provider_log adapter, not this string."
+    },
+    {
+      "path": "vendor/credential-rescue/Tests/Invoke-KeyCheck.Tests.ps1",
+      "class": "test-fixture",
+      "reason": "Fixture argv paths (quoted paths containing spaces) that pin the helper command-line quoting rule; they are inputs to a unit test, never resolved."
+    },
+    {
+      "path": "vendor/dispatch/scripts/run-iqa-worker.ps1",
+      "class": "vendored-documentation",
+      "reason": "Worked examples in help and comments naming a fleet checkout; the worker takes its repo root from arguments and resolves nothing from that string."
+    },
+    {
+      "path": "vendor/iqa-merge/HubRegistry.ps1",
+      "class": "vendored-documentation",
+      "reason": "Help-block and comment examples of a repo path, plus the record of a fixed defect where a repo path was joined onto the record root. The registry takes -Repo/-RepoPath as arguments."
+    },
+    {
+      "path": "vendor/iqa-merge/Test-Landed.ps1",
+      "class": "vendored-documentation",
+      "reason": "Help-block examples of -RepoPath; the landing test requires the repo path as an argument and never defaults to one."
+    },
+    {
+      "path": "vendor/paseo-child-agents/lane-watch.mjs",
+      "class": "machine-default-with-override",
+      "reason": "WELL_KNOWN_WIN is a last-resort location for the Paseo CLI after the environment and PATH checks; it is a documented machine default with an override."
+    }
+  ]
+}

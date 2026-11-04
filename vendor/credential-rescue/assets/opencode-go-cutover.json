@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "updated": "2026-11-03",
+  "activeKey": "OPENCODE_GO1_KEY",
+  "poolOrder": [
+    "OPENCODE_GO6_KEY",
+    "OPENCODE_GO5_KEY",
+    "OPENCODE_GO4_KEY",
+    "OPENCODE_GO3_KEY",
+    "OPENCODE_GO2_KEY",
+    "OPENCODE_GO1_KEY",
+    "OPENCODE_GO7_KEY"
+  ],
+  "keyMaxConcurrent": {
+    "OPENCODE_GO1_KEY": 2,
+    "OPENCODE_GO2_KEY": 4,
+    "OPENCODE_GO3_KEY": 4,
+    "OPENCODE_GO4_KEY": 4,
+    "OPENCODE_GO5_KEY": 4,
+    "OPENCODE_GO6_KEY": 4
+  },
+  "providerMaxConcurrent": {
+    "opencode-go": 4
+  },
+  "paseo": {
+    "providerId": "opencode",
+    "configPath": "~/.paseo/config.json",
+    "pinEnv": true,
+    "$comment": "Paseo hosts opencode inside long-lived `opencode.exe serve` helper servers whose environment is frozen at spawn, so a User-env repoint alone never reaches them — that is why a cutover can leave Paseo still showing the old key. Pinning OPENCODE_GO_KEY/OPENCODE_API_KEY under agents.providers.<providerId>.env makes every future Paseo opencode launch use the active key; owned by scripts/Repair-Paseo.ps1 (pin + `paseo restart` worker restart — `paseo reload` can NOT apply a launch env). Salmon Run is unaffected (it reads the Machine pool + config.json).",
+    "harnesses": {
+      "opencode": {
+        "providerId": "opencode",
+        "keySource": "agents.providers.opencode.env (OPENCODE_GO_KEY + OPENCODE_API_KEY pin)",
+        "pinEnv": true
+      },
+      "deepseek-harness": {
+        "providerId": "deepseek-harness",
+        "keySource": "Machine/User env var named by apiKeyEnv in ~/.dsh/profiles/acp/salmon-run-model.yml (managed by salmon-run Tools/Install-PaseoDeepSeekHarness.ps1)",
+        "pinEnv": false,
+        "$comment": "No provider-env pin exists for DSH: the ACP child reads its apiKeyEnv var at spawn, so only a (worker) restart carries a changed DSH key. Repair-Paseo.ps1 verifies this harness (apiKeyEnv name + GO-label + diagnostic + pool-key canary) but never pins it; either harness can be sick while the other is healthy."
+      }
+    }
+  },
+  "canary": {
+    "defaultMode": "fast",
+    "timeoutSeconds": 90,
+    "fast": [
+      {
+        "model": "opencode-go/deepseek-v4.1-flash",
+        "variant": "low"
+      }
+    ],
+    "full": [
+      {
+        "model": "opencode-go/deepseek-v4.1-flash",
+        "variant": "low"
+      },
+      {
+        "model": "opencode-go/deepseek-v4-pro",
+        "variant": "max"
+      }
+    ],
+    "$comment": "fast = one model, the fleet default worker (DeepSeek V4.1 Flash, low). full = adds deepseek-v4-pro at max, a different model family on the same wallet, so a swap proves more than one route. -Full selects the full set. NOTE (2026-10-28): deepseek-v4.1-flash has no `max` variant on the opencode route (ceiling is high/xhigh) - the old full-set entry asked for `max`, which is why it read as a timeout; use `low` (default) or `high` (escalation) instead.",
+    "knownFailures": {
+      "opencode-go/deepseek-v4-pro#max": "wide-context reasoning route; slower than DS4.1 Flash and not proven on this box - treat a failure here as a route problem, not a credential failure, while the fast canary passes"
+    }
+  },
+  "hygiene": {
+    "mode": "auto",
+    "$comment": "auto = count poisoned parts first, strip only when some exist (the count is cheap; the strip is only paid when a pre-switch session actually carries account-bound reasoning). always = current behaviour. never = skip."
+  },
+  "freshness": {
+    "windows": {
+      "$comment": "The metering WINDOWS (cycles) themselves - defined once here so no reader has to hardcode them. A Go limit is a per-model MONTHLY DOLLAR allowance sliced into three windows (https://opencode.ai/v2/docs/console/go#usage-limits); 'used' in meters below is a percentage of that model's monthly allowance inside that window. rolling5h is deliberately NOT a ledger meter: it heals continuously, so any 429 inside it is a load signal to probe, never stored state.",
+      "rolling5h": {
+        "label": "5-hour rolling",
+        "kind": "rolling",
+        "lengthHours": 5,
+        "percentOfMonthly": 20,
+        "tracked": false
+      },
+      "weekly": {
+        "label": "weekly",
+        "kind": "aligned",
+        "lengthDays": 7,
+        "percentOfMonthly": 50,
+        "tracked": true,
+        "boundary": {
+          "weekday": "Sunday",
+          "time": "17:00",
+          "timezone": null
+        },
+        "$comment": "ALIGNED to a shared boundary, not per-key rolling - CONFIRMED on all five keys (2026-10-31, operator: 'all weekly seem to roll over at the same time'). GO1, GO2, GO3, GO4 and GO5 are five separate workspaces and every one names 2026-11-01T17:00 for its weekly reset, while occupying every possible weekly utilisation (GO1 100%, GO3 100%, GO4 24%, GO2 0%, GO5 0%) - so the shared instant is a boundary, not usage histories drifting together. The weekly window closes on SUNDAY 17:00, then Nov 8, Nov 15, ... timezone is null on purpose - every reading came from the Console as wall-clock with no zone, and this box is -07:00, so record the zone here only if it is ever confirmed. The Console truncates to whole hours/days, so a relative reading ('in 1d13h') lands ~0.63h under the true instant; convert, then reconcile against a recorded instant rather than trusting the arithmetic. Implication for planning: the pool gets a weekly reset TOGETHER, so a fleet-wide burst before the boundary pushes every key against the same wall - which is how GO1 went from 0% to 100% weekly in three days while GO2 and GO3 sat capped."
+      },
+      "monthly": {
+        "label": "monthly term",
+        "kind": "term",
+        "lengthDays": null,
+        "percentOfMonthly": 100,
+        "tracked": true,
+        "$comment": "A term, not a rolling window: each key resets on its own anniversary, which is the day-of-month of that key's meters.monthly.resetsOn (23rd GO1, 10th GO2, 20th GO3, 13th GO4, 14th GO5 as of 2026-10-31). lengthDays is null because the cycle is 'to the anniversary', not a fixed count. GO5's 2026-10-28 figure (the 11th) disagreed with the 2026-10-31 figure (the 14th) by 3.81d - too far for truncation or timezone - and the operator resolved it on 2026-10-31: the newer reading is accurate and the older one was wrong, NOT a re-anchor. So when two readings of this field disagree beyond a rounding step, the newer reading wins and the older is retired in evidence rather than kept as an alternative."
+      }
+    },
+    "$comment": "CONFIG for the per-key quota ledger, not the ledger itself. The WINDOWS are defined once here so no reader hardcodes them. The per-key OBSERVATIONS (state, trippedMeter, usage, resetsOn, observedAt, evidence, meters) are runtime state rewritten every watch cycle, so they live OUTSIDE this tracked+vendored file at observationsPath (the profile state root), written by Set-OpencodeGoFreshness.ps1 and read by Get-OpencodeGoFreshness.ps1. Scoring: state=fresh|exhausted|unknown; trippedMeter names how the 429 was reported (monthly = account term, weekly = pool cap); meters carries the reading PER METER because the two refresh independently, and each meter carries its OWN observedAt (null = not reported) so a weekly reading and a monthly reading taken on different days never collapse into one date; row-level usage = the fullest meter; row-level resetsOn = the reset that actually FREES the key - the tripped meter's reset when state=exhausted (a weekly reset does NOT unblock a monthly-capped key), otherwise the refresh of the BINDING meter, i.e. the one with the least remaining headroom weighed in points of the monthly allowance (a weekly window is only percentOfMonthly of it) - NOT merely the soonest date, because a key at 99% monthly is not helped by a weekly boundary that arrives first; row-level observedAt dates the newest evidence for that key. Never store a key value in this file or in the observations file."
+  },
+  "observationsPath": "~/.salmon/State/credential-rescue/seam-observations.json",
+  "$comment": "THE single seam for opencode-go key cutover. Owned by Skills/credential-rescue. Change activeKey here (or run scripts/Switch-OpencodeGoKey.ps1 -KeyNumber N) and every surface is projected from it: User env OPENCODE_GO_KEY + OPENCODE_API_KEY, auth.json opencode-go, and ~/.salmon/config.json execution.defaultCodingKey + keyMaxConcurrent + providerMaxConcurrent. NOTHING else may hardcode which key is active. CONFIG ONLY: this file is tracked in git AND vendored into the IQA package, so it must stay byte-stable between commits. Runtime observations (the per-key freshness ledger) live at observationsPath in the profile state root and are never written here. Pool key VALUES live in Machine env vars OPENCODE_GO<n>_KEY, with a Machine -> User fallback (scripts/lib/PaseoCommon.ps1 Get-PoolKeyValue) so a key staged at User scope - i.e. one written without the elevation prompt that Machine scope needs - still resolves; never store a key value in this file."
+}

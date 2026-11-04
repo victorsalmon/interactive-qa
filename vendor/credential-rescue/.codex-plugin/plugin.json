@@ -1,0 +1,38 @@
+{
+  "name": "credential-rescue",
+  "version": "1.0.0+codex.20261014",
+  "description": "Credentials Rescue — the fleet plugin for machine-level credential repair. Two tracks off one seam: salmon-run (Salmon-track key cutover for lanes), paseo-rescue (single-entry Repair-Paseo: classify, pin, worker/app restart, verify), plus aws-store restore and the unattended watch (cutover + Paseo repair on EXHAUSTED only). Pick the runbook that matches the symptom and load only that one.",
+  "author": {
+    "name": "Clock Lobster"
+  },
+  "license": "MIT",
+  "keywords": [
+    "credential",
+    "opencode-go",
+    "key",
+    "cutover",
+    "quota",
+    "paseo",
+    "salmon-run",
+    "aws",
+    "restore"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Credentials Rescue",
+    "shortDescription": "Credential repair",
+    "longDescription": "Two tracks off one seam: Salmon Run lane key-pool cutover (Switch-OpencodeGoKey: User env + auth.json + defaultCodingKey first in pool order), then the single-entry Paseo repair (Repair-Paseo: classify BINARY/NAME/KEY, pin provider env, worker restart with FullApp fallback, verify) — plus ~/.aws store restore and the unattended overnight watch (cutover + Paseo repair on EXHAUSTED only).",
+    "developerName": "Clock Lobster",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Execute"
+    ],
+    "defaultPrompt": [
+      "GO1 is exhausted - switch to GO5 and prove it.",
+      "Paseo still uses the old key after the cutover - fix it.",
+      "Restore ~/.aws after it was deleted."
+    ]
+  }
+}

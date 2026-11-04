@@ -1,0 +1,56 @@
+{
+  "_meta": {
+    "plugin": "credential-rescue",
+    "updated": "2026-11-03",
+    "generator": "Gen-SkillsIndex.ps1 (frontmatter name/description)",
+    "description": "Member index for this plugin (Layer 2). Read the plugin SKILL.md runbook first, then load only the member the task needs."
+  },
+  "members": [
+    {
+      "name": "aws-store",
+      "description": "Runbook — restore the ~/.aws credential store after one of the recurring external-cleanup deletions, and reseed its off-.aws backup. Owns the restore source order, the Restore-AwsStore.ps1 modes (Status/Restore/Verify...",
+      "path": "Skills/credential-rescue/skills/aws-store",
+      "entry": "Skills/credential-rescue/skills/aws-store/SKILL.md",
+      "status": "inline",
+      "canonical": null
+    },
+    {
+      "name": "key-check",
+      "description": "Runbook — deadline-bounded Key Check for the opencode-go pool. Polls the live usage meters, escalates through heartbeat → discover → near when a key approaches its cap, and moves Paseo onto a proven, eligible replacem...",
+      "path": "Skills/credential-rescue/skills/key-check",
+      "entry": "Skills/credential-rescue/skills/key-check/SKILL.md",
+      "status": "inline",
+      "canonical": null
+    },
+    {
+      "name": "paseo-rescue",
+      "description": "Runbook — repair Paseo's opencode credential and daemon via the single-entry Repair-Paseo.ps1 (classify BINARY/NAME/KEY, pin provider env, worker restart with FullApp fallback, verify). Use when Paseo conversations us...",
+      "path": "Skills/credential-rescue/skills/paseo-rescue",
+      "entry": "Skills/credential-rescue/skills/paseo-rescue/SKILL.md",
+      "status": "inline",
+      "canonical": null,
+      "body": "alias+archived",
+      "archive": "Skills/_archive/iqa-superseded-2026-11-03/manifest.json",
+      "archivedDocs": 1
+    },
+    {
+      "name": "salmon-run",
+      "description": "Runbook — Salmon-track opencode-go key cutover for Salmon Run lanes (Switch-OpencodeGoKey.ps1: User env + auth.json + defaultCodingKey, hygiene, canary). This is the **second** track: the Paseo surface is replaced fir...",
+      "path": "Skills/credential-rescue/skills/salmon-run",
+      "entry": "Skills/credential-rescue/skills/salmon-run/SKILL.md",
+      "status": "inline",
+      "canonical": null
+    },
+    {
+      "name": "watch",
+      "description": "Runbook — unattended overnight watch for opencode-go key exhaustion. Canary the ACTIVE pool key against a standby every unit of time, cut over only on proven EXHAUSTED, make Paseo use the new key, then send \"Continue\"...",
+      "path": "Skills/credential-rescue/skills/watch",
+      "entry": "Skills/credential-rescue/skills/watch/SKILL.md",
+      "status": "inline",
+      "canonical": null,
+      "body": "alias+archived",
+      "archive": "Skills/_archive/iqa-superseded-2026-11-03/manifest.json",
+      "archivedDocs": 1
+    }
+  ]
+}
