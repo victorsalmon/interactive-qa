@@ -139,6 +139,37 @@ migration input only: a live item found there is minted as a bead and its file
 archived under `09Archive/Moved to Beads/`. Merge-queue rows remain the merge
 handoff (`## Sub handoff`) and are unchanged by this rule.
 
+### Collection-first dispatch (when the graph carries collections)
+
+A graph that groups work into numbered collections (`collection-order:<n>` +
+`collection:<name>` on a collection epic and its beads) is drained **in
+collection order, not by flat priority** (canonical contract:
+`$env:CL_REPOS_ROOT\Public\IQA-beads\skills\iqa-beads\REFERENCE.md` ->
+`## Collection contract`):
+
+1. `qa-spot` P0/P1 interrupts first — a stop-the-line or before-new-work
+   spot-test bead jumps every collection.
+2. Then the lowest open `collection-order`: the **primary** collection takes
+   every new dispatch until it has nothing ready. Equal orders are one wave.
+3. Then at most one **parallel** collection (the next one with ready work),
+   only while the primary cannot fill the lane budget. Never a third, and the
+   lane cap still applies across both.
+4. **Epics never dispatch** — a collection epic is a container; `-t epic` is
+   excluded from every ready query.
+5. **P0 inflation is re-tiered at claim time**: a P0 is only stop-the-line for
+   the user (an S1 qa-spot report, gate-blocking work, or an operator label).
+   Past `max(3, ceil(open/3))` open P0 in one collection the census warns, and
+   the Hub re-tiers with the reason on the bead.
+6. **A blocked collection escalates, never skipped silently**: name the
+   blockers, their owner and what is needed, record it on the beads, then
+   promote the parallel collection. All collections blocked or done = stand
+   down and say so.
+
+Read the window before dispatching — `Get-Iqa2CollectionStatus.ps1` for the
+census and warnings, `Get-Iqa2CollectionQueue.ps1` for the per-collection
+queue (both in the canonical plugin, `-Workdir <repo>`). A graph with no
+collection labels keeps the flat `bd ready` queue unchanged.
+
 ## Hub start contract (binding, every Hub-role session)
 
 Assuming the Hub role is a **claim that must be proven**, not a mode you
@@ -1660,6 +1691,20 @@ preserved. `SKILL.md` → `## Reference` points here.
   (checkout).
 
 ## Changelog
+
+- v20 (2026-11-04): **dispatch order is collection-first, and epics never
+  dispatch.** A repo graph grouped into numbered collections
+  (`collection-order:<n>` + `collection:<name>`) is drained in collection
+  order — `qa-spot` P0/P1 interrupts first, then the lowest open
+  `collection-order`, then at most one parallel collection — instead of a flat
+  priority list. Epics are containers and never take a lane, a blocked
+  collection escalates with its blockers named instead of being skipped, and
+  P0 inflation is re-tiered at claim time against a
+  `max(3, ceil(open/3))` budget. Additive: a graph with no collection labels
+  keeps the flat `bd ready` queue. Canonical contract lives in the IQA-beads
+  plugin (`skills/iqa-beads/REFERENCE.md` -> `## Collection contract`); the
+  Hub reads the window with `Get-Iqa2CollectionStatus.ps1` /
+  `Get-Iqa2CollectionQueue.ps1`.
 
 - v19 (2026-11-03): **the effective cadence is era-windowed and run-duration
   floored, and `-AcceptEffectiveCadence` works in both directions**

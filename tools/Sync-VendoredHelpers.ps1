@@ -389,6 +389,12 @@ $script:NotVendoredHelpers = @(
     ) -Reason ('Legacy iqa2 beads export/init shape; graph writes go through bd, and no Hub-start path needs ' +
         'either script.')
 
+    New-NotVendoredRow -Owner 'Public/IQA-beads/scripts (canonical plugin)' -Names @(
+        'Get-Iqa2CollectionQueue.ps1', 'Get-Iqa2CollectionStatus.ps1'
+    ) -Reason ('The collection dispatch queue and census are owned by the canonical IQA-beads plugin, which ' +
+        'the Hub runs from that checkout (`-Workdir <repo>`); they read the repo graph through bd and are ' +
+        'read-only. Vendoring them would create a second copy of a contract the plugin is the single owner ' +
+        'of, so the Hub prescribes the command by name and resolves it at run time.')
     New-NotVendoredRow -Owner 'Skills/cl-paseo/scripts' -Names @(
         'Get-PaseoWorkspaceRecordReport.ps1'
     ) -Reason ('Reads this machine''s Paseo workspace records. Named as the diagnostic a dispatch prints when ' +

@@ -182,6 +182,22 @@ it in every dispatch and every merge verdict.
 Long form, per-surface guidance and anti-patterns: [REFERENCE.md](REFERENCE.md)
 -> `## Development philosophy (long form)`.
 
+### Dispatch order is collection-first (binding)
+
+When the repo graph carries collections (`collection-order:<n>` +
+`collection:<name>` on a collection epic and its beads), the Hub drains them
+in order instead of picking the single highest-priority bead: **`qa-spot`
+P0/P1 interrupts first**, then the **lowest open `collection-order`**, then at
+most **one parallel collection**; **epics never dispatch**; a **blocked
+collection escalates** with its blockers, owner and missing input named rather
+than being skipped; and **P0 inflation is re-tiered at claim time** (a P0 is
+only stop-the-line for the user). Read the window before each wave —
+`Get-Iqa2CollectionStatus.ps1` for the census, `Get-Iqa2CollectionQueue.ps1`
+for the per-collection queue (canonical plugin, `-Workdir <repo>`). A graph with
+no collection labels keeps the flat `bd ready` queue unchanged. Normative:
+[REFERENCE.md](REFERENCE.md) -> `## Collection-first dispatch` and the
+canonical contract in the IQA-beads plugin.
+
 ### Wave continuity, and grill after recon (binding)
 
 An approved epic is approved for its **whole queue**: a wave lands -> merge ->
