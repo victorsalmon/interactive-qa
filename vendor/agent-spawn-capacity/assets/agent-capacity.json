@@ -139,6 +139,7 @@
       "cap": 10,
       "capScope": "pool",
       "harness": "opencode",
+      "bridgeEnv": "OPENCODE_GO_KEY",
       "matchPrefixes": [
         "opencode/opencode-go/",
         "opencode-go/",
