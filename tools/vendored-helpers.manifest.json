@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-04T02:37:32.0061601-07:00",
+  "generatedAt": "2026-11-04T04:43:37.3435597-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -68,9 +68,9 @@
       "Name": "AgentCapacity.ps1",
       "Canonical": "agent-spawn-capacity/scripts/AgentCapacity.ps1",
       "Vendored": "vendor/agent-spawn-capacity/scripts/AgentCapacity.ps1",
-      "Sha256": "94CB26435DDD2795D8014A950272A5D4DADE2BF6D13ECE6981071A5B54B686AA",
-      "Sha256Lf": "9B5C4825B1A68132597D150B59D15D2072A63BCDDF2BAF9E6FA1D9C6CFE31F22",
-      "Bytes": 170233,
+      "Sha256": "3CBB172E5DB6A62D470A647A6D483B91F64CCAD78393C5828705167DE8D2C599",
+      "Sha256Lf": "75DE96EE0A0DE5235626783EA38FA68C116F12F2038D68337866D1B5D3463078",
+      "Bytes": 179098,
       "Tree": ""
     },
     {

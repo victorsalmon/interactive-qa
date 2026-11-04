@@ -22,10 +22,13 @@
       4. Release  - on finish: -Outcome ok, or -Outcome provider-error with the
                     provider's message when the AGENT ITSELF failed.
 
-    Occupancy is reconciled against `paseo ls --json` (running/idle agents whose
-    provider matches the pool), so a worker that dies without a Release does not
-    leak a slot forever; an unregistered reservation expires after
-    defaults.reservationTtlMinutes.
+    Occupancy is reconciled against the daemon's own agent list
+    (`paseo agent ls --json`, falling back to `paseo ls --json`) and, per
+    candidate, against `paseo inspect --json`, so an archived, closed or
+    phantom agent frees its slot even when a stale listing row still reads
+    running. The gate's ledger is history, never the authority for "is this
+    slot occupied"; a pending spawn holds a slot only for
+    defaults.pendingSpawnMinutes.
 
     Failure state machine (per pool+route): provider-error releases are bucketed
     into failurePolicy.windowMinutes windows. failureWindowsToTrip distinct
@@ -375,16 +378,48 @@ function Get-LiveAgents {
     .DESCRIPTION
         Ok=$false means "could not ask", which is NOT the same as "nothing is
         running": pruning reservations on a failed query would silently disable
-        the cap exactly when the daemon is flaky. Callers must degrade to
-        reservation-only accounting instead.
+        the cap exactly when the daemon is flaky. A failed query is NOT a licence
+        to count the ledger instead (see Get-Occupancy): an occupant has to be
+        confirmed by the daemon, so the caller verifies the ids it still cares
+        about one by one with `paseo inspect`.
+
+        The source of truth is `paseo agent ls --json` (the canonical agent
+        listing); the older `paseo ls --json` spelling is kept as a fallback for
+        CLI versions that only ship the shorthand.
     #>
     $paseo = Resolve-PaseoCli
     if (-not $paseo) { return @{ Ok = $false; Agents = @(); Detail = 'paseo CLI not found' } }
-    try {
-        $raw = & $paseo ls --json 2>$null | Out-String
-        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($raw)) {
-            return @{ Ok = $false; Agents = @(); Detail = "paseo ls exited $LASTEXITCODE" }
+    $attempts = @(
+        @{ Args = @('agent', 'ls', '--json'); Name = 'paseo agent ls' },
+        @{ Args = @('ls', '--json'); Name = 'paseo ls' }
+    )
+    $detail = ''
+    foreach ($attempt in $attempts) {
+        try {
+            $raw = & $paseo @($attempt.Args) 2>$null | Out-String
         }
+        catch { $detail = "$($attempt.Name) failed: $($_.Exception.Message)"; continue }
+        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($raw)) {
+            $detail = "$($attempt.Name) exited $LASTEXITCODE"
+            continue
+        }
+        $result = ConvertFrom-LiveAgentPayload -Raw $raw -Name ([string]$attempt.Name)
+        if ($result.Ok) { return $result }
+        $detail = $result.Detail
+    }
+    return @{ Ok = $false; Agents = @(); Detail = $detail }
+}
+
+function ConvertFrom-LiveAgentPayload {
+    <#
+    .SYNOPSIS
+        Parse one `paseo agent ls --json` payload into an agent array.
+    .DESCRIPTION
+        Kept separate so both CLI spellings use exactly one parser.
+    #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Raw, [string]$Name = 'paseo agent ls')
+
+    try {
         # Take the JSON array out of the output instead of parsing the WHOLE
         # stream. The CLI prints notices/banners on stdout ahead of its payload
         # (observed 2026-11-02: "Warning: --background (-d) is deprecated..." on
@@ -396,33 +431,84 @@ function Get-LiveAgents {
         $start = $raw.IndexOf('[')
         $end = $raw.LastIndexOf(']')
         if ($start -lt 0 -or $end -le $start) {
-            return @{ Ok = $false; Agents = @(); Detail = 'paseo ls returned no JSON array' }
+            return @{ Ok = $false; Agents = @(); Detail = "$Name returned no JSON array" }
         }
         $payload = $raw.Substring($start, $end - $start + 1)
         return @{ Ok = $true; Agents = @($payload | ConvertFrom-Json); Detail = 'ok' }
     }
-    catch { return @{ Ok = $false; Agents = @(); Detail = "paseo ls failed: $($_.Exception.Message)" } }
+    catch { return @{ Ok = $false; Agents = @(); Detail = "$Name failed: $($_.Exception.Message)" } }
 }
 
-function Resolve-AgentExistence {
+function ConvertFrom-AgentRecord {
     <#
     .SYNOPSIS
-        Does this listed agent id actually resolve on the daemon?
+        Normalize a `paseo inspect --json` record, or $null when it is not one.
     .DESCRIPTION
-        `paseo ls` is answered from the agent store, which outlives the daemon's
-        live session table, so a listing row is a CLAIM, not proof the agent
-        exists. Measured 2026-11-04 (bead cl-common-vv7): `de03ce64` was listed
-        with status=running and adopted as an occupant while the daemon answered
-        "Agent not found" for it - a phantom occupant holding a real slot, and
-        indistinguishable from a genuine cap hit to the caller.
+        The real CLI answers in PascalCase (Id/Status/Archived/ArchivedAt/
+        UpdatedAt) while the listing is camelCase; both shapes are accepted and
+        reduced to the field names Test-AgentLive reads, so the daemon record can
+        be handed to the one liveness predicate. A payload that is not a single
+        object (a JSON array, empty output, a notice) yields $null: it proves the
+        id resolved but says nothing about liveness.
+    #>
+    param([AllowEmptyString()][string]$Raw = '')
 
-        `paseo inspect <id>` is the existence check:
-          $true  - the daemon resolved the id;
-          $false - the daemon answered AGENT_NOT_FOUND (a phantom);
-          $null  - cannot tell (inspect missing, failed some other way, or
-                   returned an unreadable payload). A failed query is NOT
-                   evidence of a phantom: callers keep the status verdict, so a
-                   flaky daemon cannot silently disable the cap.
+    if ([string]::IsNullOrWhiteSpace($Raw)) { return $null }
+    $start = $Raw.IndexOf('{')
+    $end = $Raw.LastIndexOf('}')
+    if ($start -lt 0 -or $end -le $start) { return $null }
+    try { $obj = $Raw.Substring($start, $end - $start + 1) | ConvertFrom-Json -AsHashtable }
+    catch { return $null }
+    if ($null -eq $obj -or $obj -is [System.Array]) { return $null }
+    if ($obj -isnot [System.Collections.IDictionary]) { return $null }
+    $pick = {
+        param([string[]]$Names)
+        foreach ($n in $Names) {
+            foreach ($k in $obj.Keys) {
+                if ([string]$k -ieq $n) { return $obj[$k] }
+            }
+        }
+        return $null
+    }
+    return @{
+        id         = [string](& $pick @('Id', 'id'))
+        status     = [string](& $pick @('Status', 'status'))
+        archived   = (& $pick @('Archived', 'archived'))
+        archivedAt = [string](& $pick @('ArchivedAt', 'archivedAt'))
+        updatedAt  = [string](& $pick @('UpdatedAt', 'updatedAt'))
+        createdAt  = [string](& $pick @('CreatedAt', 'createdAt'))
+        pid        = (& $pick @('Pid', 'pid'))
+        host       = [string](& $pick @('Host', 'host', 'HostId', 'hostId'))
+    }
+}
+
+function Resolve-AgentTruth {
+    <#
+    .SYNOPSIS
+        What does the DAEMON say about this agent id: absent, or its own record?
+    .DESCRIPTION
+        A listing row is a CLAIM, not proof the agent is running: `paseo agent
+        ls` is answered from the agent store, which outlives the daemon's live
+        session table (measured 2026-11-04, bead cl-common-vv7: a row listed as
+        running belonged to an id the daemon answered "Agent not found" for).
+        The gate's own ledger is weaker still - it is history, not a snapshot of
+        what is running (bead cl-common-x6u).
+
+        `paseo inspect <id> --json` is the authority, and it answers more than
+        existence: it reports the daemon's Status plus Archived/ArchivedAt, so an
+        archived or closed agent is known to be dead even when a stale listing
+        row still reads "running".
+
+        Returns:
+          $null                              cannot tell (CLI missing, inspect
+                                             failed some other way, unreadable
+                                             payload) - callers fall back to the
+                                             listing verdict, never to "assume
+                                             live";
+          @{ Exists=$false; Record=$null }   AGENT_NOT_FOUND (a phantom);
+          @{ Exists=$true;  Record=<obj> }   the daemon's record ($null when the
+                                             payload was exit-0 but unparseable,
+                                             which still proves existence).
         Verdicts are cached for the run: one inspect per candidate id.
     #>
     param(
@@ -430,7 +516,7 @@ function Resolve-AgentExistence {
         [string]$Paseo = ''
     )
 
-    if ([string]::IsNullOrWhiteSpace($AgentId)) { return $false }
+    if ([string]::IsNullOrWhiteSpace($AgentId)) { return @{ Exists = $false; Record = $null } }
     if ([string]::IsNullOrWhiteSpace($Paseo)) { $Paseo = Resolve-PaseoCli }
     if ([string]::IsNullOrWhiteSpace($Paseo)) { return $null }
     if (-not (Get-Variable -Name AgentExistenceCache -Scope Script -ErrorAction Ignore)) {
@@ -440,8 +526,8 @@ function Resolve-AgentExistence {
     $verdict = $null
     try {
         $raw = & $Paseo inspect $AgentId --json 2>$null | Out-String
-        if ($LASTEXITCODE -eq 0) { $verdict = $true }
-        elseif ($raw -match 'AGENT_NOT_FOUND') { $verdict = $false }
+        if ($LASTEXITCODE -eq 0) { $verdict = @{ Exists = $true; Record = (ConvertFrom-AgentRecord -Raw $raw) } }
+        elseif ($raw -match 'AGENT_NOT_FOUND') { $verdict = @{ Exists = $false; Record = $null } }
     }
     catch { $verdict = $null }
     $script:AgentExistenceCache[$AgentId] = $verdict
@@ -636,6 +722,64 @@ function Test-AgentLive {
     return [pscustomobject]@{ Live = $true; Terminal = $false; State = $stateLabel; Reason = '' }
 }
 
+function Get-AgentLiveVerdict {
+    <#
+    .SYNOPSIS
+        The one liveness answer for an agent: daemon truth first, listing second.
+    .DESCRIPTION
+        Occupancy asks "is this id holding a slot right now". The daemon owns the
+        answer, so when `paseo inspect` resolves the id its Status/Archived win
+        over whatever a listing row says - this is what frees an archived or
+        closed agent whose `paseo agent ls` row still reads running, and it is
+        also how an id the daemon cannot resolve (a phantom) is refused a slot.
+
+        When the daemon cannot answer at all, the listing verdict stands, so a
+        flaky inspect never silently disables the cap. No listing row either (the
+        ledger-only case) is NOT evidence of liveness: the caller is told the
+        answer is unresolved.
+
+        Returns a Test-AgentLive-shaped verdict plus Resolved (did the daemon
+        answer) and Phantom (the id does not exist).
+    #>
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$AgentId,
+        $Agent = $null,
+        [DateTime]$Now = (Get-Date),
+        [int]$FreshnessMinutes = 15
+    )
+
+    $listing = $null
+    if ($null -ne $Agent) { $listing = Test-AgentLive -Agent $Agent -Now $Now -FreshnessMinutes $FreshnessMinutes }
+
+    $truth = Resolve-AgentTruth -AgentId $AgentId
+    if ($null -ne $truth -and -not $truth.Exists) {
+        return [pscustomobject]@{ Live = $false; Terminal = $true; State = 'id-not-found'; Reason = 'the daemon cannot resolve this id'; Resolved = $true; Phantom = $true }
+    }
+    if ($null -ne $truth) {
+        $record = $truth.Record
+        if ($null -ne $record) {
+            # Keep the listing's age/provider context; the daemon owns state.
+            if ($null -ne $Agent) {
+                if ([string]::IsNullOrWhiteSpace([string](Get-Prop $record 'createdAt' ''))) { $record['createdAt'] = [string](Get-Prop $Agent 'created' '') }
+                if ([string]::IsNullOrWhiteSpace([string](Get-Prop $record 'id' ''))) { $record['id'] = $AgentId }
+                if ([string]::IsNullOrWhiteSpace([string](Get-Prop $record 'host' ''))) { $record['host'] = [string](Get-Prop $Agent 'host' (Get-Prop $Agent 'hostId' '')) }
+            }
+            $verdict = Test-AgentLive -Agent $record -Now $Now -FreshnessMinutes $FreshnessMinutes
+            return [pscustomobject]@{ Live = $verdict.Live; Terminal = $verdict.Terminal; State = $verdict.State; Reason = $verdict.Reason; Resolved = $true; Phantom = $false }
+        }
+        if ($null -ne $listing) {
+            return [pscustomobject]@{ Live = $listing.Live; Terminal = $listing.Terminal; State = $listing.State; Reason = $listing.Reason; Resolved = $true; Phantom = $false }
+        }
+        # The daemon knows the id but said nothing readable about it: existence
+        # is proven, liveness is not. Do not invent a slot.
+        return [pscustomobject]@{ Live = $false; Terminal = $false; State = 'unverified'; Reason = 'the daemon resolved the id but reported no readable state'; Resolved = $true; Phantom = $false }
+    }
+    if ($null -ne $listing) {
+        return [pscustomobject]@{ Live = $listing.Live; Terminal = $listing.Terminal; State = $listing.State; Reason = $listing.Reason; Resolved = $false; Phantom = $false }
+    }
+    return [pscustomobject]@{ Live = $false; Terminal = $false; State = 'unverified'; Reason = 'neither the daemon nor a listing could confirm this agent'; Resolved = $false; Phantom = $false }
+}
+
 function Register-CallerSession {
     <#
     .SYNOPSIS
@@ -688,40 +832,46 @@ function Get-Occupancy {
         PoolUsed (9 occupants against 2 running agents), which manufactured
         "pool is saturated" refusals.
 
-        * A RESERVATION is a deliberate spawn from this gate. While its agent
-          is live it is counted. When the agent is idle or in any other
-          non-terminal state the reservation is kept (the agent may resume)
-          but not counted; a terminal state (closed/errored/failed/archived)
-          drops the reservation outright. Reservation-only accounting (no live
-          query at all) still bounds an unregistered claim by
-          defaults.reservationTtlMinutes, never "unknown, so forever" -
-          a registered entry has no expiresAt and would otherwise hold a slot
-          for good (measured 2026-11-02: 9 stale reservations counted at once).
-          Only when neither the live agent nor a timestamp exists does a
-          deliberate claim keep counting: two unknowns are not evidence of
-          staleness.
+        * A RESERVATION is a deliberate spawn from this gate, and the row is
+          ATTRIBUTION, not evidence: an occupant has to be confirmed by the
+          daemon. While its agent is genuinely live it is counted; when the
+          agent is idle or in any other non-terminal state the reservation is
+          kept (the agent may resume) but not counted; a terminal state
+          (closed/errored/failed/archived) or an id the daemon cannot resolve
+          drops the reservation outright.
         * An ADOPTED agent (spawned without going through the gate) counts
           only while genuinely live; every non-live record is named in
           Skipped (agent id, source, state, age) and counted nowhere.
-        * An id that the daemon cannot resolve is a PHANTOM, never an
-          occupant: `paseo ls` rows are claims, and `paseo inspect` is the
-          check (see Resolve-AgentExistence). Both an adopted row and a
-          reservation naming that id are named in Skipped with state
-          'id-not-found' and count nowhere (measured 2026-11-04,
-          bead cl-common-vv7: a listed `running` row the daemon did not know
+        * The DAEMON is the authority for "is this slot occupied", so
+          `paseo inspect` overrules the listing row (see Get-AgentLiveVerdict):
+          a row that still reads `running` for an archived or closed agent, or
+          for an id the daemon answers AGENT_NOT_FOUND for, holds no slot.
+          `paseo agent ls` rows are claims (measured 2026-11-04, bead
+          cl-common-vv7: a listed `running` row the daemon did not know
           consumed a real slot and made a refusal indistinguishable from a
           genuine cap hit).
-        * When the live query cannot be made (daemon unreachable, CLI missing)
-          a reservation is counted only inside defaults.reservationTtlMinutes
-          of its own createdAt, as 'unverified': the slot is bounded rather
-          than pinned. A worker that finishes with no Release therefore frees
-          its slot on a timer even with no live state to reconcile against.
+        * The LEDGER IS HISTORY, never the authority. When the live list cannot
+          be read the gate does not fall back to counting its own rows: each
+          id it still cares about is confirmed one at a time with
+          `paseo inspect`, and a claim nobody can confirm counts nowhere
+          (named 'unverified' in Skipped). Only an explicit `-NoReconcile`
+          opts back into reservation-only accounting, where
+          defaults.reservationTtlMinutes bounds an unverifiable claim.
+          Before this rule the ledger was the authority on a failed live
+          query, so archived, closed and phantom reservations counted as
+          running and the gate refused at 6/6, 8/6 and 9/6 with four agents
+          running (measured 2026-11-04, bead cl-common-x6u).
+        * A PENDING reservation (no agent id yet) is the one claim the ledger
+          does own, because the spawn has not reported back yet. It holds a
+          slot only for defaults.pendingSpawnMinutes (5): a dispatch that never
+          registers by then did not happen, and the rest of the reservation TTL
+          must not keep the slot. Past the window it is named 'pending-overdue'
+          and counted nowhere, while the row is kept as history.
 
-        Reservations past their TTL, entries whose agent is gone from
-        `paseo ls`, and agents that are not live are pruned - a worker that
-        dies without a Release must not leak a slot. Every exclusion is named
-        in Skipped (agent id, source, state, age) so `-Mode Status` can say
-        what it counted and what it left out.
+        Entries whose agent is gone from the live list, and agents that are not
+        live, are pruned - a worker that dies without a Release must not leak a
+        slot. Every exclusion is named in Skipped (agent id, source, state, age)
+        so `-Mode Status` can say what it counted and what it left out.
     #>
     param(
         [Parameter(Mandatory)]$Registry,
@@ -731,7 +881,12 @@ function Get-Occupancy {
         # host, every agent archived, or a stubbed CLI. Mandatory rejects it.
         [array]$LiveAgents = @(),
         [Parameter(Mandatory)][hashtable]$Paths,
-        [bool]$Reconcile = $true
+        [bool]$Reconcile = $true,
+        # Explicit operator override (-NoReconcile) only: the caller asked for
+        # reservation-only accounting, so a claim it cannot verify counts inside
+        # its TTL. An IMPLICIT live-query failure never sets this - that is the
+        # ledger-as-authority defect of cl-common-x6u.
+        [bool]$TrustLedger = $false
     )
 
     $poolDef = Get-Prop (Get-Prop $Registry 'pools' @{}) $PoolId
@@ -741,6 +896,7 @@ function Get-Occupancy {
     $ttl = [int](Get-Prop $defaults 'reservationTtlMinutes' 30)
     $idleGrace = [int](Get-Prop $defaults 'idleGraceMinutes' 10)
     $freshness = [int](Get-Prop $defaults 'liveFreshnessMinutes' 15)
+    $pendingWindow = [int](Get-Prop $defaults 'pendingSpawnMinutes' 5)
     $now = Get-Date
 
     $occupants = [System.Collections.Generic.List[object]]::new()
@@ -779,64 +935,72 @@ function Get-Occupancy {
         $entryRole = [string](Get-Prop $entry 'role' '')
         if (-not $agentId) {
             if ($expires -ne [DateTime]::MinValue -and $expires -lt $now) { continue }  # expired reservation
-            # Reservation-only accounting has no live state to bound it, so the
-            # TTL is the bound: a claim we cannot verify must not hold a slot
-            # forever. The entry itself is kept so a later reconcile can still
-            # prove or refute it.
-            if (-not $Reconcile -and $null -ne $entryBorn -and $entryBorn -lt $now.AddMinutes(-$ttl)) {
-                $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = ''; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'unverified'; AgeMinutes = [int]($now - $entryBorn).TotalMinutes })
+            # A pending reservation claims a spawn that has not reported its
+            # agent yet, so it holds a slot only for the short pending window: a
+            # spawn that never registers by then did not happen (failed dispatch,
+            # runner died before Register), and history must not keep a slot for
+            # the rest of the reservation TTL. Measured 2026-11-04
+            # (cl-common-x6u): abandoned pending rows stacked up and the gate
+            # refused at 6/6, 8/6 and 9/6 with four agents actually running.
+            $pendingAge = if ($null -ne $entryBorn) { [int]($now - $entryBorn).TotalMinutes } else { $null }
+            if ($null -ne $pendingAge -and $pendingAge -ge $pendingWindow) {
+                $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = ''; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'pending-overdue'; AgeMinutes = $pendingAge })
                 $keepEntries.Add($entry)
                 continue
             }
-            $occupants.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = ''; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'pending'; AgeMinutes = if ($null -ne $entryBorn) { [int]($now - $entryBorn).TotalMinutes } else { $null } })
+            $occupants.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = ''; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'pending'; AgeMinutes = $pendingAge })
             $keepEntries.Add($entry)
             continue
         }
         $live = $LiveAgents | Where-Object { $_.id -eq $agentId } | Select-Object -First 1
-        if ($null -eq $live) {
-            if ($Reconcile) {
-                # Gone from `paseo ls` => archived/stopped: release the slot.
+        if ($null -eq $live -and $Reconcile) {
+            # The live list answered and does not carry this id: the agent is
+            # history (archived/stopped), so the slot is released.
+            continue
+        }
+        # Occupancy authority is the daemon (`paseo inspect`), not the listing row
+        # and never this ledger row; the row only supplies attribution.
+        $verdict = Get-AgentLiveVerdict -AgentId $agentId -Agent $live -Now $now -FreshnessMinutes $freshness
+        if (-not $verdict.Live) {
+            $born = if ($null -ne $live) { ConvertFrom-PaseoAge ([string](Get-Prop $live 'created' '')) } else { $null }
+            if ($null -eq $born) { $born = $entryBorn }
+            $ageMinutes = if ($null -ne $born) { [int]($now - $born).TotalMinutes } else { $null }
+            if ($verdict.Phantom -or $verdict.Terminal) {
+                # The id resolves to nothing, or the agent cannot come back:
+                # the claim is over, so the reservation is dropped. Named once,
+                # so the adopted sweep does not repeat the row.
+                [void]$seenAgents.Add($agentId)
+                $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = $agentId; KeyName = [string](Get-Prop $entry 'keyName' ''); State = $verdict.State; AgeMinutes = $ageMinutes })
                 continue
             }
-            # Cannot ask: the reservation's own createdAt is the only bound, so
-            # an unreachable daemon cannot pin a finished worker's slot forever.
-            if ($null -ne $entryBorn -and $entryBorn -lt $now.AddMinutes(-$ttl)) {
-                $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = $agentId; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'unverified'; AgeMinutes = [int]($now - $entryBorn).TotalMinutes })
+            if (-not $verdict.Resolved) {
+                if (-not $TrustLedger) {
+                    # Nobody can confirm this id - and an unconfirmed ledger row
+                    # is history, not an occupant. Keep it so a resumed agent is
+                    # counted again, but hold no slot.
+                    [void]$seenAgents.Add($agentId)
+                    $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = $agentId; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'unverified'; AgeMinutes = $ageMinutes })
+                    $keepEntries.Add($entry)
+                    continue
+                }
+                if ($null -ne $entryBorn -and $entryBorn -lt $now.AddMinutes(-$ttl)) {
+                    # Explicit reservation-only accounting: the TTL is the bound.
+                    $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = $agentId; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'unverified'; AgeMinutes = $ageMinutes })
+                    $keepEntries.Add($entry)
+                    continue
+                }
+                $occupants.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = $agentId; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'unverified'; AgeMinutes = $ageMinutes })
                 $keepEntries.Add($entry)
                 continue
             }
-            $occupants.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = $agentId; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'unverified'; AgeMinutes = if ($null -ne $entryBorn) { [int]($now - $entryBorn).TotalMinutes } else { $null } })
-            $keepEntries.Add($entry)
-            continue
-        }
-        $verdict = Test-AgentLive -Agent $live -Now $now -FreshnessMinutes $freshness
-        if (-not $verdict.Live) {
-            if ($verdict.Terminal) {
-                # Closed/errored/archived: the agent cannot come back, so the
-                # reservation is dropped exactly as a vanished agent's is.
-                continue
-            }
-            # Idle or otherwise non-live but not terminal: keep the entry so a
-            # resumed agent is counted again, but free the slot now.
+            # Idle, or non-live but not terminal: keep the entry so a resumed
+            # agent is counted again, but free the slot now.
             [void]$seenAgents.Add($agentId)
-            $born = ConvertFrom-PaseoAge ([string](Get-Prop $live 'created' ''))
-            if ($null -eq $born) { $born = $entryBorn }
-            $ageMinutes = if ($null -ne $born) { [int]($now - $born).TotalMinutes } else { $null }
             # The label keeps the long-standing idle-beyond-grace signal while
             # never letting any non-live state hold a slot.
             $skipState = if ($verdict.State -eq 'idle' -and ($null -eq $ageMinutes -or $ageMinutes -ge $idleGrace)) { 'idle-beyond-grace' } else { $verdict.State }
             $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = $agentId; KeyName = [string](Get-Prop $entry 'keyName' ''); State = $skipState; AgeMinutes = $ageMinutes })
             $keepEntries.Add($entry)
-            continue
-        }
-        if ((Resolve-AgentExistence -AgentId $agentId) -eq $false) {
-            # A phantom id resolves to no agent, so it holds no slot: release it
-            # exactly as a vanished agent's reservation is released, and name it
-            # once (seenAgents keeps the adopted sweep from repeating the row).
-            [void]$seenAgents.Add($agentId)
-            $born = ConvertFrom-PaseoAge ([string](Get-Prop $live 'created' ''))
-            if ($null -eq $born) { $born = $entryBorn }
-            $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = $entryRole; Source = 'reservation'; AgentId = $agentId; KeyName = [string](Get-Prop $entry 'keyName' ''); State = 'id-not-found'; AgeMinutes = if ($null -ne $born) { [int]($now - $born).TotalMinutes } else { $null } })
             continue
         }
         [void]$seenAgents.Add($agentId)
@@ -856,7 +1020,10 @@ function Get-Occupancy {
         if (-not $model) { $model = [string](Get-Prop (Get-Prop $agent 'runtimeInfo' @{}) 'model' '') }
         if ($provider -and $model -and $provider -notmatch '/') { $provider = "$provider/$model" }
         if (-not (Test-PoolMatch -AgentProvider $provider -Pool $poolDef)) { continue }
-        $verdict = Test-AgentLive -Agent $agent -Now $now -FreshnessMinutes $freshness
+        # One liveness answer for occupancy and per-key dispatch: the daemon's
+        # own record wins over a stale listing row, and an id it cannot resolve
+        # (a phantom) is not an occupant at all (cl-common-vv7, cl-common-x6u).
+        $verdict = Get-AgentLiveVerdict -AgentId $agentId -Agent $agent -Now $now -FreshnessMinutes $freshness
         if (-not $verdict.Live) {
             # A historic record for this pool is named, never counted. This is
             # the 2026-11-03 defect: idle/closed sessions adopted as running
@@ -865,14 +1032,6 @@ function Get-Occupancy {
             $ageMinutes = if ($null -ne $created) { [int]($now - $created).TotalMinutes } else { $null }
             $skipState = if ($verdict.State -eq 'idle' -and ($null -eq $ageMinutes -or $ageMinutes -ge $idleGrace)) { 'idle-beyond-grace' } else { $verdict.State }
             $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = ''; Source = 'adopted'; AgentId = $agentId; KeyName = ''; State = $skipState; AgeMinutes = $ageMinutes })
-            continue
-        }
-        if ((Resolve-AgentExistence -AgentId $agentId) -eq $false) {
-            # `paseo ls` advertised a row the daemon cannot resolve: a phantom
-            # occupant, not a slot holder (bead cl-common-vv7).
-            $created = ConvertFrom-PaseoAge ([string](Get-Prop $agent 'created' ''))
-            $ageMinutes = if ($null -ne $created) { [int]($now - $created).TotalMinutes } else { $null }
-            $skipped.Add([pscustomobject]@{ Pool = $PoolId; Role = ''; Source = 'adopted'; AgentId = $agentId; KeyName = ''; State = 'id-not-found'; AgeMinutes = $ageMinutes })
             continue
         }
         $matched = $routes | Where-Object { Test-ProviderMatch -AgentProvider $provider -RouteProvider ([string](Get-Prop $_ 'provider' '')) } | Select-Object -First 1
@@ -2222,13 +2381,13 @@ function Get-WorkEffortSummary {
 }
 
 function Get-PoolSnapshot {
-    param([Parameter(Mandatory)]$Registry, [Parameter(Mandatory)]$State, [Parameter(Mandatory)][hashtable]$Paths, [array]$LiveAgents = @(), [bool]$Reconcile = $true)
+    param([Parameter(Mandatory)]$Registry, [Parameter(Mandatory)]$State, [Parameter(Mandatory)][hashtable]$Paths, [array]$LiveAgents = @(), [bool]$Reconcile = $true, [bool]$TrustLedger = $false)
 
     $rows = [System.Collections.Generic.List[object]]::new()
     $occupancy = @{}
     foreach ($poolId in @((Get-Prop $registry 'pools' @{}).Keys | Sort-Object)) {
         $poolDef = Get-Prop (Get-Prop $registry 'pools' @{}) $poolId
-        $occ = Get-Occupancy -Registry $Registry -State $State -PoolId $poolId -LiveAgents $LiveAgents -Paths $Paths -Reconcile $Reconcile
+        $occ = Get-Occupancy -Registry $Registry -State $State -PoolId $poolId -LiveAgents $LiveAgents -Paths $Paths -Reconcile $Reconcile -TrustLedger $TrustLedger
         $routes = @($occ.Routes)
         $roleCaps = Get-Prop $poolDef 'roleCaps' @{}
         # What occupancy actually counted, and what it deliberately left out.
@@ -2295,7 +2454,7 @@ switch ($Mode) {
         # the occupancy prune above has always been discarded here.
         $payload = Invoke-WithStateLock {
             $statusState = Get-State -StateFile $paths.StateFile
-            $snapshot = Get-PoolSnapshot -Registry $registry -State $statusState -Paths $paths -LiveAgents $live -Reconcile $reconcile
+            $snapshot = Get-PoolSnapshot -Registry $registry -State $statusState -Paths $paths -LiveAgents $live -Reconcile $reconcile -TrustLedger $NoReconcile
             $statusRows = @($snapshot.Rows)
             $statusKeys = @()
             $statusDispatch = @{ mode = 'single-active'; cursor = 0; effectiveOrder = @() }
@@ -2428,7 +2587,7 @@ switch ($Mode) {
                     Write-LogLine -Path $paths.ErrorLog -Record @{ ts = $now.ToString('o'); event = 'pool-quota-reset'; pool = $poolId; detail = 'calendar day rolled over; pool back in circulation' }
                 }
 
-                $occ = Get-Occupancy -Registry $registry -State $state -PoolId $poolId -LiveAgents $live -Paths $paths -Reconcile $reconcile
+                $occ = Get-Occupancy -Registry $registry -State $state -PoolId $poolId -LiveAgents $live -Paths $paths -Reconcile $reconcile -TrustLedger $NoReconcile
                 $selection = Resolve-RouteSelection -Registry $registry -State $state -PoolId $poolId -Pool $poolDef `
                     -Routes @($occ.Routes) -RequestedRole $Role -SkipCanary:$SkipCanary -Paths $paths
                 $cap = [int](Get-Prop $poolDef 'cap' 0)
@@ -2556,7 +2715,7 @@ switch ($Mode) {
                 $fallbackId = [string]($poolOrder | Where-Object { [bool](Get-Prop $poolTable[$_] 'enabled' $false) } | Select-Object -First 1)
                 if (-not $fallbackId) { throw "Spawn refused: no enabled pool. $($rejections -join ' | ')" }
                 $poolDef = $poolTable[$fallbackId]
-                $occ = Get-Occupancy -Registry $registry -State $state -PoolId $fallbackId -LiveAgents $live -Paths $paths -Reconcile $reconcile
+                $occ = Get-Occupancy -Registry $registry -State $state -PoolId $fallbackId -LiveAgents $live -Paths $paths -Reconcile $reconcile -TrustLedger $NoReconcile
                 $selection = Resolve-RouteSelection -Registry $registry -State $state -PoolId $fallbackId -Pool $poolDef `
                     -Routes @($occ.Routes) -RequestedRole $Role -SkipCanary -Paths $paths
                 $overrideKeys = $null
