@@ -193,7 +193,7 @@ function Resolve-QueueFile {
     #>
     param([Parameter(Mandatory)][string]$Slug)
 
-    $runtimeHome = if ($env:IQA_MACHINE_HOME) { $env:IQA_MACHINE_HOME } else { Join-Path $HOME '.machine' }
+    $runtimeHome = if ($env:MACHINE_STATE_HOME) { $env:MACHINE_STATE_HOME } else { Join-Path $HOME '.machine' }
     $candidates = @(
         $env:MERGE_QUEUE_DIR
         (Join-Path $runtimeHome 'Tasks\MergeQueue')
