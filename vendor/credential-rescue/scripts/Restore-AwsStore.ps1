@@ -82,13 +82,10 @@ function Write-CredLog {
 
 # ------------------------------------------------------------- encryption ---
 function Get-BackupKeyBytes {
-    # Machine secrets home (2026-11-04): ~/.machine replaced ~/.salmon. The legacy path is a
-    # read-only fallback so this keeps working until the old tree is retired; never write there.
+    # Machine secrets home: ~/.machine. The legacy ~/.salmon tree is retired and
+    # archived, so there is no fallback to read: a missing key is a named absence,
+    # not a reason to look in a tree nothing writes to any more.
     $envFile = Join-Path $env:USERPROFILE '.machine\.env'
-    if (-not (Test-Path -LiteralPath $envFile)) {
-        $legacyEnvFile = Join-Path $env:USERPROFILE '.salmon\.env'
-        if (Test-Path -LiteralPath $legacyEnvFile) { $envFile = $legacyEnvFile }
-    }
     if (-not (Test-Path -LiteralPath $envFile)) { return $null }
     foreach ($line in @(Get-Content -LiteralPath $envFile -ErrorAction SilentlyContinue)) {
         if ($line -match '^\s*AWS_CRED_BACKUP_KEY\s*=\s*(\S+)\s*$') {

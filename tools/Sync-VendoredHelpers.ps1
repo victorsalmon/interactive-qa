@@ -174,13 +174,13 @@ $script:PatchedFiles = @(
         Canonical = 'credential-rescue/scripts/Invoke-ProviderLock.ps1'
         Vendored  = 'vendor/credential-rescue/scripts/Invoke-ProviderLock.ps1'
         Patch     = 'lock-path-outside-package'
-        Why       = 'The lock is machine state written on this machine, so the package copy resolves it from the profile state root ($env:USERPROFILE/.salmon/State/credential-rescue/provider-lock.json) with a read-only legacy fallback to the old in-tree asset, and -Mode Lock writes the state root. The canonical script keeps its in-tree default until the fleet tool is retired.'
+        Why       = 'The lock is machine state written on this machine, so the package copy resolves it from the profile state root ($env:MACHINE_STATE_HOME/credential-rescue/provider-lock.json, or ~/.machine/state/credential-rescue) with a read-only legacy fallback to the old in-tree asset, and -Mode Lock writes the state root. The canonical script keeps its in-tree default until the fleet tool is retired.'
     }
     [pscustomobject]@{
         Canonical = 'credential-rescue/scripts/Switch-OpencodeGoKey.ps1'
         Vendored  = 'vendor/credential-rescue/scripts/Switch-OpencodeGoKey.ps1'
         Patch     = 'state-root-log-fallback'
-        Why       = 'The canonical script throws when CL_REPOS_ROOT is unset, which made an installed copy unable to plan a cutover. The package copy falls back to the machine state root ($HOME/.salmon) for the credential-change log and the legacy Tools paths; a fleet run is unchanged.'
+        Why       = 'The canonical script throws when CL_REPOS_ROOT is unset, which made an installed copy unable to plan a cutover. The package copy falls back to the machine logs root (~/.machine/logs) for the credential-change log and the legacy Tools paths; a fleet run is unchanged.'
     }
 )
 
@@ -336,7 +336,7 @@ $script:NotVendoredHelpers = @(
     New-NotVendoredRow -Owner 'the provider-lock tool' -Names @(
         'provider-lock.json'
     ) -Reason ('Runtime state written by the tool, resolved from the profile state root ' +
-        '($env:USERPROFILE\.salmon\State\credential-rescue\provider-lock.json) with a read-only ' +
+        '($env:MACHINE_STATE_HOME\credential-rescue\provider-lock.json, or ~/.machine/state/credential-rescue) with a read-only ' +
         'legacy fallback to the old in-tree copy. Vendoring it would drift on every -Mode Lock run ' +
         'and make the tool write into its own package.')
 

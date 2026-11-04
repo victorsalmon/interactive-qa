@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T23:02:39.5288129-07:00",
+  "generatedAt": "2026-11-03T23:22:42.3332300-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -274,7 +274,7 @@
       "Canonical": "credential-rescue/scripts/Invoke-ProviderLock.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Invoke-ProviderLock.ps1",
       "Patch": "lock-path-outside-package",
-      "Why": "The lock is machine state written on this machine, so the package copy resolves it from the profile state root ($env:USERPROFILE/.salmon/State/credential-rescue/provider-lock.json) with a read-only legacy fallback to the old in-tree asset, and -Mode Lock writes the state root. The canonical script keeps its in-tree default until the fleet tool is retired.",
+      "Why": "The lock is machine state written on this machine, so the package copy resolves it from the profile state root ($env:MACHINE_STATE_HOME/credential-rescue/provider-lock.json, or ~/.machine/state/credential-rescue) with a read-only legacy fallback to the old in-tree asset, and -Mode Lock writes the state root. The canonical script keeps its in-tree default until the fleet tool is retired.",
       "Sha256": "7C35745F1BEEEBCE84ABB779CAF8E2960B4F4B70F8ED1D8373D32AD14A88E6FF",
       "Sha256Lf": "122545EEB3C80A577866144ED299E66B9E01F4F7CC38568D2FB6C248473F38F9",
       "CanonicalSha256": "A64EECD7135B6071B2D7EA98698947A813B7790766401E3BBFC275B00D81315A",
@@ -397,9 +397,9 @@
       "Name": "Restore-AwsStore.ps1",
       "Canonical": "credential-rescue/scripts/Restore-AwsStore.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Restore-AwsStore.ps1",
-      "Sha256": "13B6796680034E08C08A275E6B4014ADB67672474817163713068DF8AC7281B4",
-      "Sha256Lf": "E59A0BF9BE8558EB1B4E2276922054803BDA0EE7C6643F68FB0B4C66245BA206",
-      "Bytes": 22269,
+      "Sha256": "730D10F608A635C21A2C380D2EA30314A3DC86A554293FE5B147C7D307E0459D",
+      "Sha256Lf": "67BBC94B179826BB06071C5D6AC639DDDE1FE5037C92CDD47C6188A14BB28A66",
+      "Bytes": 22101,
       "Tree": "credential-rescue"
     },
     {
@@ -438,7 +438,7 @@
       "Canonical": "credential-rescue/scripts/Switch-OpencodeGoKey.ps1",
       "Vendored": "vendor/credential-rescue/scripts/Switch-OpencodeGoKey.ps1",
       "Patch": "state-root-log-fallback",
-      "Why": "The canonical script throws when CL_REPOS_ROOT is unset, which made an installed copy unable to plan a cutover. The package copy falls back to the machine state root ($HOME/.salmon) for the credential-change log and the legacy Tools paths; a fleet run is unchanged.",
+      "Why": "The canonical script throws when CL_REPOS_ROOT is unset, which made an installed copy unable to plan a cutover. The package copy falls back to the machine logs root (~/.machine/logs) for the credential-change log and the legacy Tools paths; a fleet run is unchanged.",
       "Sha256": "E377ED53630F884E95874A84FD7BFCC064C2517A0E1A0FC318683968F6420D12",
       "Sha256Lf": "E377ED53630F884E95874A84FD7BFCC064C2517A0E1A0FC318683968F6420D12",
       "CanonicalSha256": "59207ECBA0BC6CA7BA5F944C6306788639E641217CBA36261C4479A7B98EF15B",
@@ -953,7 +953,7 @@
     {
       "Name": "provider-lock.json",
       "Owner": "the provider-lock tool",
-      "Reason": "Runtime state written by the tool, resolved from the profile state root ($env:USERPROFILE\\.salmon\\State\\credential-rescue\\provider-lock.json) with a read-only legacy fallback to the old in-tree copy. Vendoring it would drift on every -Mode Lock run and make the tool write into its own package."
+      "Reason": "Runtime state written by the tool, resolved from the profile state root ($env:MACHINE_STATE_HOME\\credential-rescue\\provider-lock.json, or ~/.machine/state/credential-rescue) with a read-only legacy fallback to the old in-tree copy. Vendoring it would drift on every -Mode Lock run and make the tool write into its own package."
     },
     {
       "Name": "Invoke-SafeCommit.ps1",
