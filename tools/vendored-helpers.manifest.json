@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T22:25:03.6244621-07:00",
+  "generatedAt": "2026-11-03T23:02:39.5288129-07:00",
   "canonicalRoot": "Skills",
   "trees": [
     {
@@ -58,9 +58,9 @@
       "Name": "agent-capacity.json",
       "Canonical": "agent-spawn-capacity/assets/agent-capacity.json",
       "Vendored": "vendor/agent-spawn-capacity/assets/agent-capacity.json",
-      "Sha256": "2FB33C6901A3CF56DA5B6F8C28A971836FC9AA8B3D259B8F56FD53D37B892DFD",
-      "Sha256Lf": "191CE83BAECE898235DF004527990ACB0608880945B3959ADED6D4DE4B9CD757",
-      "Bytes": 21588,
+      "Sha256": "389351ADF520EE8CDC4799E187BFA9EC3A702F295565A8E186FABD916CACE098",
+      "Sha256Lf": "680C2106E91C6DE1D8E6B4CF439750C9C24393906C001E844EB74E75A20D3B68",
+      "Bytes": 21627,
       "Tree": ""
     },
     {
@@ -775,9 +775,9 @@
       "Vendored": "vendor/dispatch/scripts/run-iqa-worker.ps1",
       "Owner": "this package",
       "Why": "Detached worker dispatch; the fleet source (iqa-mode) was retired at Phase 5 and the dispatch member cites this copy.",
-      "Sha256": "BBF9F8C55B50F9154DF8B2DE675A745A6C42BB04779573B0A51585AF32DB1DB3",
-      "Sha256Lf": "FDB9CD708EEDF9B30D2951A1B207FF598015436BBF07B529F0429F9AFAE88452",
-      "Bytes": 60255,
+      "Sha256": "02542D5614266C520C86D1A95C77689C489AC5049535A38B0B28D306A780B9A6",
+      "Sha256Lf": "A8F3175DFCAD05EB426BA890F45FC589F547CFD50E6B6EC9328F1DD04C5747CD",
+      "Bytes": 62307,
       "Tree": ""
     },
     {
@@ -787,9 +787,9 @@
       "Vendored": "vendor/dispatch/scripts/Test-OpencodeProvider.ps1",
       "Owner": "this package",
       "Why": "Provider reachability pre-check for a dispatch; the fleet source (iqa-mode) was retired at Phase 5.",
-      "Sha256": "F7AC7138F7C8F036EAA2081A0C7051A8DB4284EE9AB123CC871EC56161A25C1E",
-      "Sha256Lf": "1DBA574F57D515B1DDB94A4A3F9E3EA4B80E592945C3C8E9AAC8BFB318667894",
-      "Bytes": 13376,
+      "Sha256": "6C02050BC827D4ED2BEFFE6B60D046675AD35BF735A63E2F81B500D8B5E61850",
+      "Sha256Lf": "AED6B961B6B2EF329E0135B66B268F1E50D2AEE4E14F3025626065294B52D9E0",
+      "Bytes": 13450,
       "Tree": ""
     },
     {
