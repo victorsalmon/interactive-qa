@@ -713,7 +713,7 @@ supervises and stays interactive. Guardrails (all session-enforced):
 - Claim at dispatch (`bd update <id> --claim`), brief pins bead id + exact
   scope + staging worktree (never the trunk checkout); worker never runs `bd`.
 - **Vendored-helper acceptance (cl-common class).** Before a branch lands,
-  run `Skills/iqa-merge/Test-VendoredSync.ps1 -RepoPath <repo> -Trunk dev
+  run `tools/Test-VendoredSync.ps1 -RepoPath <repo> -Trunk dev
   -Branch <branch>`. It intersects the branch diff with the vendored manifest
   rows and runs `Sync-VendoredHelpers.ps1 -Check` on the branch tip; exit 1
   names the `ROW` and `CANONICAL` file that must be re-vendored, exit 0 means

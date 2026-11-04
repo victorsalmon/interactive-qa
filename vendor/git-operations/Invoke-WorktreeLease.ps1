@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Cross-repo worktree lease: serialize writers per checkout and make dirty
     worktrees inspectable instead of blocking.
@@ -12,7 +12,7 @@
     A lease is a small JSON document in a central, git-ignored store:
 
         $env:OC_WORKTREE_LEASE_ROOT
-          ?? $env:SALMON_RUN_HOME/State/worktree-leases
+          ?? $env:IQA_MACHINE_HOME/State/worktree-leases
           ?? ~/.salmon/State/worktree-leases
 
     keyed by the SHA1 of the normalized checkout path. The Salmon Run engine
@@ -106,10 +106,10 @@ function Get-LeaseRoot {
     if (-not [string]::IsNullOrWhiteSpace($env:OC_WORKTREE_LEASE_ROOT)) {
         return $env:OC_WORKTREE_LEASE_ROOT
     }
-    if (-not [string]::IsNullOrWhiteSpace($env:SALMON_RUN_HOME)) {
-        return (Join-Path $env:SALMON_RUN_HOME 'State\worktree-leases')
+    if (-not [string]::IsNullOrWhiteSpace($env:IQA_MACHINE_HOME)) {
+        return (Join-Path $env:IQA_MACHINE_HOME 'State\worktree-leases')
     }
-    return (Join-Path $HOME '.salmon\State\worktree-leases')
+    return (Join-Path $HOME '.machine\state\worktree-leases')
 }
 
 function Get-NormalizedPath {

@@ -84,10 +84,10 @@ function Remove-CutoverMarkerFile {
 
 function Get-CutoverDefaultLeaseRoot {
     if (-not [string]::IsNullOrWhiteSpace($env:OC_WORKTREE_LEASE_ROOT)) { return $env:OC_WORKTREE_LEASE_ROOT }
-    if (-not [string]::IsNullOrWhiteSpace($env:SALMON_RUN_HOME)) {
-        return (Join-Path $env:SALMON_RUN_HOME 'State\worktree-leases')
+    if (-not [string]::IsNullOrWhiteSpace($env:IQA_MACHINE_HOME)) {
+        return (Join-Path $env:IQA_MACHINE_HOME 'State\worktree-leases')
     }
-    return (Join-Path $env:USERPROFILE '.salmon\State\worktree-leases')
+    return (Join-Path $env:USERPROFILE '.machine\state\worktree-leases')
 }
 
 function Get-CutoverDefaultHubRoot {
