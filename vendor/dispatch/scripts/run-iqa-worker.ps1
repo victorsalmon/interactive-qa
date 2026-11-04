@@ -671,10 +671,16 @@ function Resolve-AgentKeyEnv {
     .SYNOPSIS
         The extra `--env` pairs one agent needs for a keyed pool.
     .DESCRIPTION
-        A keyed pool (Gemini) has several accounts, each with its own budget,
-        but the CLI reads only one variable name. So the selected key's value is
-        bridged into THIS agent's own variable - never a global override - which
-        is what keeps two concurrent agents on two different keys.
+        A keyed pool (Gemini, opencode-go) has several accounts, each with its
+        own budget, but the CLI reads only one variable name. So the selected
+        key's value is bridged into THIS agent's own variable - never a global
+        override - which is what keeps two concurrent agents on two different
+        keys.
+
+        The bridge variable is declared by the pool's `bridgeEnv`. It is NOT
+        defaulted for arbitrary pools: an absent bridge is a hard failure except
+        for the legacy Gemini pool, because injecting an OpenCode key into
+        GEMINI_API_KEY would silently leave the agent on the machine-pinned key.
 
         The value is read here and nowhere else. It is never printed, never
         written to a log, and is redacted out of any text that reaches the error
@@ -696,8 +702,24 @@ function Resolve-AgentKeyEnv {
         throw "Key '$keyName' is registered for pool '$([string](Get-Prop $Slot 'Pool' ''))' but has no value in any scope; refusing to dispatch an unauthenticated agent. Set the Machine-scope variable and retry."
     }
 
-    $bridge = if ([string](Get-Prop $Slot 'BridgeEnv' '')) { [string]$Slot.BridgeEnv } else { 'GEMINI_API_KEY' }
-    return @{ Pairs = @("$bridge=$value"); Value = $value; KeyName = $keyName }
+    $pool = [string](Get-Prop $Slot 'Pool' '')
+    $provider = [string](Get-Prop $Slot 'Provider' '')
+    $bridge = [string](Get-Prop $Slot 'BridgeEnv' '')
+    if ([string]::IsNullOrWhiteSpace($bridge)) {
+        # Gemini is the one legacy keyed pool whose CLI reads GEMINI_API_KEY and
+        # whose registry row may omit bridgeEnv. Every other keyed pool MUST
+        # declare its bridge explicitly: silently falling back to
+        # GEMINI_API_KEY would inject an OpenCode key into a variable OpenCode
+        # never reads, and the agent would quietly run on the machine-pinned
+        # key instead of the selected one.
+        if ($pool -eq 'gemini' -or $provider -match '^gemini/') {
+            $bridge = 'GEMINI_API_KEY'
+        }
+        else {
+            throw "Pool '$pool' selected key '$keyName' but declares no bridgeEnv; refusing to inject it into GEMINI_API_KEY. Set the pool's bridgeEnv (opencode-go: OPENCODE_GO_KEY) in agent-capacity.json and retry."
+        }
+    }
+    return @{ Pairs = @("$bridge=$value"); Value = $value; KeyName = $keyName; BridgeEnv = $bridge }
 }
 
 function Get-WorkerModeArgument {
@@ -1009,10 +1031,19 @@ if (-not $SkipPreflight -and $Provider -match '^opencode/([^/]+)/(.+)$') {
     # Capture so the explanation can name the key the canary actually exercised
     # (it reports a label, never a value) and compare it with the key this
     # session inherited.
-    $canaryText = & $canary -Model $canaryModel 2>&1 | Out-String
+    # Exercise the key this dispatch actually selected, not whatever key the
+    # caller inherited. The gate returns KeyEnv=OPENCODE_GO<n>_KEY; pass that
+    # number to the canary so a GO6 dispatch is canaried on GO6 even when the
+    # machine's active key is GO1.
+    $canaryArgs = @{ Model = $canaryModel }
+    $selectedKeyNumber = 0
+    if ($keyEnv.KeyName -match '^OPENCODE_GO(\d+)_KEY$') { $selectedKeyNumber = [int]$Matches[1] }
+    if ($selectedKeyNumber -gt 0) { $canaryArgs['KeyNumber'] = $selectedKeyNumber }
+    $canaryText = & $canary @canaryArgs 2>&1 | Out-String
     if (-not [string]::IsNullOrWhiteSpace($canaryText)) { Write-Host $canaryText.TrimEnd() }
     if ($LASTEXITCODE -ne 0) {
-        throw (Get-PreflightFailureMessage -Model $canaryModel -CanaryOutput $canaryText -SessionKeyValue $env:OPENCODE_GO_KEY)
+        $sessionKeyValue = if ($keyEnv.Value) { [string]$keyEnv.Value } else { $env:OPENCODE_GO_KEY }
+        throw (Get-PreflightFailureMessage -Model $canaryModel -CanaryOutput $canaryText -SessionKeyValue $sessionKeyValue)
     }
 }
 
@@ -1199,7 +1230,9 @@ try {
         Write-Host "Capacity (retry): $($slot.Pool)/$($slot.Role) work=$($slot.WorkRole) - provider $Provider$(if ($Thinking) { " (thinking $Thinking)" })$(if ($keyEnv.KeyName) { " key=$($keyEnv.KeyName) (value never shown)" })$(if ($DispatchMode -ne 'single-active') { " dispatch=$DispatchMode" })" -ForegroundColor Cyan
         if (-not $SkipPreflight -and $Provider -match '^opencode/([^/]+)/(.+)$') {
             $retryModel = "$($Matches[1])/$($Matches[2])"
-            & (Join-Path $PSScriptRoot 'Test-OpencodeProvider.ps1') -Model $retryModel
+            $retryCanaryArgs = @{ Model = $retryModel }
+            if ($keyEnv.KeyName -match '^OPENCODE_GO(\d+)_KEY$') { $retryCanaryArgs['KeyNumber'] = [int]$Matches[1] }
+            & (Join-Path $PSScriptRoot 'Test-OpencodeProvider.ps1') @retryCanaryArgs
             if ($LASTEXITCODE -ne 0) { throw "Provider preflight failed for '$retryModel' on the re-dispatch." }
         }
     }

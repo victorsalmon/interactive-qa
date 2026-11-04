@@ -16,7 +16,8 @@
     credential-rescue Runbook A) and re-dispatch on the fleet default
     worker model — audit runs never swap model families.
 
-    WHICH key is tested is the machine's ACTIVE key, not whatever the caller
+    WHICH key is tested is the machine's ACTIVE key (or the gate-selected
+    -KeyNumber when a keyed dispatch supplies one), not whatever the caller
     inherited. The seam (credential-rescue assets/opencode-go-cutover.json)
     names it (`activeKey` -> OPENCODE_GO<n>_KEY); that pool key's value is
     read from Machine scope first, then User, and injected into the CLI child
